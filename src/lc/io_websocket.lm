@@ -1,0 +1,7 @@
+#"io_declarators.lm"\nullary_io unary_io binary_io ternary_io.
+
+unary_io "waitOpen" λwaitOpen.
+unary_io "waitMessage" λwaitMessage.
+binary_io "send" λsend.
+
+\f.f waitOpen waitMessage send

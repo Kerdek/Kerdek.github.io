@@ -1,0 +1,1 @@
+@ λx.λf.f "bind" λf.f (λf.f "put" "@ λx.") λ_ f.f "print" x

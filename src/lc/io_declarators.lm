@@ -1,0 +1,8 @@
+#"preamble.lm"\let id car cdr head tail cons compose composer.
+
+let (λio.let $ cons io _) λnullary_io.
+let (λio.let λx.cons io x) λunary_io.
+let (λio.let λx y.cons io $ cons x y) λbinary_io.
+let (λio.let λx y z.cons io $ cons x $ cons y z) λternary_io.
+
+\f.f nullary_io unary_io binary_io ternary_io

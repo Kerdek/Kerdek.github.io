@@ -1,0 +1,15 @@
+#"pre.cru"\id di car cdr cons head tail compose composer ->
+export
+  where (
+    export f = f return bind do print yield get put unput newArray push invoke,
+    get = cons "get" _,
+    unput = cons "unput" _,
+    put x = cons "put" x,
+    yield = cons "yield" _,
+    newArray = cons "newArray" _,
+    print x = cons "print" x,
+    return x = cons "return" x,
+    push x y = cons "push" (cons x y),
+    invoke x y z = cons "invoke" (cons x (cons y z)),
+    bind x y = cons "bind" (cons x y),
+    do x y = bind x (car y))

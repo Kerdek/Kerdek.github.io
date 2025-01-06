@@ -1,0 +1,9 @@
+#"pre.cru"\id di car cdr cons head tail compose composer ->
+export
+  where(
+    export f = f emptymaybe maybe emptylist list,
+    emptymaybe l = l (\_ _ -> false) true,
+    emptylist l = l (\_ _ _ -> false) true,
+
+    maybe x a b = x (\e _ -> a e) b,
+    list l = compose l (compose (compose car)))

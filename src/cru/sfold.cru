@@ -1,0 +1,23 @@
+#"pre.cru"\id di car cdr cons head tail compose composer ->
+#"builtin_logic.cru"\rec if and or not ->
+#"builtin_arithmetic.cru"\neg cpl mul div mod add sub shl shr eq neq gt ge lt le bcj bxj bdj ->
+#"builtin_string.cru"\sempty slength shead stail sinit slast ->
+#"data.cru"\emptymaybe maybe emptylist list ->
+
+export
+  where (
+    export f = f string sfoldr sfoldl sreverse,
+    string s a b = if (sempty s) b (a (shead s) (stail s)),
+
+    sfoldr g b = rec
+      where (
+        rec s = string s nonempty b,
+        nonempty x y = g x (rec y)),
+
+    sfoldl g = rec
+      where (
+        rec b s = string s nonempty b
+          where (
+            nonempty x y = rec (g x b) y)),
+
+    sreverse = sfoldl add "")

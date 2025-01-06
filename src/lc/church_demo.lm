@@ -1,0 +1,60 @@
+/* bare minimum */
+(λa.a a) (λx f.f x) λlet.
+let (λx.x) λid.
+let (λa b.a) λcar.
+let (λa b.b) λcdr.
+let (λa b f.f a b) λcons.
+let (λf g x.f $ g x) λcompose.
+let (λf.(λx.f (x x)) (λx.f (x x))) λY.
+let (let id $ Y λf l.cons (λp.car $ λx.f (compose l (cons x)) p) (l cdr)) λary.
+let (let id $ Y λf l x y.y (car $ f (compose l (cons x))) (l (cons x cdr))) λ[.
+let id λ,.
+let cdr λ].
+
+let cdr λc0.
+let (let c0) λc1.
+let (let c1) λc2.
+let (let c2) λc3.
+
+let (λa.Y λf.cons (compose car f) a) λaddc.
+let (λa.Y λf.cons (compose (add a) f) cdr) λmulc.
+
+/* IO declarators */
+let (λio.let $ [io]) λnullary_io.
+let (λio.let λ*x.[io, x]) λunary_io.
+let (λio.let λ*x *y.[io, x, y]) λbinary_io.
+let (λio.let λ*x *y *z.[io, x, y, z]) λternary_io.
+
+/* mandatory IO declarations */
+unary_io "return" λreturn.
+binary_io "bind" λbind.
+
+/* IO helpers */
+let (λa b.bind a (car b)) λdo.
+
+let (λf *x.f x) λstrict.
+
+/* injected functions for javascript */
+λ_cjs _addjs _subjs _muljs _divjs _modjs _eqjs _gtjs _gejs _ltjs _lejs _ifjs.
+let (strict _cjs) λcjs.
+let (compose (strict) $ strict _addjs) λaddjs.
+let (compose (strict) $ strict _subjs) λsubjs.
+let (compose (strict) $ strict _muljs) λmuljs.
+let (compose (strict) $ strict _divjs) λdivjs.
+let (compose (strict) $ strict _modjs) λmodjs.
+let (compose (strict) $ strict _eqjs) λeqjs.
+let (compose (strict) $ strict _gtjs) λgtjs.
+let (compose (strict) $ strict _gejs) λgejs.
+let (compose (strict) $ strict _ltjs) λltjs.
+let (compose (strict) $ strict _lejs) λlejs.
+let (strict _ifjs) λifjs.
+/* IO declarations for javascript */
+unary_io "global" λglobaljs.
+unary_io "await" λawaitjs.
+binary_io "call" λcalljs.
+binary_io "elem" λelemjs.
+binary_io "mfun" λmfunjs.
+
+let (let (cjs 1) $ let (cjs 0) $ Y λf a b n.ifjs (eqjs n (cjs 0)) a $ ifjs (eqjs n (cjs 1)) b $ f b (addjs a b) (subjs n (cjs 1))) λfib.
+
+return (fib (cjs 20))

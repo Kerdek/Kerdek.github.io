@@ -1,0 +1,162 @@
+#"pre.cru"\id di car cdr cons head tail compose composer ->
+#"drawing_io.cru"\return bind do resetTransform getTransform setTransform transform arc beginPath moveTo lineTo strokeStyle fillStyle stroke fill fillRect fillText textAlign textBaseline font ->
+#"builtin_logic.cru"\rec if and or not ->
+#"builtin_arithmetic.cru"\neg cpl mul div mod add sub shl shr eq neq gt ge lt le bcj bxj bdj ->
+#"builtin_math.cru"\pi ceil floor sqrt pow exp log sin cos tan asin acos atan sinh cosh tanh asinh acosh atanh ->
+#"ary.cru"\ary consn ->
+
+let F = Icos (Isin Ix) differentiateI differentiateI differentiateI in
+
+do (font "bold 24px CMU Typewriter Text") $
+do (textAlign "center") $
+do (textBaseline "middle") $
+do (fillStyle "white") $
+do (ttitle setTransform) $
+do (fillText (add "f = " $ F printI) 0 0) $
+do (font "bold 16px CMU Typewriter Text") $
+do (txlabel setTransform) $
+do (fillText "var" 0 0) $
+do (tylabel setTransform) $
+do (fillText "f x" 0 0) $
+do resetTransform $
+plot (F implementI) -10 10 -10 10 100 500 100 300
+
+  where (
+    ttitle = mtrans 300 50,
+    txlabel = mtrans 300 320,
+    tylabel =
+      mmul (mrot (div pi 2)) $
+      mtrans 80 200,
+
+    printI kind parts =
+      if (eq kind "add") (let f a b = add "(add " $ add (a printI) $ add " " $ add (b printI) $ ")" in parts f) $
+      if (eq kind "mul") (let f a b = add "(mul " $ add (a printI) $ add " " $ add (b printI) $ ")" in parts f) $
+      if (eq kind "neg") (let f a = add "(neg " $ add (a printI) $ ")" in parts f) $
+      if (eq kind "sin") (let f a = add "(sin " $ add (a printI) $ ")" in parts f) $
+      if (eq kind "cos") (let f a = add "(cos " $ add (a printI) $ ")" in parts f) $
+      if (eq kind "var") "x" $
+      if (eq kind "lit") "<lit>" $
+      "<err>",
+
+    implementI kind parts =
+      if (eq kind "add") (let f a b = let ap = a implementI, bp = b implementI in \x -> add (ap x) (bp x) in parts f) $
+      if (eq kind "mul") (let f a b = let ap = a implementI, bp = b implementI in \x -> mul (ap x) (bp x) in parts f) $
+      if (eq kind "neg") (let f a = let ap = a implementI in \x -> neg (ap x) in parts f) $
+      if (eq kind "sin") (let f a = let ap = a implementI in \x -> sin (ap x) in parts f) $
+      if (eq kind "cos") (let f a = let ap = a implementI in \x -> cos (ap x) in parts f) $
+      if (eq kind "var") id $
+      if (eq kind "lit") (let f a = \x -> a in parts f) $
+      "<err>",
+
+    differentiateI kind parts =
+      if (eq kind "add") (let f a b = Iadd (a differentiateI) (b differentiateI) in parts f) $
+      if (eq kind "mul") (let f a b = Iadd (Imul (a differentiateI) b) (Imul a (b differentiateI)) in parts f) $
+      if (eq kind "neg") (let f a = Ineg (a differentiateI) in parts f) $
+      if (eq kind "sin") (let f a = Imul (Icos a) (a differentiateI) in parts f) $
+      if (eq kind "cos") (let f a = Imul (Ineg (Isin a)) (a differentiateI) in parts f) $
+      if (eq kind "var") (Ilit 1) $
+      if (eq kind "lit") (Ilit 0) $
+      "<err>",
+
+    Iadd x y = cons "add" (consn 2 x y),
+    Imul x y = cons "mul" (consn 2 x y),
+    Ineg x = cons "neg" (consn 1 x),
+    Isin x = cons "sin" (consn 1 x),
+    Icos x = cons "cos" (consn 1 x),
+    Ix = cons "var" (consn 0),
+    Ilit x = cons "lit" (consn 1 x),
+
+    matrix a b c d e f x = x a b c d e f,
+    mid = matrix 1 0 0 1 0 0,
+    mrot th = matrix (cos th) (sin th) (neg (sin th)) (cos th) 0 0,
+    mrotc x y th = 
+      mmul (mtrans (neg x) (neg y)) $
+      mmul (mrot th) $
+      mtrans x y,
+    mtrans x y = matrix 1 0 0 1 x y,
+    mmul a b = b (a f)
+      where (
+        f aa ab ac ad ae af ba bb bc bd be bf = matrix
+          (add (mul aa ba) $ mul ab bc)
+          (add (mul aa bb) $ mul ab bd)
+          (add (mul ac ba) $ mul ad bc)
+          (add (mul ac bb) $ mul ad bd)
+          (add (mul ae ba) $ add (mul af bc) $ be)
+          (add (mul ae bb) $ add (mul af bd) $ bf)),
+
+    plot f xmin xmax ymin ymax wmin wmax hmin hmax =
+      do box $
+      do x_axis $
+      do y_axis $
+      do plot_line $
+      return void
+      where (
+        xoff = add wmin (mul (sub wmax wmin) (div (neg xmin) (sub xmax xmin))),
+        yoff = add hmax (mul (sub hmax hmin) (div (neg ymin) (sub ymin ymax))),
+        xscale = div (sub wmax wmin) (sub xmax xmin),
+        yscale = div (sub hmax hmin) (sub ymin ymax),
+
+        w2x w = div (sub w xoff) xscale,
+        y2h y = add (mul y yscale) yoff,
+
+        x_axis =
+          do beginPath $
+          if (or (gt yoff hmax) (lt yoff hmin)) (
+            return void) $
+          do (moveTo wmin yoff) $
+          do (lineTo wmax yoff) $
+          do (strokeStyle "gray") $
+          do stroke $
+          return void,
+
+        y_axis =
+          do beginPath $
+          if (or (gt xoff wmax) (lt xoff wmin)) (
+            return void) $
+          do (moveTo xoff hmin) $
+          do (lineTo xoff hmax) $
+          do (strokeStyle "gray") $
+          do stroke $
+          return void,
+
+        box =
+          do beginPath $
+          do (moveTo wmin hmin) $
+          do (lineTo wmax hmin) $
+          do (lineTo wmax hmax) $
+          do (lineTo wmin hmax) $
+          do (lineTo wmin hmin) $
+          do (strokeStyle "white") $
+          do stroke $
+          return void,
+
+        plot_line =
+          do beginPath $
+          do (
+            if (and (le h hmax) (ge h hmin)) (
+              do (moveTo wmin h) $
+              line (add wmin 1)) $
+            gap (add wmin 1)) $
+          do (strokeStyle "white") $
+          stroke
+          where (
+            h = fwh wmin,
+            fwh w = y2h (f (w2x w)),
+            gap w =
+              if (gt w wmax) (
+                return void) $
+              if (and (le h hmax) (ge h hmin)) (
+                do (moveTo w h) $
+                line (add w 1)) $
+              gap (add w 1)
+              where (
+                h = fwh w),
+            line w =
+              if (gt w wmax) (
+                return void) $
+              if (or (gt h hmax) (lt h hmin)) (
+                gap (add w 1)) $
+              do (lineTo w h) $
+              line (add w 1)
+              where (
+                h = fwh w))))

@@ -1,0 +1,11 @@
+#"io_declarators.lm"\nullary_io unary_io binary_io ternary_io.
+
+nullary_io "newArray" λnewArray.
+nullary_io "newObject" λnewObject.
+binary_io "push" λpush.
+binary_io "elem" λelem.
+ternary_io "assign" λassign.
+binary_io "new" λnew.
+ternary_io "invoke" λinvoke.
+
+\f.f newArray newObject push elem assign new invoke

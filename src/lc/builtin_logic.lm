@@ -1,0 +1,6 @@
+#"preamble.lm"\let id car cdr head tail cons compose composer.
+
+let __builtin_rec λrec.
+let __builtin_if λif.
+
+\f.f rec if

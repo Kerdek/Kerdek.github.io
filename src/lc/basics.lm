@@ -1,0 +1,49 @@
+#"preamble.lm" λlet id car head rest if compose just pcons qcons ccons.
+
+/* deconstruct a let numeral */
+let (λl a b.l (λp _.a p) b) λletnum.
+
+/* deconstruct a pair list */
+let (λl a b.l (λx y _.a x y) b) λpairlist.
+
+/* church numeral to builtin numeral */
+let (pcons (λx.x + 1) 0) λc2b.
+
+/* let numeral to builtin numeral */
+let (@ λf n.letnum n (λp.(f p) + 1) 0) λlet2b.
+
+/* let numeral to church numeral */
+let (@ λf n.letnum n (λp.let (f p)) false) λlet2c.
+
+/* let numeral to just numeral */
+let (@ λf n.letnum n (λp.just (f p)) false) λlet2just.
+
+/* church numeral to let numeral */
+let (pcons let false) λc2let.
+
+/* church numeral to just numeral */
+let (pcons just false) λc2just.
+
+/* church math */
+let (λn f x.f $ n f x) λincc.
+let (λm n.m incc n) λaddc.
+let (λm n f.m $ n f) λmulc.
+
+/* builtin strings and lists are church like */
+
+/* church list to built in list */
+let (pcons (λx y.x : y) false) λc2bl.
+
+/* church list to builtin string */
+let (pcons (λa b.a + b) "") λjoin.
+
+/* head of church list */
+let (pcons car _) λchead.
+
+/* pair list to built in list */
+let (@ λf l.pairlist l (λa b.a : (f b)) false) λpair2bl.
+
+/* church list to pair list */
+let (pcons pcons false) λc2pair.
+
+λf.f letnum pairlist c2b let2b let2c let2just c2let c2just incc addc mulc c2bl join chead pair2bl c2pair

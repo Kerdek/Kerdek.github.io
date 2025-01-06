@@ -1,0 +1,12 @@
+#"let.lm" λlet.
+
+let (λx.x) λid.
+let (λa b.a) λcar.
+let (λa b.b) λcdr.
+let (let car) λhead.
+let (let cdr) λtail.
+let (λa b f.f a b) λcons.
+let (λf g x.f (g x)) λcompose.
+let (λf g x.g (f x)) λcomposer.
+
+λf.f let id car cdr head tail cons compose composer

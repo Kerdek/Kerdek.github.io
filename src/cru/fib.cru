@@ -1,0 +1,9 @@
+#"pre.cru"\id di car cdr cons head tail compose composer ->
+#"builtin_arithmetic.cru"\neg cpl mul div mod add sub shl shr eq neq gt ge lt le bcj bxj bdj ->
+
+export
+  where (
+    export f = f fib,
+    fib = fibab 0 1
+      where (
+        fibab a b = cons a (fibab b (add a b))))

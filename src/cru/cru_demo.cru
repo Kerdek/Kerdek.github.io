@@ -1,0 +1,92 @@
+#"pre.cru"\id di car cdr cons head tail compose composer ->
+#"io.cru"\return bind do print yield get put unput newArray push invoke ->
+#"builtin_logic.cru"\rec if and or not ->
+#"builtin_arithmetic.cru"\neg cpl mul div mod add sub shl shr eq neq gt ge lt le bcj bxj bdj ->
+#"builtin_string.cru"\sempty slength shead stail sinit slast ->
+#"builtin_json.cru"\jsonparse jsonstringify ->
+#"fib.cru"\fib ->
+#"data.cru"\emptymaybe maybe emptylist list ->
+#"fold.cru"\foldr foldl length reverse sum cat ->
+#"sfold.cru"\string sfoldr sfoldl sreverse ->
+
+reverser
+
+  where (
+    map f = g
+      where (
+        g l = list l nonempty cdr,
+        nonempty a b = cons (f a) (g b)),
+
+    filter f = g
+      where (
+        g l = list l nonempty cdr,
+        nonempty a b = if (f a) (cons a rest) rest
+          where (
+            rest = g b))
+
+    join c l = foldl nonempty (head l) (tail l)
+      where (
+        nonempty a b = add b $ add c a),
+
+    first n l = if (le n 0) cdr (l nonempty cdr)
+      where (
+        nonempty a b _ = cons a (first (sub n 1) b)),
+
+    elem n = if (le n 0) head (compose (elem (sub n 1)) tail),
+
+    split d s = string s (nonempty new) new
+      where (
+        new = init cdr,
+        init = cons "",
+        nonempty p a b = string b (nonempty pp) (reverse pp)
+          where (
+            pp = if (eq a d) (init p) (p merge),
+            merge x y = cons (add x a) y)),
+
+    do_list h y = if y f g
+      where (
+        f = cons nonempty_yield (return true),
+        g = cons nonempty (return true),
+        nonempty_yield a b _ = do (h a) $ do yield $ f b,
+        nonempty a b _ = do (h a) $ g b),
+
+    print_list = do_list print,
+    put_list d = do_list (\x -> do (put x) (put d)),
+
+    getLine = waitKey cdr
+      where (
+        waitKey s = bind get onKey
+          where (
+            onKey x =
+              if (eq x "Enter") (
+                do (put "\n") $
+                return $ let (reverse s)) $
+              if (eq x "Escape") (
+                do (put "\n") $
+                return cdr) $
+              if (eq x "Backspace") (
+                do unput $
+                waitKey (tail s)) $
+              do (put x) $
+              waitKey (cons x s))),
+
+    reverser = bind getLine onLine
+      where (
+        onLine x = x nonempty empty,
+        nonempty x _ = do (put (add (cat (reverse x)) "\n")) reverser,
+        empty = put "\nThanks for using reverser.\n"),
+
+    splitter = bind getLine onLine
+      where (
+        onLine x = maybe x nonempty empty,
+        nonempty x = bind getLine onDelimiter
+          where (
+            onDelimiter y = maybe y nonemptyDelimiter empty,
+            nonemptyDelimiter y = do (put $ add (join "\n" $ split (cat y) (cat x)) "\n") splitter),
+        empty = put "\nThanks for using splitter.\n"),
+
+    tellLength = bind getLine onLine
+      where (
+        onLine x = x nonempty empty,
+        nonempty x _ = do (print $ slength (cat x)) tellLength,
+        empty = put "\nThanks for using tell length.\n"))

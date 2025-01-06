@@ -1,0 +1,173 @@
+#"pre.cru"\id di car cdr cons head tail compose composer ->
+#"io.cru"\return bind do print yield get put unput newArray push invoke ->
+#"builtin_logic.cru"\rec if and or not ->
+#"builtin_arithmetic.cru"\neg cpl mul div mod add sub shl shr eq neq gt ge lt le bcj bxj bdj ->
+#"builtin_string.cru"\sempty slength shead stail sinit slast ->
+#"sfold.cru"\string sfoldr sfoldl sreverse ->
+#"fold.cru"\foldr foldl length reverse sum cat ->
+#"data.cru"\emptymaybe maybe emptylist list ->
+
+parse_cru "hello 2 (\\ u v w -> ( u ) $ ( v ) w ) where ( hello a b = goodbye , lol b = k ) where (hi = bye)"
+  (\r s -> put (pretty false true r))
+  (print "no")
+  (\m s -> do (print m) (print s))
+
+  where (
+    Abs x y  a b c d = a x y,
+    App x y  a b c d = b x y,
+    Ref x    a b c d = c x,
+    Whr x y  a b c d = d x y,
+
+    parens c s = if c (add "(" $ add s $ ")") s,
+
+    map f = g
+      where (
+        g l = list l nonempty cdr,
+        nonempty a b = cons (f a) (g b)),
+
+    join c l = foldl nonempty (head l) (tail l)
+      where (
+        nonempty a b = add b $ add c a),
+
+    pretty p r x = x on_abs on_app on_ref on_whr
+      where (
+        on_def a b = add a $ add " = " $ pretty false true b,
+        on_abs a b = parens (not r) (add "\\" $ add a $ params b)
+          where (
+            params e = e on_abs on_app on_ref on_whr
+              where (
+                otherwise = add " -> " $ pretty false true e,
+                on_abs a b = add " " $ add a $ params b,
+                on_app _ _ = otherwise,
+                on_ref _ = otherwise,
+                on_whr _ _ = otherwise)),
+        on_app a b = parens p (add (pretty false false a) $ add " " $ pretty true (or p r) b),
+        on_ref i = i,
+        on_whr x y = add (pretty false false y) $ add " where (" $ add (join ", " $ map (let on_def) x) $ ")" ),
+
+    err    m    s y n f = f m s,
+    fail        s y n f = n,
+    ret    r    s y n f = y r s,
+    take   a b  s y n f = a s (\r t -> b r t y n f) n f,
+    either a b  s y n f = a s y (b s y n f) f,
+    eof         s y n f = if (sempty s) (y "" s) n,
+    exact  x    s y n f = string s (\a b -> if (eq a x) (y a b) n) n,
+
+    skip a b = take a \_ -> b,
+
+    expect e m = either e (err m),
+
+    anychar = sfoldr (\a b -> either (exact a) b) fail,
+    seqchar x = sfoldr (\a b -> skip (exact a) b) (ret x) x,
+
+    one_or_more x = rec
+      where (
+        rec =
+          take x \c ->
+          either (
+            take rec \r ->
+            ret (add c r)) $
+          ret c),
+
+    zero_or_more x = rec
+      where (
+        rec =
+          either (
+            take x \c ->
+            take rec \r ->
+            ret (add c r)) $
+          ret ""),
+
+
+    parse_cru = all
+      where (
+        idchar = anychar "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789",
+        wschar = anychar " \t\n",
+
+        identifier = one_or_more idchar,
+        ws = zero_or_more wschar,
+
+        reference =
+          take identifier \i ->
+          if (eq i "where") fail $
+          ret i,
+
+        wheretk =
+          take identifier \i ->
+          if (eq i "where") (ret i) $
+          fail,
+
+        parameters end what = rec
+          where (
+            rec =
+              skip ws $
+              either (
+                skip end $
+                expression) $
+              take (expect reference (add "expected `" $ add what $ "` or identifier.")) \i ->
+              take rec \e ->
+              ret (Abs i e)),
+
+        primary =
+          skip ws $
+          either (
+            skip (exact "\\") $
+            parameters (seqchar "->") "->") $
+          either (
+            take reference \i ->
+            ret (Ref i)) $
+          either (
+            skip (exact "(") $
+            take (expect expression "expected expression") \e ->
+            skip ws $
+            skip (expect (exact ")") "expected `)`") $
+            ret e) $
+          fail,
+
+        juxt_rhs lhs =
+          either (
+            take primary \rhs ->
+            juxt_rhs (App lhs rhs)) $
+          ret lhs,
+        juxt =
+          take (expect primary "expected primary expression") \lhs ->
+          juxt_rhs lhs,
+
+        dollar =
+          take juxt \lhs ->
+          either (
+            skip ws $
+            skip (exact "$") $
+            take dollar \rhs ->
+            ret (App lhs rhs)) $
+          ret lhs,
+
+        where_clause =
+          skip ws $
+          take (expect reference "expected an identifier.") \i ->
+          take (parameters (exact "=") "=") \y ->
+          skip ws $
+          either (
+            skip (exact ")") $
+            ret (cons (cons i y) cdr)) $
+          skip (expect (exact ",") "expected `(` or `,`.") $
+          take where_clause \rest ->
+          ret (cons (cons i y) rest),
+
+        where_seq e =
+          skip ws $
+          either (
+            skip wheretk $
+            skip ws $
+            skip (expect (exact "(") "expected `(`.") $
+            take where_clause \m ->
+            where_seq (Whr m e)) $
+          ret e,
+
+        expression = take dollar where_seq,
+
+        all =
+          take expression \e ->
+          skip ws $
+          skip (expect eof "expected eof") $
+          ret e))

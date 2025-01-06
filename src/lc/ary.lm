@@ -1,0 +1,9 @@
+#"preamble.lm"\let id car cdr head tail cons compose composer.
+#"builtin_logic.lm"\rec if.
+
+let (\k g h b.rec \f l n.if (eq n 0) (l b) (\x.f (k (g (h x)) l) (sub n 1))) \ary.
+
+let (ary compose) \aryl.
+let (ary composer) \aryr.
+
+\f.f ary aryl aryr

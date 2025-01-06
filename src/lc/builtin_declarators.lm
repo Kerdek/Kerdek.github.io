@@ -1,0 +1,7 @@
+#"preamble.lm"\let id car cdr head tail cons compose composer.
+
+let (\f.let f) \nullary_builtin.
+let (\f.let f) \unary_builtin.
+let (\f. let (\x y.f (cons x y))) \binary_builtin.
+
+\f.f nullary_builtin unary_builtin binary_builtin

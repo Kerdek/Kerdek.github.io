@@ -1,0 +1,125 @@
+#"pre.cru"\id cons1 car cdr cons2 head tail compose composer ->
+#"io.cru"\return bind do print yield get put unput newArray push invoke ->
+#"builtin_logic.cru"\rec if and or not ->
+#"builtin_arithmetic.cru"\neg cpl mul div mod add sub shl shr eq neq gt ge lt le bcj bxj bdj ->
+#"builtin_string.cru"\sempty slength shead stail sinit slast ->
+#"sfold.cru"\string sfoldr sfoldl sreverse ->
+
+lambda_calc "(λa.a a) (λx f.f x) λcons1.cons1 (λa b.a) λcar.cons1 (λa b.b) λcdr.cons1 (λa b f.f a b) λpair.pair foo (pair bar baz) cdr car"
+  (\r s -> put (pretty false true r))
+  (print "no")
+  (\m s -> do (print m) (print s))
+
+  where (
+    ary k g h b = rec
+      where (
+        rec l n = if (eq n 0) (l b) nonzero
+          where (
+            nonzero x = rec (k (g (h x)) l) (sub n 1))),
+
+    consn = ary composer composer let id id,
+
+    Abs x y = cons2 "abs" $ cons2 x y,
+    App x y = cons2 "app" $ cons2 x y,
+    Ref x   = cons2 "ref" $ cons1 x,
+
+    tree e on_abs on_app on_ref =
+      case "abs" (parts on_abs) $
+      case "app" (parts on_app) $
+      parts on_ref
+      where (
+        case x = if (eq kind x),
+        kind = e car,
+        parts = e cdr),
+
+    parens c s = if c (add "(" $ add s $ ")") s,
+
+    pretty p r x = tree x on_abs on_app on_ref
+      where (
+        on_abs a b = parens (not r) (add "λ" $ add a $ params b)
+          where (
+            params e = tree e on_abs on_app on_ref
+              where (
+                otherwise = add "." $ pretty false true e,
+                on_abs a b = add " " $ add a $ params b,
+                on_app _ _ = otherwise,
+                on_ref _ = otherwise)),
+        on_app a b = parens p (add (pretty false false a) $ add " " $ pretty true (or p r) b),
+        on_ref i = i),
+
+    err    m    s y n f = f m s,
+    fail        s y n f = n,
+    ret    r    s y n f = y r s,
+    take   a b  s y n f = a s (\r t -> b r t y n f) n f,
+    either a b  s y n f = a s y (b s y n f) f,
+    eof         s y n f = if (sempty s) (y "" s) n,
+    exact  x    s y n f = string s (\a b -> if (eq a x) (y a b) n) n,
+
+    skip a b = take a \_ -> b,
+
+    expect e m = either e (err m),
+
+    anychar = sfoldr (\a b -> either (exact a) b) fail,
+    seqchar x = sfoldr (\a b -> skip (exact a) b) (ret x) x,
+
+    one_or_more x = rec
+      where (
+        rec =
+          take x \c ->
+          either (
+            take rec \r ->
+            ret (add c r)) $
+          ret c),
+
+    zero_or_more x = rec
+      where (
+        rec =
+          either (
+            take x \c ->
+            take rec \r ->
+            ret (add c r)) $
+          ret ""),
+
+    lambda_calc = all
+      where (
+        identifier = one_or_more (anychar "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789"),
+        ws = skip $ zero_or_more (anychar " \t\n"),
+
+        parameters =
+          ws $
+          either (
+            skip (exact ".") $
+            expression) $
+          take (expect identifier "expected `.` or identifier.") \i ->
+          take parameters \e ->
+          ret (Abs i e),
+
+        primary =
+          ws $
+          either (
+            skip (exact "λ") $
+            parameters) $
+          either (
+            skip (exact "(") $
+            take expression \e ->
+            ws $
+            skip (expect (exact ")") "expected `)`.") $
+            ret e) $
+          take identifier \i ->
+          ret (Ref i),
+
+        juxt lhs =
+          either (
+            take primary \rhs ->
+            juxt (App lhs rhs)) $
+          ret lhs,
+
+        expression =
+          take (expect primary "expected expression.") \lhs ->
+          juxt lhs,
+
+        all =
+          take expression \e ->
+          ws $
+          skip (expect eof "expected eof.") $
+          ret e))

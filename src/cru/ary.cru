@@ -1,0 +1,12 @@
+#"pre.cru"\id cons1 car cdr cons2 head tail compose composer ->
+#"builtin_logic.cru"\rec if and or not ->
+#"builtin_arithmetic.cru"\neg cpl mul div mod add sub shl shr eq neq gt ge lt le bcj bxj bdj ->
+export
+  where (
+    export f = f ary consn,
+    ary k f b = g
+      where (
+        g l n = if (eq n 0) (l b) nonzero
+          where (
+            nonzero x = g (k (f x) l) (sub n 1))),
+    consn = ary composer (compose composer cons1) id id)

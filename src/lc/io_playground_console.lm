@@ -1,0 +1,8 @@
+#"io_declarators.lm"\nullary_io unary_io binary_io ternary_io.
+
+unary_io "print" λprint.
+nullary_io "get" λget.
+unary_io "put" λput.
+nullary_io "unput" λunput.
+
+\f.f print get put unput

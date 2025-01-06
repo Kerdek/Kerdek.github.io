@@ -1,0 +1,102 @@
+#"preamble.lc"\let id car head rest if compose just pcons qcons ccons.
+#"ios.lc"\get jsNewArray jsconsole jsdocument return fetch print put js tojs fromjs bind jsassign jsinvoke jsfield jspush do bind_to.
+#"basics.lc"\letnum pairlist c2b let2b let2c let2just c2let c2just incc addc mulc c2bl join chead pair2bl c2pair.
+
+/* list builders */
+
+/* church numeral list builder */
+let (\g l n.n (\e f x.e (compose f (g x))) (let false) l) \aryf.
+let (aryf \x y.x . y) \ary.
+let (aryf pcons) \pary.
+
+/* let numeral list builder */
+let (\g.@ \f l.pcons (\p.car $ \x.f (compose l (g x)) p) (l false)) \laryf.
+let (laryf \x y.x . y) \lary.
+let (laryf pcons) \plary.
+
+// list accessors
+
+/* element of pair list */
+let (@ \f n.if (n == 0) head (f (n - 1) . rest)) \elem.
+
+/* folds on pair lists */
+let (\g b.@ \f l.pairlist l (\x y.g x (f y)) b) \pfoldr.
+let (\g.@ \f b l.pairlist l (\x y.f (g x b) y) b) \pfoldl.
+
+/* folds on query lists */
+let (\g b.@ \f l.l (\x y.g x (f y)) b) \qfoldr.
+let (\g.@ \f b l.l (\x y.f (g x b) y) b) \qfoldl.
+
+/* reverse a pair list */
+let (pfoldl pcons false) \preverse.
+
+// some excitement
+
+/* fibonacci sequence */
+let (#"fib.lc") \fib.
+
+// /* 100th fibonacci number */
+do (print $ celem 100 fib) $
+
+/* triangle number sequence */
+let (@ \f *a *b.ccons a (f (a + b) (b + 1))) \triangleab.
+let (triangleab 0 1) \triangle.
+
+// /* 100th triangle number */
+// do (print $ celem 100 triangle) $
+
+/* string split */
+let (\d s.
+  let (@ \g p a b.
+    let (
+      if (a == d) (pcons "" p) $
+      (pcons ((p car) + a) (p false)))
+    \pp.
+    pairlist b (g pp) (pair2bl (preverse pp)))
+  \nonempty.
+  pairlist (c2pair s) (nonempty $ pcons "" false) false)
+\split.
+
+// javascript terror
+
+/* pair list field access on javascript objects */
+let (\on l.let (preverse l) $ @ \f l.pairlist l (\x y.bind (f y) \e.(jsfield e x)) (return on)) \jsfieldpairs.
+
+/* list builder field access on javascript objects */
+let (\on.pary $ jsfieldpairs on) \jsfields.
+let (\on.pary $ \x.bind on \onf.jsfieldpairs onf x) \jsfieldst.
+
+/* invoke and field templates */
+let (\e x.bind e \ef.bind x \xf.jsassign ef xf) \jsassigntt.
+let (\e x.bind e \ef.jsassign ef x) \jsassignte.
+let (\e x.bind e \ef.jsinvoke ef x) \jsinvokete.
+let (\e x.bind e \ef.jsfield ef x) \jsfieldt.
+
+/* cons list javascript list builder */
+let (\on.pcons (\x r.do (jspush on x) r) (return true)) \jspushnl.
+
+/* list builder javascript list builder */
+let (\on.ary $ jspushnl on) \jspushn.
+
+/* cons list javascript list builder template */
+let (\on.pcons (\x r.do (bind x \xf.jspush on xf) r) (return true)) \jspushntl.
+
+/* list builder javascript list builder template */
+let (\on.ary $ jspushntl on) \jspushnt.
+
+/* assign field and template */
+let (\x f v.bind (jsfield x f) \xf.jsassign xf v) \jsaf.
+let (\x f v.bind v \vf.jsaf x f vf) \jsaft.
+
+let (bind (jsNewArray)) \jsna.
+
+/* append hello to the document body */
+// jsna \ctnArgs.
+// do (jspushnt ctnArgs 1 (tojs "hello")) $
+// jsna \acArgs.
+// do (jspushnt acArgs 1 (jsinvokete (jsfieldt jsdocument "createTextNode") ctnArgs)) $
+// do (jsinvokete (jsfieldst jsdocument 2 "body" "appendChild") acArgs) $
+
+// let (let car $ @ \f.pcons (pcons "even" $ f false) (pcons "odd" $ f car)) \parity_pair.
+
+fetch "preamble.lc"

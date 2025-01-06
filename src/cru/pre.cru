@@ -1,0 +1,12 @@
+export
+  where (
+    export f = f id di car cdr cons head tail compose composer,
+    id x = x,
+    di x f = f x,
+    car a b = a,
+    cdr a b = b,
+    cons a b f = f a b,
+    head f = f car,
+    tail f = f cdr,
+    compose f g x = f (g x),
+    composer f g x = g (f x))

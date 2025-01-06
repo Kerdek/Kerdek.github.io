@@ -1,0 +1,2 @@
+#!/bin/sh
+rsync -r --progress monaco lc demo.html demo.ts demo.js demo.js.map playground.html playground.ts playground.js playground.js.map create_playground.ts create_playground.js create_playground.js.map church.ts church.js church.js.map run.ts run.js run.js.map io.ts io.js io.js.map cmuntt.ttf ted@ojuea.us:/srv/www/church

@@ -1,0 +1,96 @@
+(λa.a a) (λx f.f x) λlet.
+let (λf x.f $ x x) λdga.
+let (λf.dga true (dga f)) λrec.
+let (let const) λcar.
+let (let false) λcdr.
+let (λf g x.f $ g x) λcompose.
+let (λa b.compose (let a) b) λpush.
+let (λa b.a : b) λpair.
+let (λa b.a + b) λadd.
+let (λa b.a * b) λmul.
+let (λa b.a == b) λeq.
+let (const false) λis-zero.
+let (compose car compose) λif.
+let cdr λnot.
+let cdr λor. #they're the same#
+let (pair false is-zero) λand.
+let (compose pair const) λcond.
+let (pair (const $ const $ is-zero) true) λempty.
+let (compose if bind) λdo.
+let (return true) λpass.
+
+let (λop b.rec λf l.if (empty l) b (op (car l) (f (cdr l)))) λfoldr.
+let (λop.rec λf b l.if (empty l) b (f (op (car l) b) (cdr l))) λfoldl.
+let (λop.rec λf l.if (empty l) [] (op (car l) : f (cdr l))) λmap.
+let (λb.rec λf l op.if (empty l) b (op (car l) (f (cdr l)))) λwalk.
+
+let (rec λf n l.n (λp x.f p (cdr l)) (car l)) λelem.
+
+let (λl.foldr (λa b x.bind (x a) λz.b (let z)) (let return) l const) λlist-bind.
+let (foldr do pass) λlist-do.
+let (foldl push true) λlist-tuple.
+let (foldl pair []) λreverse.
+
+let (rec λa.[a]) λbrackets.
+
+let (rec λf n.n : f (n + 1)) λsuccessors.
+let (successors 0) λintegers.
+let (map (λx.x * x) integers) λsquare-numbers.
+let (walk _ integers (let 0 $ rec λf n a b.n : b (f (a + n)))) λtriangle-numbers.
+
+let (
+  let [] $
+  rec λf s.
+  bind sleep $
+  let λe k.
+  if (e == "key") (
+    if (k == "Enter") (
+      do (put-string "\n") $
+      return (reverse s)) $
+    do (put-string k) $
+    f (k : s)) $
+  f s
+) λread-line.
+
+let (
+  let (
+    let 9 $
+    rec λf k.
+    if (k < 0) (const k) $
+    list-tuple [
+      f (k - 1),
+      `${k}` const
+    ] λg d.
+    λs.if (s == d) k (g s)
+  ) λchar-digit.
+  let 0 $
+  foldl λa b.
+  let (char-digit a) λd.
+  if (d < 0) -1 $
+  10 * b + d
+) λparse-int.
+
+let (λn.if (n != 1) `s` ``) λplural.
+
+# math garbage #
+let (λbase op. rec λf x. if (x is-zero) base (op x $ x f
+)) λrecurrence.
+let (recurrence 0 add) λhandshakes.
+let (recurrence 1 mul) λfactorial.
+
+let (list-do [
+  clear,
+  put-string `Welcome!\n`,
+  rec λf.
+  let (compose (let f) (compose do put-string)) λdf.
+  let (df `Enter a positive integer.\n`) λerr-sign.
+  let (df `Enter an integer no greater than 1000.\n`) λerr-toobig.
+  bind read-line λline.
+  let (parse-int line) λpn.
+  if (pn <= 0) err-sign $
+  if (pn > 1000) err-toobig $
+  let (pn handshakes) λh.
+  df `${pn} people can make ${h} handshake${plural h}.\n`
+]) λshaker.
+
+shaker

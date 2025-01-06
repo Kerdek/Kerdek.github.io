@@ -1,0 +1,17 @@
+[
+  { "directory": "/home/ted/src/tslam/",
+    "arguments": ["clang++ -Wall -Werror -g3 -O3 -flto=auto -target wasm32-wasi --sysroot=wasi-libc/sysroot -nodefaultlibs -Wl,--allow-undefined -Wl,--export=invoke -lc -o main.wasm -DNDEBUG --std=c++2a main.cc ctfftc.cc"],
+    "file": "ctfftc.cc" },
+
+  { "directory": "/home/ted/src/tslam/",
+    "arguments": ["clang++ -Wall -Werror -g3 -O3 -flto=auto -target wasm32-wasi --sysroot=wasi-libc/sysroot -nodefaultlibs -Wl,--allow-undefined -Wl,--export=invoke -lc -o main.wasm -DNDEBUG --std=c++2a main.cc ctfftc.cc"],
+    "file": "ctfftc.hh" },
+
+  { "directory": "/home/ted/src/tslam/",
+    "arguments": ["clang++ -Wall -Werror -g3 -O3 -flto=auto -target wasm32-wasi --sysroot=wasi-libc/sysroot -nodefaultlibs -Wl,--allow-undefined -Wl,--export=invoke -lc -o main.wasm -DNDEBUG --std=c++2a main.cc ctfftc.cc"],
+    "file": "ujs.hh" },
+
+  { "directory": "/home/ted/src/tslam/",
+    "arguments": ["clang++ -Wall -Werror -g3 -O3 -flto=auto -target wasm32-wasi --sysroot=wasi-libc/sysroot -nodefaultlibs -Wl,--allow-undefined -Wl,--export=invoke -lc -o main.wasm -DNDEBUG --std=c++2a main.cc ctfftc.cc"],
+    "file": "main.cc" }
+]

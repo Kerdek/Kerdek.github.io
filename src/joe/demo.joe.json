@@ -1,0 +1,21 @@
+{
+  "loop": [
+    ["eq", ["immediate", 0], ["stack", 2]],
+    ["ccallcc", 0, "done"],
+    ["pop"],
+    ["sub", ["stack", 2], ["immediate", 1]],
+    ["push", ["stack", 1]],
+    ["add", ["stack", 2], ["stack", 3]],
+    ["delete", 3],
+    ["delete", 3],
+    ["delete", 3],
+    ["callcc", "loop"]],
+  "done": [
+    ["pop"],
+    ["pop"],
+    ["delete", 1]],
+  "main": [
+    ["push", ["immediate", 20]],
+    ["push", ["immediate", 0]],
+    ["push", ["immediate", 1]],
+    ["callcc", "loop"]] }

@@ -1,0 +1,24 @@
+#"pre.cru"\id di car cdr cons head tail compose composer ->
+export
+  where (
+    export f = f return bind do resetTransform getTransform setTransform transform arc beginPath moveTo lineTo strokeStyle fillStyle stroke fill fillRect fillText textAlign textBaseline font,
+    return x = cons "return" x,
+    bind x y = cons "bind" (cons x y),
+    do x y = bind x (car y),
+    resetTransform = cons "resetTransform" cdr,
+    getTransform = cons "getTransform" cdr,
+    setTransform a b c d e f = cons "setTransform" $ cons a $ cons b $ cons c $ cons d $ cons e $ f,
+    transform a b c d e f = cons "transform" $ cons a $ cons b $ cons c $ cons d $ cons e $ f,
+    arc x y r a b = cons "arc" $ cons x $ cons y $ cons r $ cons a $ b,
+    beginPath = cons "beginPath" cdr,
+    moveTo a b = cons "moveTo" $ cons a $ b,
+    lineTo a b = cons "lineTo" $ cons a $ b,
+    strokeStyle x = cons "strokeStyle" x,
+    fillStyle x = cons "fillStyle" x,
+    stroke = cons "stroke" cdr,
+    fill = cons "fill" cdr,
+    fillRect a b c d = cons "fillRect" $ cons a $ cons b $ cons c $ d,
+    fillText a b c = cons "fillText" $ cons a $ cons b c,
+    textAlign x = cons "textAlign" x,
+    textBaseline x = cons "textBaseline" x,
+    font x = cons "font" x)

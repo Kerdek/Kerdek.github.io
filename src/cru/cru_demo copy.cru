@@ -1,0 +1,80 @@
+print (elem 8 fib)
+
+  where (
+    print_nth_line_of_cru_demo n = bind fetch_cru_demo (print_nth_line n),
+    fetch_cru_demo = fetch "cru_demo.cru",
+    print_nth_line n d = print (elem n (split "\n" d)) )
+
+  where (
+    split d s = string s (nonempty new) new
+      where (
+        new = init cdr,
+        init = cons "",
+        nonempty p a b = string b (nonempty pp) (reverse pp)
+          where (
+            pp = if (eq a d) (init p) (p merge),
+            merge x y = cons (add x a) y)))
+
+  where (
+    fib = fibab 0 1 where (fibab a b = cons a (fibab b (add a b))))
+
+  where (
+    triangle = triangleab 0 1 where (triangleab a b = cons a (triangleab (add a b) (inc b))))
+
+  where (
+    reverse = foldl cons cdr,
+    sum = foldr add 0,
+    cat = foldr add "",
+
+    first n l =
+      if (zero n) cdr (
+      cons (head l) (first (dec n) (tail l))),
+
+    elem n =
+      if (zero n) head (
+      compose (elem (dec n)) tail),
+
+    unfoldr a b = unfoldrab
+      where (
+        unfoldrab q = cons (a q) (unfoldrab (b q))),
+
+    foldr g b = rec
+      where (
+        rec l = list l nonempty b,
+        nonempty x y = g x (rec y)),
+
+    foldl g = rec
+      where (
+        rec b l = list l nonempty b where (
+          nonempty x y = rec (g x b) y)))
+
+  where (
+    string s a b = if (sempty s) b (a (shead s) (stail s)),
+    list l = compose l (compose (compose car)))
+
+  where (
+    sempty = eq "",
+    zero = eq 0,
+    inc x = add x 1,
+    dec x = sub x 1)
+
+  where (
+    eval x = cons "eval" x,
+    fetch x = cons "fetch" x,
+    print x = cons "print" x,
+    return x = cons "return" x,
+    bind x y = cons "bind" (cons x y),
+    do x y = bind x (car y))
+
+  where (
+    let x f = f x,
+    id x = x,
+    car a b = a,
+    cdr a b = b,
+    cons a b f = f a b,
+    head = let car,
+    tail = let cdr,
+    compose f g x = f (g x),
+    just x f _ = f x,
+    qcons a b f _ = f a b,
+    ccons e l f x = f e (l f x))

@@ -1,0 +1,29 @@
+#"preamble.lm"\let id car cdr head tail cons compose composer.
+#"builtin_logic.lm"\rec if.
+#"builtin_arithmetic.lm"\add sub mul div eq neq gt lt ge le.
+#"builtin_math.lm"λpi sqrt log exp sin cos tan asin acos atan atan2 sinh cosh tanh asinh acosh atanh.
+#"builtin_dom.lm"\document console WebSocket.
+#"io_playground_console.lm"\print get put unput.
+#"io_sequencing.lm"\yield return bind bindr do.
+#"io_js.lm"\newArray newObject push elem assign new invoke.
+#"io_websocket.lm"\waitOpen waitMessage send.
+
+let (\addr.
+  bind newArray \x.
+  do (push x addr) $
+  bind (new WebSocket x) \ws.
+  do (waitOpen ws) $
+  bind (waitMessage ws) \msg.
+  return ws) \connect_to_server.
+
+let (\ws msg.
+  do (send ws msg) $
+do yield $
+do yield $
+  bind (waitMessage ws) \msg2.
+  elem msg2 "data") \get_reply.
+
+bind (connect_to_server "http://localhost:8080/") \ws.
+do (bind (get_reply ws "mrrow") print) $
+do (bind (get_reply ws "bad") print) $
+return true

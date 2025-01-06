@@ -1,0 +1,7 @@
+#"preamble.lm"\let id car cdr head tail cons compose composer.
+#"io_sequencing.lm"\yield return bind bindr do.
+#"ary.lm"\ary aryl aryr.
+
+let (aryl (\x y f.bind (y f) x) id return id) \doall.
+
+\f.f doall

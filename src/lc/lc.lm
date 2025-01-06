@@ -1,0 +1,139 @@
+#"preamble.lm"\let id car cdr head tail cons compose composer.
+#"builtin_logic.lm"\rec if.
+#"builtin_arithmetic.lm"\add sub mul div eq neq gt lt ge le.
+#"builtin_string.lm"\shead stail sempty jsonstringify jsonparse.
+
+let (λa b.if a a b) λor.
+let (λa b.if a b a) λand.
+let (λc.if c false true) λnot.
+
+let (λx y f _ _ _.f x y) λAbs.
+let (λx y _ f _ _.f x y) λApp.
+let (  λx _ _ f _.f x) λRef.
+let (  λx _ _ _ f.f x) λLit.
+
+let (λx f _.f x) λJust.
+let (λx y f _.f x y) λPair.
+
+let (λ_ f.f) λNothing.
+let (λx _ f.f x) λError.
+
+let (λx c.(rec λf l.if (not $ sempty l) (if (eq c (shead l)) true (f (stail l))) false) x) λisany.
+let (λcond text was wasnt.if (not $ sempty text) (if (cond (shead text)) (was (shead text) (stail text)) wasnt) wasnt) λtakechar.
+let (λcond x.if (sempty x) Nothing $ if (cond $ shead x) (Just $ stail x) Nothing) λtakechar2.
+
+let (λinit subseq text was wasnt.
+  let (rec λf sofar rest.
+    takechar subseq rest
+      (λc rest.f (add sofar c) rest)
+      (was sofar rest))
+  λtakerest.
+  takechar init text takerest wasnt)
+λtakeseq.
+
+let (rec λf x y.if (sempty x) (Just y) $ if (eq (shead x) (shead y)) (f (stail x) (stail y)) Nothing) λtakeexact.
+
+let ("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_") λidichars.
+let ("0123456789") λdigitchars.
+let (" \t\n") λwschars.
+
+let (isany idichars) λidichar.
+let (isany digitchars) λdigitchar.
+let (isany wschars) λwschar.
+let (λx.or (idichar x) (digitchar x)) λidchar.
+let (eq "\"") λdqchar.
+let (neq "\"") λnondqchar.
+let (isany "\\λ") λbschar.
+let (eq ".") λdtchar.
+let (eq "(") λlpchar.
+let (eq ")") λrpchar.
+
+let (takechar2 bschar) λtakebs.
+let (takechar2 dtchar) λtakedt.
+let (takechar2 lpchar) λtakelp.
+let (takechar2 rpchar) λtakerp.
+
+let (takeseq idichar idchar) λtakeid.
+let (takeseq digitchar digitchar) λtakenumber.
+let (λtext was wasnt.takeseq dqchar nondqchar text (λa text.takechar dqchar text (λb text.was (add a b) text) wasnt) wasnt) λtakesc.
+let (λtext.takeseq wschar wschar text (λ_ text.text) text) λtakews.
+
+let (rec λf x.x
+  (λa b.add "(λ" $ add a $ add "." $ add (f b) ")")
+  (λa b.add "(" $ add (f a) $ add " " $ add (f b) ")")
+  id
+  jsonstringify)
+λformat.
+
+let (
+  let (λb s.if b (add "(" $ add s ")") s) λparens.
+  rec λf.
+  let (rec \g a b.
+    let (add a (add "." (f 0 true b))) \default.
+    b (\i x.add a (add " " (g i x))) (\_ _.default) (\_.default) (\_.default))
+  \parameters.
+  \ p r x.x
+  (λa b.parens (not r) $ add "λ" (parameters a b))
+  (λa b.parens (gt p 0) $ add (f 0 false a) $ add " " $ f 1 (or r (gt p 0)) b)
+  id
+  jsonstringify)
+λpretty.
+
+let (rec λf x.x
+  (λa b.add "[\"lam\", " $ add (jsonstringify a) $ add ", " $ add (f b) "]")
+  (λa b.add "[\"abs\", " $ add (f a) $ add ", " $ add (f b) "]")
+  (λa.add "[\"ref\", " $ add (jsonstringify a) "]")
+  (λa.add "[\"lit\", " $ add (jsonstringify a) "]"))
+λformat_tree.
+
+let (
+  let (\why text.Error $ add why $ add " before '" $ add text "'.") \die.
+  let (λid text.Just $ Pair (Lit $ jsonparse id) text) \sn_literal.
+  let (rec λexpression.
+    let (rec λparameters text.
+      let (takews text) λtext.
+      takedt text expression $
+      takeid text (λid text.
+        parameters text
+          (λtree text.Pair (Abs id tree) text)
+          Error) $
+      die "Expected '.' or an identifier" text)
+    λparameters.
+    let (λtext.
+      let (takews text) λtext.
+      takelp text (λtext.
+        expression text
+          (λtree text.takerp text
+            (λtext.Just $ Pair tree text)
+            (die "Expected ')'" text))
+          Error) $
+      takebs text (λtext.
+        parameters text
+          (λtree text.Just $ Pair tree text)
+          Error) $
+      takesc text sn_literal $
+      takenumber text sn_literal $
+      takeexact "true" text (sn_literal "true") $
+      takeexact "false" text (sn_literal "false") $
+      takeid text (λid  text.Just $ Pair (Ref id) text) $
+      Just Nothing)
+    λprimary.
+    let (rec λf lhs text.
+      primary text
+        (cons (λtree text.f (App lhs tree) text) (Pair lhs text))
+        Error)
+    λapplication_lhs.
+    λtext.
+      primary text
+        (cons application_lhs (die "Expected an expression" text))
+        Error)
+  λexpression.
+  λtext.
+  expression text
+    (λtree text.if (not $ sempty (takews text))
+      (die "Expected end of file." text)
+      (Just tree))
+    Error)
+λfile.
+
+\f.f file format_tree format pretty

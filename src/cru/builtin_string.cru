@@ -1,0 +1,9 @@
+export
+  where (
+    export f = f sempty slength shead stail sinit slast,
+    sempty = __builtin_sempty,
+    slength = __builtin_slength,
+    shead = __builtin_shead,
+    stail = __builtin_stail,
+    sinit = __builtin_sinit,
+    slast = __builtin_slast)

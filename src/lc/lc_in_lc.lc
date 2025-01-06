@@ -1,0 +1,12 @@
+#"preamble.lm"\let id car cdr head tail cons compose composer.
+#"io_playground_console.lm"\print get put unput.
+#"io_sequencing.lm"\yield return bind bindr do.
+#"io_fetch.lm"\fetch.
+#"builtin_arithmetic.lm"\add sub mul div eq neq gt lt ge le.
+#"lc.lm"\read _ format pretty.
+
+
+bind (fetch "lc/preamble.lm") λtext.
+read text
+  (λx.do (put $ pretty 0 true x) $ put "\n")
+  print
