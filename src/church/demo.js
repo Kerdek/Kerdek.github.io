@@ -7,7 +7,7 @@ const style_rule = (() => {
 })();
 style_rule(`@font-face {
   font-family: CMU Typewriter Text;
-  src: url("./cmuntt.ttf"); }`);
+  src: url("../cmuntt.ttf"); }`);
 style_rule(`:root {
   --contrast: ${playground_colors.contrast};
   --invalid: ${playground_colors.invalid};
