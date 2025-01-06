@@ -1,8 +1,0 @@
-export
-  where (
-    export f = f rec if and or not,
-    rec = __builtin_rec,
-    if = __builtin_if,
-    and = __builtin_and,
-    or = __builtin_or,
-    not = __builtin_not)

@@ -1,5 +1,0 @@
-export
-  where(
-    export f = f jsonparse jsonstringify,
-    jsonparse = __builtin_jsonparse,
-    jsonstringify = __builtin_jsonstringify)

@@ -14,23 +14,17 @@ export const exec = async (io, put, unput, get) => {
 
     // sequencing
 
+    case "return": {
+      const [r] = args
+      x = r
+      break }
     case "bind": {
       const [n, f] = args
       s.push(f)
       io = n
       continue }
-    case "return": {
-      const [r] = args
-      x = r
-      break }
     case "yield": {
       await new Promise(c => window.setTimeout(c, 0))
-      x = make("lit", true)
-      break }
-    case "print": {
-      const [r] = args
-      put(print(evaluate(r)))
-      put('\n')
       x = make("lit", true)
       break }
 
@@ -38,7 +32,7 @@ export const exec = async (io, put, unput, get) => {
 
     case "put": {
       const [s] = args
-      process.stdout.write(unbox(s))
+      put(unbox(s))
       x = make("lit", undefined)
       break }
     case "unput": {
