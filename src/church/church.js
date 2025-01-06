@@ -12,7 +12,7 @@ export const assign = (e, x) => {
 export const make = (...x) => x;
 export const visit = o => e => (f => () => f(e))(o[e[0]]);
 export const read = async (x) => (async_homproc((call, ret) => {
-    let w = ["<user input>", 1, 1];
+    let w = [window.location.href, 1, 1];
     const includes = {};
     const k = t => () => {
         const r = x.match(t);

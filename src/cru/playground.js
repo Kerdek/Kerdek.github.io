@@ -1,5 +1,5 @@
-import { read, tokenizer } from './cru.js';
-import { exec } from './cru_drawing_io.js';
+import { print, read, tokenizer, evaluate } from './cru.js';
+import { exec } from './io.js';
 import { scanner } from '../scanner.js';
 (async () => {
     document.title = "cru playground";
@@ -51,9 +51,6 @@ import { scanner } from '../scanner.js';
         elem.append(...children);
         return elem;
     };
-    const run_button = create_element('div', function () { }, [
-        document.createTextNode("Run")
-    ]);
     const menu = create_element('div', function () {
         this.setAttribute('id', 'input');
         this.style.width = "100%";
@@ -62,13 +59,21 @@ import { scanner } from '../scanner.js';
             this.style.whiteSpace = "pre",
             this.style.display = "flex";
         this.style.flexDirection = "row";
-    }, [
-        run_button
+    }, []);
+    const spacer = () => create_element('div', function () { }, [
+        document.createTextNode("   ")
     ]);
+    const button = text => create_element('div', function () { }, [
+        document.createTextNode(text)
+    ]);
+    const run_button = button("Run");
+    const eval_button = button("Evaluate");
+    const print_button = button("Print");
+    menu.append(run_button, spacer(), eval_button, spacer(), print_button);
     const entry = create_element('div', function () {
         this.setAttribute('id', 'input');
         this.style.width = "100%";
-        this.style.height = "40%";
+        this.style.height = "70%";
         this.style.flexShrink = "0";
     }, []);
     const output = create_element("div", function () {
@@ -98,15 +103,16 @@ import { scanner } from '../scanner.js';
             ignoreCase: false,
             tokenizer: {
                 root: [
+                    [/ |\t|\n/, 'whitespace'],
                     [/\/\*/, { token: "punctuation", next: "@block_comment" }],
                     [/\/\//, { token: "punctuation", next: "@line_comment" }],
                     [/"/, { token: 'punctuation', next: "@string" }],
-                    [/[+-]?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?/, 'constant.numerical'],
-                    [/true|false|void/, 'constant.boolean'],
+                    [/[+-]?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?/, 'constant.numerical'],
+                    [/\b(true|false|undefined)\b/, 'constant.boolean'],
                     [/->/, 'punctuation'],
                     [/\$/, 'keyword.operator'],
-                    [/\\|=|\(|\)|,|where|let|in/, 'punctuation'],
-                    [/\w[\w0-9]*/, 'entity.name']
+                    [/\\|=|\(|\)|\{|\}|\[|\]|:|,|\b(where|in|let)\b/, 'punctuation'],
+                    [/\w[\w\d]*/, 'entity.name']
                 ],
                 block_comment: [
                     [/([^\*]|\*[^\/])+/, "comment"],
@@ -137,7 +143,7 @@ import { scanner } from '../scanner.js';
                 { open: "(", close: ")" }
             ],
             folding: { "markers": { start: /\(/, end: /\)/ } },
-            wordPattern: /\w[\w0-9]*/
+            wordPattern: /\w[\w\d]*/
         });
         const editor = monaco.editor.create(entry, {
             language: 'cru',
@@ -167,31 +173,48 @@ import { scanner } from '../scanner.js';
             });
             monaco.editor.setTheme('hcblack2');
         }
-        editor.setValue(localStorage.getItem('cru-drawing-playground-system') || '');
+        editor.setValue(localStorage.getItem('cru-playground-system') || '');
         editor.getModel().onDidChangeContent(() => {
-            localStorage.setItem('cru-drawing-playground-system', editor.getValue());
+            localStorage.setItem('cru-playground-system', editor.getValue());
         });
         const keybuf = [];
         let keywait;
         async function run() {
+            localStorage.setItem('cru-playground-system', editor.getValue());
+            output.innerHTML = '';
+            const text = editor.getValue();
             try {
-                output.innerHTML = '';
-                const canvas = create_element("canvas", function () {
-                    this.width = 1500;
-                    this.height = 1500;
-                }, []);
-                const ctxp = canvas.getContext("2d");
-                if (!ctxp) {
-                    throw new Error("couldn't get drawing context");
-                }
-                const ctx = ctxp;
-                output.appendChild(canvas);
-                const text = editor.getValue();
-                const tree = await read(tokenizer(scanner(text)));
-                await exec(tree, ctx);
+                const tree = await read(tokenizer(scanner(text, window.location.href)));
+                output.appendChild(document.createTextNode(`\n-OK-\n${print(evaluate(await exec(tree, s => {
+                    output.appendChild(document.createTextNode(s));
+                    output.scrollTop = output.scrollHeight;
+                }, () => {
+                    output.removeChild(output.childNodes[output.childNodes.length - 1]);
+                }, async () => keybuf.shift() || await new Promise(cb => (keywait = cb)))))}`));
             }
             catch (e) {
-                output.appendChild(document.createTextNode(e.toString()));
+                output.appendChild(document.createTextNode(`\n-ERROR-\n${e.toString()}`));
+            }
+        }
+        async function sj() {
+            localStorage.setItem('cru-playground-system', editor.getValue());
+            output.innerHTML = '';
+            const text = editor.getValue();
+            try {
+                output.appendChild(document.createTextNode(`\n-OK-\n${print(await read(tokenizer(scanner(text, window.location.href))))}`));
+            }
+            catch (e) {
+                output.appendChild(document.createTextNode(`\n-ERROR-\n${e.toString()}`));
+            }
+        }
+        async function ev() {
+            output.innerHTML = '';
+            const text = editor.getValue();
+            try {
+                output.appendChild(document.createTextNode(`\n-OK-\n${print(evaluate(await read(tokenizer(scanner(text, window.location.href)))))}`));
+            }
+            catch (e) {
+                output.appendChild(document.createTextNode(`\n-ERROR-\n${e.toString()}`));
             }
         }
         document.addEventListener('keydown', ev => {
@@ -200,6 +223,8 @@ import { scanner } from '../scanner.js';
             return true;
         });
         run_button.addEventListener('click', run);
+        eval_button.addEventListener('click', ev);
+        print_button.addEventListener('click', sj);
         output.addEventListener('keydown', e => {
             keybuf.push(e.key);
             if (keywait) {
@@ -211,4 +236,4 @@ import { scanner } from '../scanner.js';
         });
     });
 })();
-//# sourceMappingURL=cru_drawing_playground.js.map
+//# sourceMappingURL=playground.js.map

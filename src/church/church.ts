@@ -69,7 +69,7 @@ type Take = (re: RegExp) => Token
 type Token = () => string | null
 type TextPosition = [string, number, number]
 type Fatal = (msg: string) => never
-let w: TextPosition = ["<user input>", 1, 1]
+let w: TextPosition = [window.location.href, 1, 1]
 const includes: { [i: string]: Bar } = {}
 const
   k: Take = t => () => {

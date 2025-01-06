@@ -1,5 +1,5 @@
 import { print, read, tokenizer, evaluate } from './cru.js'
-import { exec } from './cru_io.js'
+import { exec } from './io.js'
 import { scanner } from '../scanner.js';
 
 (async () => {
@@ -120,10 +120,10 @@ monaco.languages.setMonarchTokensProvider('cru', {
       [/\/\//, { token: "punctuation", next: "@line_comment" }],
       [/"/, { token: 'punctuation', next: "@string" }],
       [/[+-]?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?/, 'constant.numerical'],
-      [/(true|false|void)/, 'constant.boolean'],
+      [/\b(true|false|undefined)\b/, 'constant.boolean'],
       [/->/, 'punctuation'],
       [/\$/, 'keyword.operator'],
-      [/\\|=|\(|\)|,|^(where|in|let)$/, 'punctuation'],
+      [/\\|=|\(|\)|\{|\}|\[|\]|:|,|\b(where|in|let)\b/, 'punctuation'],
       [/\w[\w\d]*/, 'entity.name']],
     block_comment: [
       [/([^\*]|\*[^\/])+/, "comment"],
@@ -180,7 +180,7 @@ async function run() {
   output.innerHTML = ''
     const text = editor.getValue()
   try {
-    const tree = await read(tokenizer(scanner(text)))
+    const tree = await read(tokenizer(scanner(text, window.location.href)))
     output.appendChild(document.createTextNode(`\n-OK-\n${print(evaluate(await exec(tree,
       s => {
         output.appendChild(document.createTextNode(s))
@@ -196,7 +196,7 @@ async function sj() {
   output.innerHTML = ''
     const text = editor.getValue()
   try {
-    output.appendChild(document.createTextNode(`\n-OK-\n${print(await read(tokenizer(scanner(text))))}`)) }
+    output.appendChild(document.createTextNode(`\n-OK-\n${print(await read(tokenizer(scanner(text, window.location.href))))}`)) }
   catch (e: any) {
     output.appendChild(document.createTextNode(`\n-ERROR-\n${e.toString()}`)) } }
 
@@ -204,7 +204,7 @@ async function ev() {
   output.innerHTML = ''
     const text = editor.getValue()
   try {
-    output.appendChild(document.createTextNode(`\n-OK-\n${print(evaluate(await read(tokenizer(scanner(text)))))}`)) }
+    output.appendChild(document.createTextNode(`\n-OK-\n${print(evaluate(await read(tokenizer(scanner(text, window.location.href)))))}`)) }
   catch (e: any) {
     output.appendChild(document.createTextNode(`\n-ERROR-\n${e.toString()}`)) } }
 

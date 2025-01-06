@@ -7,8 +7,8 @@ export type Scanner = {
   unget(s: string): void,
   unpos(p: Pos): void }
 
-export function scanner(src: string) {
-  const w: Pos = ["<user input>", 1, 1]
+export function scanner(src: string, file: string) {
+  const w: Pos = [file, 1, 1]
 
   function pos(): Pos {
     return [...w] }

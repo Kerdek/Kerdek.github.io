@@ -1,5 +1,5 @@
-export function scanner(src) {
-    const w = ["<user input>", 1, 1];
+export function scanner(src, file) {
+    const w = [file, 1, 1];
     function pos() {
         return [...w];
     }
