@@ -1,7 +1,7 @@
 import { cnj, dsj, lit, rec, str, typ_lit, ref, typ_rec, typ_new, typ_dsj, typ_str, aka } from "./graph.js";
 import { di } from "./di.js";
 import { homproc, jmp } from "./run.js";
-import { print_inequalities, print_type } from "./print.js";
+import { print_type } from "./print.js";
 import { conjoin_inequalities, disjoin_inequalities, empty_inequalities } from "./constraints.js";
 import { subsume } from "./subsume.js";
 export const element = (t, a) => {
@@ -44,7 +44,7 @@ export const element = (t, a) => {
     });
     if (typeof r === "string")
         return r;
-    console.log(`Element of \`${print_type(t)}\` with index \`${print_type(a)}\` is \`${print_type(r[0])} with constraints \`${print_inequalities(r[1])}\`\`.`);
+    // console.log(`Element of \`${print_type(t)}\` with index \`${print_type(a)}\` is \`${print_type(r[0])} with constraints \`${print_inequalities(r[1])}\`\`.`)
     return r;
 };
 //# sourceMappingURL=element.js.map

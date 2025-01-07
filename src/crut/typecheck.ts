@@ -1,7 +1,7 @@
 import { abs, acs, app, blt, Graph, iov, lit, mod, Module, Ptr, rec, RecordSyntax, sav, aka, TypingContext, visit_graph, ref, res, cst, typ_new, TypeTree, typ_unk, typ_cnj, typ_rec, typ_abs, typ_lit, ext, unk } from "./graph.js"
 import { di } from "./di.js"
 import { homproc, jmp, Process } from "./run.js"
-import { print_term, print_type, print_inequalities } from "./print.js"
+import { print_term, print_type } from "./print.js"
 import { builtins_types } from "./builtin_types.js"
 import { apply_inequalities, conjoin_inequalities, empty_inequalities, Inequalities } from "./constraints.js"
 import { eliminate } from "./eliminate.js"
@@ -111,7 +111,7 @@ const s: TypingProcess = (e, g) => () => call(visit_graph({
   [rec]: () => ret("typecheck: record values should not exist at typecheck"),
   [lit]: e => ret([typ_lit(e.value), empty_inequalities()]) })(e), r =>
   typeof r === "string" ? ret(r) : (
-  console.log(`Synthesized type \`${print_type(r[0])}\` for term \`${print_term(e)}\` with constraints \`${print_inequalities(r[1])}\`.`),
+  // console.log(`Synthesized type \`${print_type(r[0])}\` for term \`${print_term(e)}\` with constraints \`${print_inequalities(r[1])}\`.`),
   ret(r)))
 return s(e, builtins_types) })
 return r }

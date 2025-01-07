@@ -1,5 +1,4 @@
 import { typ_cnj, typ_dsj } from "./graph.js";
-import { print_inequalities } from "./print.js";
 import { substitute } from "./substitute.js";
 export const empty_inequalities = () => ({ less: {}, greater: {} });
 export const apply_inequalities = (l, r) => {
@@ -10,7 +9,7 @@ export const apply_inequalities = (l, r) => {
     for (const k in l.greater) {
         o.greater[k] = substitute(r, l.greater[k], false);
     }
-    console.log(`Applied \`${print_inequalities(r)}\` to \`${print_inequalities(l)}\` to get \`${print_inequalities(o)}\`.`);
+    // console.log(`Applied \`${print_inequalities(r)}\` to \`${print_inequalities(l)}\` to get \`${print_inequalities(o)}\`.`)
     return o;
 };
 export const conjoin_inequalities = (l, r) => {

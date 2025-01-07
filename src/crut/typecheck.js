@@ -1,7 +1,7 @@
 import { abs, acs, app, blt, iov, lit, mod, rec, sav, aka, visit_graph, ref, res, cst, typ_new, typ_unk, typ_cnj, typ_rec, typ_abs, typ_lit, ext, unk } from "./graph.js";
 import { di } from "./di.js";
 import { homproc, jmp } from "./run.js";
-import { print_term, print_type, print_inequalities } from "./print.js";
+import { print_term, print_type } from "./print.js";
 import { builtins_types } from "./builtin_types.js";
 import { apply_inequalities, conjoin_inequalities, empty_inequalities } from "./constraints.js";
 import { eliminate } from "./eliminate.js";
@@ -66,8 +66,9 @@ export const typecheck = (e) => {
             [iov]: () => ret("typecheck: io values should not exist at typecheck"),
             [rec]: () => ret("typecheck: record values should not exist at typecheck"),
             [lit]: e => ret([typ_lit(e.value), empty_inequalities()])
-        })(e), r => typeof r === "string" ? ret(r) : (console.log(`Synthesized type \`${print_type(r[0])}\` for term \`${print_term(e)}\` with constraints \`${print_inequalities(r[1])}\`.`),
-            ret(r)));
+        })(e), r => typeof r === "string" ? ret(r) : (
+        // console.log(`Synthesized type \`${print_type(r[0])}\` for term \`${print_term(e)}\` with constraints \`${print_inequalities(r[1])}\`.`),
+        ret(r)));
         return s(e, builtins_types);
     });
     return r;

@@ -1,5 +1,4 @@
 import { typ_cnj, typ_dsj, TypeMap, TypeTree } from "./graph.js"
-import { print_inequalities } from "./print.js"
 import { substitute } from "./substitute.js"
 
 export type Inequalities = { less: TypeMap, greater: TypeMap }
@@ -12,7 +11,7 @@ for (const k in l.less) {
   o.less[k] = substitute(r, l.less[k] as TypeTree, true) }
 for (const k in l.greater) {
   o.greater[k] = substitute(r, l.greater[k] as TypeTree, false) }
-console.log(`Applied \`${print_inequalities(r)}\` to \`${print_inequalities(l)}\` to get \`${print_inequalities(o)}\`.`)
+// console.log(`Applied \`${print_inequalities(r)}\` to \`${print_inequalities(l)}\` to get \`${print_inequalities(o)}\`.`)
 return o }
 
 export const conjoin_inequalities: (l: Inequalities, r: Inequalities) => Inequalities = (l, r) => {

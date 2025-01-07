@@ -21,8 +21,8 @@ t.kind === dsj ?
 t
 
 export const eliminate: (system: Inequalities, vars: [string, boolean][], b: boolean) => [Inequalities, Inequalities] | string = (system, vars, b2) => {
-console.log(`Eliminating \`${vars.map(x => `${x[1] ? '+' : '-'}${x[0]}`).join(' ')}\` from \`${print_inequalities(system)}\`.`)
-const orig = system
+// console.log(`Eliminating \`${vars.map(x => `${x[1] ? '+' : '-'}${x[0]}`).join(' ')}\` from \`${print_inequalities(system)}\`.`)
+// const orig = system
 for (const [v, b] of vars) {
   for (const i in system.less) {
     system.less[i] = simplify(i, system.less[i] as TypeTree) }
@@ -42,5 +42,5 @@ for (const i in system.less) {
   (vars.some(v => v[0] === i) ? taken : given).less[i] = system.less[i] as TypeTree }
 for (const i in system.greater) {
   (vars.some(v => v[0] === i) ? taken : given).greater[i] = system.greater[i] as TypeTree }
-console.log(`Eliminating \`${vars.map(x => `${x[1] ? '+' : '-'}${x[0]}`).join(' ')}\` from \`${print_inequalities(orig)}\` gave \`${print_inequalities(taken)}\` and \`${print_inequalities(given)}\`.`)
+// console.log(`Eliminating \`${vars.map(x => `${x[1] ? '+' : '-'}${x[0]}`).join(' ')}\` from \`${print_inequalities(orig)}\` gave \`${print_inequalities(taken)}\` and \`${print_inequalities(given)}\`.`)
   return [taken, given] }

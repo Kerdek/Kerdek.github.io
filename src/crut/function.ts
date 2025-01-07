@@ -3,7 +3,7 @@ import { abs, cnj, dsj, TypeTree, typ_new, ref, typ_dsj, typ_abs, typ_cnj, aka }
 import { di } from "./di.js"
 import { homproc, jmp, Process } from "./run.js"
 import { subsume } from "./subsume.js"
-import { print_inequalities, print_type } from "./print.js"
+import { print_type } from "./print.js"
 import { rename } from "./rename.js"
 import { eliminate } from "./eliminate.js"
 import { conjoin_inequalities, disjoin_inequalities, Inequalities } from "./constraints.js"
@@ -69,6 +69,6 @@ t.kind === dsj ?
 ret(`\`${print_type(t)}\` is not a function.`)
 return s(t, a) })
 if (typeof r === "string") return r
-console.log(`Result of \`${print_type(t)}\` called with \`${print_type(a)}\` is \`${print_type(r[0])}\` with constraints \`${print_inequalities(r[1])}\`\`.`)
+// console.log(`Result of \`${print_type(t)}\` called with \`${print_type(a)}\` is \`${print_type(r[0])}\` with constraints \`${print_inequalities(r[1])}\`\`.`)
 return [r[0], r[1]] }
 

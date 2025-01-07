@@ -2,7 +2,7 @@ import { conjoin_inequalities, disjoin_inequalities, empty_inequalities, Inequal
 import { di } from "./di.js"
 import { result } from "./function.js"
 import { abs, aka, any, bol, cnj, dsj, ext, iov, lit, num, rec, ref, str, TypeMap, TypeTree, unk } from "./graph.js"
-import { print_inequalities, print_type } from "./print.js"
+import { print_type } from "./print.js"
 import { homproc, jmp, Process } from "./run.js"
 
 
@@ -99,7 +99,7 @@ const s: (l: TypeTree, r: TypeTree) => Process = (l, r) => () => call(() =>
   typeof dz === "string" ? ret(dz) : (
   dl.set(r, dz),
   ret(dz)))))), o => (
-  typeof o !== "string" && console.log(`\`${print_type(l)}\` subsumes\`${print_type(r)}\` with constraints \`${print_inequalities(o)}\`.`),
+  // typeof o !== "string" && console.log(`\`${print_type(l)}\` subsumes \`${print_type(r)}\` with constraints \`${print_inequalities(o)}\`.`),
   ret(o)))
 const sp: (l: TypeTree, r: TypeTree) => Process = (l, r) => () =>
   l === r ? ret(empty_inequalities()) :
@@ -182,6 +182,6 @@ const sp: (l: TypeTree, r: TypeTree) => Process = (l, r) => () =>
   ret(`\`${print_type(l)}\` does not subsume \`${print_type(r)}\`.`)
 return s(l, r) })
 if (typeof o === "string") return o;
-// console.log(`\`${print_type(l)}\` subsumes\`${print_type(r)}\` with constraints \`${print_type_map(o)}\`.`)
+// console.log(`\`${print_type(l)}\` subsumes \`${print_type(r)}\` with constraints \`${print_type_map(o)}\`.`)
 return o }
 

@@ -2,7 +2,7 @@ import { conjoin_inequalities, disjoin_inequalities, empty_inequalities } from "
 import { di } from "./di.js";
 import { result } from "./function.js";
 import { abs, aka, any, bol, cnj, dsj, ext, iov, lit, num, rec, ref, str, unk } from "./graph.js";
-import { print_inequalities, print_type } from "./print.js";
+import { print_type } from "./print.js";
 import { homproc, jmp } from "./run.js";
 // export const subsume_dnf_function: (l: TypeDNFFunction, r: TypeDNFFunction) => Constraints | string = (l, r) =>
 // di(result_function_dnf(l, r[1]), dr =>
@@ -75,8 +75,9 @@ export const subsume = (l, r) => {
             di(new Map(), dl => (m.set(l, dl),
                 dl.set(r, empty_inequalities()),
                 call(sp(l, r), dz => typeof dz === "string" ? ret(dz) : (dl.set(r, dz),
-                    ret(dz)))))), o => (typeof o !== "string" && console.log(`\`${print_type(l)}\` subsumes\`${print_type(r)}\` with constraints \`${print_inequalities(o)}\`.`),
-            ret(o)));
+                    ret(dz)))))), o => (
+        // typeof o !== "string" && console.log(`\`${print_type(l)}\` subsumes \`${print_type(r)}\` with constraints \`${print_inequalities(o)}\`.`),
+        ret(o)));
         const sp = (l, r) => () => l === r ? ret(empty_inequalities()) :
             l.kind === any ? ret(empty_inequalities()) :
                 r.kind === unk ? ret(empty_inequalities()) :
@@ -139,7 +140,7 @@ export const subsume = (l, r) => {
     });
     if (typeof o === "string")
         return o;
-    // console.log(`\`${print_type(l)}\` subsumes\`${print_type(r)}\` with constraints \`${print_type_map(o)}\`.`)
+    // console.log(`\`${print_type(l)}\` subsumes \`${print_type(r)}\` with constraints \`${print_type_map(o)}\`.`)
     return o;
 };
 //# sourceMappingURL=subsume.js.map

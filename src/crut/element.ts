@@ -1,7 +1,7 @@
 import { cnj, dsj, lit, rec, str, TypeTree, typ_lit, TypeMap, ref, typ_rec, typ_new, typ_dsj, typ_str, aka } from "./graph.js"
 import { di } from "./di.js"
 import { homproc, jmp, Process } from "./run.js"
-import { print_inequalities, print_type } from "./print.js"
+import { print_type } from "./print.js"
 import { conjoin_inequalities, disjoin_inequalities, empty_inequalities, Inequalities } from "./constraints.js"
 import { subsume } from "./subsume.js"
 
@@ -60,5 +60,5 @@ const s: (t: TypeTree, a: TypeTree) => Process = (t, a) => () =>
   ret(`\`${print_type(t)}\` is not a string, tuple, or record.`)
 return s(t, a) })
 if (typeof r === "string") return r
-console.log(`Element of \`${print_type(t)}\` with index \`${print_type(a)}\` is \`${print_type(r[0])} with constraints \`${print_inequalities(r[1])}\`\`.`)
+// console.log(`Element of \`${print_type(t)}\` with index \`${print_type(a)}\` is \`${print_type(r[0])} with constraints \`${print_inequalities(r[1])}\`\`.`)
 return r }

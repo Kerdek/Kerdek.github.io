@@ -14,8 +14,8 @@ const simplify = (i, t) => t.kind === ref ? t.name === i ? typ_unk() : t :
                     typ_dsj(l, r))) :
             t;
 export const eliminate = (system, vars, b2) => {
-    console.log(`Eliminating \`${vars.map(x => `${x[1] ? '+' : '-'}${x[0]}`).join(' ')}\` from \`${print_inequalities(system)}\`.`);
-    const orig = system;
+    // console.log(`Eliminating \`${vars.map(x => `${x[1] ? '+' : '-'}${x[0]}`).join(' ')}\` from \`${print_inequalities(system)}\`.`)
+    // const orig = system
     for (const [v, b] of vars) {
         for (const i in system.less) {
             system.less[i] = simplify(i, system.less[i]);
@@ -39,7 +39,7 @@ export const eliminate = (system, vars, b2) => {
     for (const i in system.greater) {
         (vars.some(v => v[0] === i) ? taken : given).greater[i] = system.greater[i];
     }
-    console.log(`Eliminating \`${vars.map(x => `${x[1] ? '+' : '-'}${x[0]}`).join(' ')}\` from \`${print_inequalities(orig)}\` gave \`${print_inequalities(taken)}\` and \`${print_inequalities(given)}\`.`);
+    // console.log(`Eliminating \`${vars.map(x => `${x[1] ? '+' : '-'}${x[0]}`).join(' ')}\` from \`${print_inequalities(orig)}\` gave \`${print_inequalities(taken)}\` and \`${print_inequalities(given)}\`.`)
     return [taken, given];
 };
 //# sourceMappingURL=eliminate.js.map
