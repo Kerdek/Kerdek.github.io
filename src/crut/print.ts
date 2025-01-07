@@ -1,6 +1,7 @@
 import { Inequalities } from "./constraints.js"
 import { di } from "./di.js"
 import { abs, acs, any, app, blt, bol, cnj, dsj, Graph, iov, lit, mod, num, rec, sav, aka, str, TypeTree, unk, visit_graph, visit_type, ref, res, TypeMap, Record, Ptr, cst, ext } from "./graph.js"
+import { pretty_vars } from "./pretty_vars.js"
 import { homproc, jmp, Process } from "./run.js"
 
 type PrintType = (e: TypeTree) => string
@@ -50,7 +51,7 @@ const s: TypePrintProcess = (e, p, d) => d === 10 ? () => ret(`...`) : (visit_ty
   [abs]: ({ vars, lhs, rhs }) =>
     call(s(lhs, 1, d + 1), dx =>
     call(s(rhs, 0, d + 1), dy =>
-    ret(parens(p > 0, `${vars.length > 0 ? `\\${vars.map(x => `${x[1] ? '+' : '-'}${x[0]}`).join(' ')}.` : ``}${dx} -> ${dy}`)))),
+    ret(parens(p > 0, `${vars.length > 0 ? `\\${vars.map(x => `${x[1] ? '-' : ''}${x[0]}`).join(' ')}.` : ``}${dx} -> ${dy}`)))),
   [cnj]: ({ lhs, rhs }) =>
     call(s(lhs, 2, d + 1), dx =>
     call(s(rhs, 3, d + 1), dy =>
@@ -59,7 +60,7 @@ const s: TypePrintProcess = (e, p, d) => d === 10 ? () => ret(`...`) : (visit_ty
     call(s(lhs, 1, d + 1), dx =>
     call(s(rhs, 2, d + 1), dy =>
     ret(parens(p > 1, `${dx} | ${dy}`)))) }))(e)
-return s(e, 0, 0) })
+return s(pretty_vars(e), 0, 0) })
 
 export const print_term: PrintTerm = e => homproc((call, ret) => {
 const qq: RecordPrintProcess = (a, k, r, d) => () =>

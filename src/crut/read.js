@@ -16,37 +16,30 @@ export const read_type = (tk, h) => async_homproc((call, ret) => {
             !tk.take("colon") ? fatal(`Expected \`:\`.`) :
                 call(type, async (y) => await di(() => ({ ...o, [i[1]]: y }), async (r) => tk.take("rbrace") ? ret(typ_rec(r())) :
                     tk.take("comma") ? jmp(rct_defs(r())) :
-                        fatal(`Expected \`,\` or \`}\`.`)))), 
-    // vars: (v: string[]) => AsyncProcess = v => async () =>
-    //   tk.take("dot") ?
-    //     call(or, async dx =>
-    //     !tk.take("arrow") ? fatal(`Expected \`->\`.`) :
-    //     call(arrow, async dy =>
-    //     ret(typ_abs(v, dx, dy)))) :
-    //   await di(tk.take("identifier"), async i =>
-    //   !i ? fatal(`Expected an identifier or \`.\`.`) :
-    //   jmp(vars([...v, i[1]]))),
-    primary = async () => 
-    // tk.take("rsolidus") ? jmp(vars([])):
-    tk.take("lbrace") ?
-        tk.take("rbrace") ? ret(typ_rec({})) :
-            jmp(rct_defs({})) :
-        tk.take("lparen") ?
-            call(type, async (x) => tk.take("rparen") ? ret(x) :
-                fatal(`Expected \`)\`.`)) :
-            await di(tk.take("literal"), async (c) => c ? ret(typ_lit(c[1] === "undefined" ? undefined : JSON.parse(c[1]))) :
-                await di(tk.take("identifier"), async (c) => c ?
-                    c[1] === "IO" ?
-                        call(primary, async (x) => ret(typ_iov(x))) :
-                        c[1] === "true" ? ret(typ_lit(true)) :
-                            c[1] === "false" ? ret(typ_lit(false)) :
-                                c[1] === "Number" ? ret(typ_num()) :
-                                    c[1] === "String" ? ret(typ_str()) :
-                                        c[1] === "Boolean" ? ret(typ_bol()) :
-                                            c[1] === "Unknown" ? ret(typ_unk()) :
-                                                c[1] === "Any" ? ret(typ_any()) :
-                                                    await di(h[c[1]], async (l) => ret(l || typ_ref(c[1]))) :
-                    fatal("Expected a type."))), and_lhs = async (x) => tk.take("amp") ? call(primary, y => and_lhs(typ_cnj(x, y))) : ret(x), and = async () => call(primary, and_lhs), or_lhs = async (x) => tk.take("bar") ? call(and, y => or_lhs(typ_dsj(x, y))) : ret(x), or = async () => call(and, or_lhs), arrow = async () => call(or, async (x) => tk.take("arrow") ?
+                        fatal(`Expected \`,\` or \`}\`.`)))), vars = v => async () => tk.take("dot") ?
+        call(or, async (dx) => !tk.take("arrow") ? fatal(`Expected \`->\`.`) :
+            call(arrow, async (dy) => ret(typ_abs(v, dx, dy)))) :
+        await di(tk.take("hyphen") ? true : false, async (b) => await di(tk.take("identifier"), async (i) => !i ? fatal(`Expected an identifier or \`.\`.`) :
+            jmp(vars([...v, [i[1], b]])))), primary = async () => tk.take("rsolidus") ? jmp(vars([])) :
+        tk.take("lbrace") ?
+            tk.take("rbrace") ? ret(typ_rec({})) :
+                jmp(rct_defs({})) :
+            tk.take("lparen") ?
+                call(type, async (x) => tk.take("rparen") ? ret(x) :
+                    fatal(`Expected \`)\`.`)) :
+                await di(tk.take("literal"), async (c) => c ? ret(typ_lit(c[1] === "undefined" ? undefined : JSON.parse(c[1]))) :
+                    await di(tk.take("identifier"), async (c) => c ?
+                        c[1] === "IO" ?
+                            call(primary, async (x) => ret(typ_iov(x))) :
+                            c[1] === "true" ? ret(typ_lit(true)) :
+                                c[1] === "false" ? ret(typ_lit(false)) :
+                                    c[1] === "Number" ? ret(typ_num()) :
+                                        c[1] === "String" ? ret(typ_str()) :
+                                            c[1] === "Boolean" ? ret(typ_bol()) :
+                                                c[1] === "Unknown" ? ret(typ_unk()) :
+                                                    c[1] === "Any" ? ret(typ_any()) :
+                                                        await di(h[c[1]], async (l) => ret(l || typ_ref(c[1]))) :
+                        fatal("Expected a type."))), and_lhs = async (x) => tk.take("amp") ? call(primary, y => and_lhs(typ_cnj(x, y))) : ret(x), and = async () => call(primary, and_lhs), or_lhs = async (x) => tk.take("bar") ? call(and, y => or_lhs(typ_dsj(x, y))) : ret(x), or = async () => call(and, or_lhs), arrow = async () => call(or, async (x) => tk.take("arrow") ?
         call(arrow, async (y) => ret(typ_abs([], x, y))) :
         ret(x)), type = arrow;
     return type;

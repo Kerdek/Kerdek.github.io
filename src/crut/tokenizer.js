@@ -105,6 +105,10 @@ export function tokenizer(s) {
             t = ["arrow", "->"];
             return;
         }
+        if (k(/^-/)) {
+            t = ["hyphen", "-"];
+            return;
+        }
         if (k(/^#/)) {
             t = ["hash", "#"];
             return;

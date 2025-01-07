@@ -39,17 +39,18 @@ rct_defs: TypeMapAsyncProcess = o => async() =>
   tk.take("rbrace") ? ret(typ_rec(r())) :
   tk.take("comma") ? jmp(rct_defs(r())) :
   fatal(`Expected \`,\` or \`}\`.`)))),
-// vars: (v: string[]) => AsyncProcess = v => async () =>
-//   tk.take("dot") ?
-//     call(or, async dx =>
-//     !tk.take("arrow") ? fatal(`Expected \`->\`.`) :
-//     call(arrow, async dy =>
-//     ret(typ_abs(v, dx, dy)))) :
-//   await di(tk.take("identifier"), async i =>
-//   !i ? fatal(`Expected an identifier or \`.\`.`) :
-//   jmp(vars([...v, i[1]]))),
+vars: (v: [string, boolean][]) => AsyncProcess = v => async () =>
+  tk.take("dot") ?
+    call(or, async dx =>
+    !tk.take("arrow") ? fatal(`Expected \`->\`.`) :
+    call(arrow, async dy =>
+    ret(typ_abs(v, dx, dy)))) :
+  await di(tk.take("hyphen") ? true : false, async b =>
+  await di(tk.take("identifier"), async i =>
+  !i ? fatal(`Expected an identifier or \`.\`.`) :
+  jmp(vars([...v, [i[1], b]])))),
 primary: AsyncProcess = async () =>
-  // tk.take("rsolidus") ? jmp(vars([])):
+  tk.take("rsolidus") ? jmp(vars([])):
   tk.take("lbrace") ?
     tk.take("rbrace") ? ret(typ_rec({})) :
     jmp(rct_defs({})) :

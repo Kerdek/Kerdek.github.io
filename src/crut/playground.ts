@@ -129,7 +129,7 @@ monaco.languages.setMonarchTokensProvider('cru', {
       [/\b(true|false|undefined)\b/, 'constant.boolean'],
       [/->/, 'punctuation'],
       [/\$/, 'keyword.operator'],
-      [/\\|=|#|\.|\(|\)|\{|\}|\[|\]|:|,|\b(where|in|let)\b/, 'punctuation'],
+      [/\\|=|#|\.|\(|\)|\{|\}|\[|\]|:|,|\b(where|in|let|type)\b/, 'punctuation'],
       [/[A-Z][\w\d]*/, 'entity.name.type'],
       [/[a-z][\w\d]*/, 'entity.name']],
     block_comment: [

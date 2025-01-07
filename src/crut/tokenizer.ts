@@ -4,7 +4,7 @@ export type NonEOFTokenKind =
   "lparen" | "rparen" | "rsolidus" | "colon" | "doublecolon" | "dot" | "comma" |
   "equal" | "arrow" | "dollar" | "identifier" | "literal" | "let" |
   "in" | "where" | "bar" | "amp" | "type" | "dots" | "lbracket" | "rbracket" |
-  "hash" | "lbrace" | "rbrace" | "as"
+  "hash" | "lbrace" | "rbrace" | "as" | "hyphen"
 
 export type Token =
   [NonEOFTokenKind, string] |
@@ -73,6 +73,7 @@ export function tokenizer(s: Scanner): Tokenizer {
     if (k(/^\.\.\./)) { t = ["dots", "..."]; return }
     if (k(/^\./)) { t = ["dot", "."]; return }
     if (k(/^->/)) { t = ["arrow", "->"]; return }
+    if (k(/^-/)) { t = ["hyphen", "-"]; return }
     if (k(/^#/)) { t = ["hash", "#"]; return }
     if (k(/^\$/)) { t = ["dollar", "$"]; return }
     let r = k(/^("([^"\\]|\\.)*($|")|[+-]?(?:\d+(?:\.\d+)?)(?:[eE][+-]?\d+)?)/)

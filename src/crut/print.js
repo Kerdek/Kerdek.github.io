@@ -1,5 +1,6 @@
 import { di } from "./di.js";
 import { abs, acs, any, app, blt, bol, cnj, dsj, iov, lit, mod, num, rec, sav, aka, str, unk, visit_graph, visit_type, ref, res, cst, ext } from "./graph.js";
+import { pretty_vars } from "./pretty_vars.js";
 import { homproc, jmp } from "./run.js";
 const parens = (x, c) => x ? `(${c})` : c;
 export const print_inequalities = m => [
@@ -23,11 +24,11 @@ export const print_type = e => homproc((call, ret) => {
         [unk]: () => ret(`Unknown`),
         [any]: () => ret(`Any`),
         [rec]: ({ elements }) => jmp(qq(elements, Object.keys(elements), [], d)),
-        [abs]: ({ vars, lhs, rhs }) => call(s(lhs, 1, d + 1), dx => call(s(rhs, 0, d + 1), dy => ret(parens(p > 0, `${vars.length > 0 ? `\\${vars.map(x => `${x[1] ? '+' : '-'}${x[0]}`).join(' ')}.` : ``}${dx} -> ${dy}`)))),
+        [abs]: ({ vars, lhs, rhs }) => call(s(lhs, 1, d + 1), dx => call(s(rhs, 0, d + 1), dy => ret(parens(p > 0, `${vars.length > 0 ? `\\${vars.map(x => `${x[1] ? '-' : ''}${x[0]}`).join(' ')}.` : ``}${dx} -> ${dy}`)))),
         [cnj]: ({ lhs, rhs }) => call(s(lhs, 2, d + 1), dx => call(s(rhs, 3, d + 1), dy => ret(parens(p > 2, `${dx} & ${dy}`)))),
         [dsj]: ({ lhs, rhs }) => call(s(lhs, 1, d + 1), dx => call(s(rhs, 2, d + 1), dy => ret(parens(p > 1, `${dx} | ${dy}`))))
     }))(e);
-    return s(e, 0, 0);
+    return s(pretty_vars(e), 0, 0);
 });
 export const print_term = e => homproc((call, ret) => {
     const qq = (a, k, r, d) => () => !k[0] ? ret(`{ ${r.join(', ')} }`) :
