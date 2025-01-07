@@ -64,7 +64,7 @@ document.title = 'hi'
 map(style_rule)(
   `@font-face {
     font-family: CMU Typewriter Text;
-    src: url('./cmuntt.ttf') }`,
+    src: url('../cmuntt.ttf') }`,
 
   `:root {
     --foreground_color: white;
