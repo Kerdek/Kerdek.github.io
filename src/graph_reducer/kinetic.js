@@ -73,7 +73,7 @@ map(style_rule)(
   `* { margin: 0; padding: 0 }`,
 
   `body {
-    font-family: Typewriter;
+    font-family: CMU Typewriter Text;
     background: var(--background_color);
     color: var(--foreground_color); }`)
 
