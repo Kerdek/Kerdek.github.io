@@ -30,16 +30,16 @@ export const exec = async (io, put, unput, get) => {
 
     // console io
 
-    case "put": {
+    case "puts": {
       const [s] = args
       put(unbox(s))
       x = make("lit", undefined)
       break }
-    case "unput": {
+    case "unputc": {
       unput()
       x = make("lit", true)
       break }
-    case "get": {
+    case "getc": {
       x = make("lit", await get())
       break }
 

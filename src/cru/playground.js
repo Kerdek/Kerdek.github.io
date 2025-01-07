@@ -111,7 +111,7 @@ import { scanner } from '../scanner.js';
                     [/\b(true|false|undefined)\b/, 'constant.boolean'],
                     [/->/, 'punctuation'],
                     [/\$/, 'keyword.operator'],
-                    [/\\|=|#|\(|\)|\{|\}|\[|\]|:|,|\b(where|in|let)\b/, 'punctuation'],
+                    [/\\|=|#|\.|\(|\)|\{|\}|\[|\]|:|,|\b(where|in|let)\b/, 'punctuation'],
                     [/\w[\w\d]*/, 'entity.name']
                 ],
                 block_comment: [

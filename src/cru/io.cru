@@ -22,9 +22,9 @@ set = monad "set",
 
 console_io = { put, print, printf },
 
-put = monad "put",
-print x = put (#"to_string.cru" x),
-printf s a = put (#"format.cru" s a),
+puts = monad "puts",
+print x = puts (#"to_string.cru" x),
+printf s a = puts (#"format.cru" s a),
 
 rng = { random },
 
