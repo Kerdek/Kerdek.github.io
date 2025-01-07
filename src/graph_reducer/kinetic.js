@@ -259,6 +259,7 @@ input.addEventListener('keydown', async ev => {
   if (ev.key === "Escape") {
     await coop() }
   if (ev.key === "Enter") {
+    if (ev.shiftKey) { return }
     const cb_make = (e, a) => {
       if (e.kind === 'thk') return
       const term_element = svg_text({})(t(cap(e)))

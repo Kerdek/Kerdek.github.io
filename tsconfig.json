@@ -3,7 +3,7 @@
   "exclude": [ ],
   "compilerOptions": {
       "target": "es2022",
-      "module": "es2022",
+      "module": "NodeNext",
       "strict": true,
       "noFallthroughCasesInSwitch": true,
       "noImplicitReturns": true,
@@ -15,4 +15,4 @@
       "rootDir": "./",
       "outDir": "./",
       "sourceMap": true,
-      "moduleResolution": "Node" } }
+      "moduleResolution": "nodenext" } }

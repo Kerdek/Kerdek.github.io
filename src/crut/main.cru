@@ -1,0 +1,4 @@
+let
+  stack = #"stack.cru"
+in
+stack

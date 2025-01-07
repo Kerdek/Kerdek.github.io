@@ -1,0 +1,25 @@
+let
+
+sequencing = { return, bind, do, yield },
+
+return = __builtin_return,
+bind = __builtin_bind,
+do x y = bind x (\_. y),
+yield = __builtin_yield,
+
+printing = { puts },
+
+puts = __builtin_puts,
+
+references = { new, get, set },
+
+new = __builtin_new,
+get = __builtin_get,
+set = __builtin_set
+
+in
+
+{
+  ...sequencing,
+  ...printing,
+  ...references }

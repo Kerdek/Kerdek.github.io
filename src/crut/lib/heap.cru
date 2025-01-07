@@ -1,0 +1,58 @@
+new where (
+
+pre = #"pre.cru",
+arith = #"arith.cru",
+logic = #"logic.cru",
+
+id = pre.id,
+car = pre.car,
+add = arith.add,
+sub = arith.sub,
+lt = arith.lt,
+eq = arith.eq,
+and = logic.and,
+if = logic.if,
+
+new cond =
+  let
+    make cond =
+      let
+        pop head =
+          let
+            new_node =
+              if (and (eq undefined head.lhs) (eq undefined head.rhs)) undefined $
+              if (eq undefined head.lhs) head.rhs $
+              if (eq undefined head.rhs) head.lhs $
+              let g a b c = let r = pop head.[a] in {
+                value: r.[0],
+                size: sub head.size 1,
+                lhs: b r.[1],
+                rhs: c r.[1] } in
+              if (cond head.lhs.value head.rhs.value)
+                (g "rhs" (car head.lhs) id)
+                (g "lhs" id (car head.rhs)) in
+          [head.value, new_node],
+
+        push head x =
+          if (eq head undefined) { value: x, size: 1, lhs: undefined, rhs: undefined } $
+          let
+            select = if (cond head.value x),
+            size = add head.size 1,
+            push_left =
+              select
+                { value: x, size, lhs: push head.lhs head.value, rhs: head.rhs }
+                { value: head.value, size, lhs: push head.lhs x, rhs: head.rhs },
+            push_right =
+              select
+                { value: x, size, lhs: head.lhs, rhs: push head.rhs head.value }
+                { value: head.value, size, lhs: head.lhs, rhs: push head.rhs x } in
+          if (eq undefined head.lhs) push_left $
+          if (eq undefined head.rhs) push_right $
+          if (lt head.lhs.size head.rhs.size) push_left $
+          push_right,
+
+        makep head =
+          let empty = eq head undefined in
+          { empty, push x: makep (push head x), ...if empty {} (let r = pop head in { peek: r.[0], pop: makep r.[1] }) } in
+      makep in
+  make cond undefined)
