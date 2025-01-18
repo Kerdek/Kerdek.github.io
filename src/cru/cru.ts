@@ -162,7 +162,7 @@ include: () => Promise<Branch> = async () => {
     return ret(m) }
     let res = await fetch(`${r}`);
   if (!res.ok) {
-    fatal(`HTTP status ${res.status} while requesting \`./${res.url}\`.`) }
+    fatal(`HTTP status ${res.status} while requesting \`${res.url}\`.`) }
   tk.unget(`${await res.text()})`)
   tk.unpos([r, 1, 1])
   return call(expression, async e => {
