@@ -4,12 +4,10 @@
   ...console_io,
   ...rng } where (
 
-monad = __builtin_monad,
-
 sequencing = { return, bind, yield, do, pass },
 
-return = monad "return",
-bind = monad "bind",
+return x = ["return", x],
+bind x y = ["bind", x, y],
 yield = monad "yield",
 do x y = bind x (\_ -> y),
 pass = return undefined,
@@ -20,9 +18,9 @@ new = monad "new",
 get = monad "get",
 set = monad "set",
 
-console_io = { put, print, printf },
+console_io = { puts, print, printf },
 
-puts = monad "puts",
+puts x = ["puts", x],
 print x = puts (#"to_string.cru" x),
 printf s a = puts (#"format.cru" s a),
 

@@ -1,0 +1,21 @@
+#"preamble.lm"\let id car cdr head tail cons compose composer.
+
+let __builtin_pi \pi.
+let __builtin_sqrt \sqrt.
+let __builtin_log \log.
+let __builtin_exp \exp.
+let __builtin_sin \sin.
+let __builtin_cos \cos.
+let __builtin_tan \tan.
+let __builtin_asin \asin.
+let __builtin_acos \acos.
+let __builtin_atan \atan.
+let __builtin_atan2 \atan2.
+let __builtin_sinh \sinh.
+let __builtin_cosh \cosh.
+let __builtin_tanh \tanh.
+let __builtin_asinh \asinh.
+let __builtin_acosh \acosh.
+let __builtin_atanh \atanh.
+
+\f.f pi sqrt log exp sin cos tan asin acos atan atan2 sinh cosh tanh asinh acosh atanh

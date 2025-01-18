@@ -29,7 +29,7 @@ exp x precision =
     f n acc term =
       if (eq n precision) acc $
       f (add n 1) (add acc (div term (fact n))) (mul term x) in
-  f 0 0 1,
+  f 0 0 1
 
 in
 

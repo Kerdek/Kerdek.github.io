@@ -1,0 +1,6 @@
+let this = {
+  rec: __builtin_rec,
+  if: __builtin_if,
+  and x y: this.if x y x,
+  or x y: this.if x x y,
+  not: __builtin_not } in this

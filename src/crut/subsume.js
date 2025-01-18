@@ -58,10 +58,10 @@ import { homproc, jmp } from "./run.js";
 const m = new Map();
 export const subsume = (l, r) => {
     const o = homproc((call, ret) => {
-        const p = (l, r, k) => () => !k[0] ? ret(empty_inequalities()) :
+        const p = (l, k, r) => () => !k[0] ? ret(empty_inequalities()) :
             !l[k[0]] ? ret(`Missing property \`${k[0]}\`.`) :
                 call(s(l[k[0]], r[k[0]]), vars => typeof vars === "string" ? ret(vars) :
-                    call(p(l, r, k.slice(1)), rest => typeof rest === "string" ? ret(rest) :
+                    call(p(l, k.slice(1), r), rest => typeof rest === "string" ? ret(rest) :
                         ret(conjoin_inequalities(vars, rest))));
         const q = (l, r) => () => !r[0] ? ret(empty_inequalities()) :
             !l[0] ? ret(`Not enough tuple elements.`) :
@@ -130,7 +130,7 @@ export const subsume = (l, r) => {
                                                                                         call(s(l.operand, r.operand), dx => typeof dx === "string" ? ret(`\`${print_type(l)}\` does not subsume \`${print_type(r)}\`.\n${dx}`) :
                                                                                             ret(dx)) :
                                                                                         l.kind === rec ?
-                                                                                            r.kind === rec ? jmp(p(l.elements, r.elements, Object.keys(r.elements))) :
+                                                                                            r.kind === rec ? jmp(p(l.elements, Object.keys(l.elements), r.elements)) :
                                                                                                 ret(`\`${print_type(l)}\` does not subsume \`${print_type(r)}\`.`) :
                                                                                             r.kind === abs ?
                                                                                                 di(result(l, r.lhs), dr => typeof dr === "string" ? ret(`\`${print_type(l)}\` does not subsume \`${print_type(r)}\`.\n${dr}`) :

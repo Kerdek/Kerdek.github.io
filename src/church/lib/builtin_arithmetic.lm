@@ -1,0 +1,14 @@
+#"preamble.lm"\let id car cdr head tail cons compose composer.
+
+let __builtin_add λadd.
+let __builtin_sub λsub.
+let __builtin_mul λmul.
+let __builtin_div λdiv.
+let __builtin_eq λeq.
+let __builtin_neq λneq.
+let __builtin_gt λgt.
+let __builtin_lt λlt.
+let __builtin_ge λge.
+let __builtin_le λle.
+
+\f.f add sub mul div eq neq gt lt ge le

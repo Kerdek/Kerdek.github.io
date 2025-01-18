@@ -1,28 +1,19 @@
-import { Fatal, Graph, make, Normal, pretty, read } from './church.js'
-import { jmp } from '../run.js'
+import { App, Graph, Value } from './church.js'
 
-type Builtins = { [i: string]: Normal }
+type Builtins = { [i: string]: Value }
 export const get_builtin: Builtins = await (async () => {
-const car = await read('λx y.x'), cdr = await read('λx y.y')
-const fatal_literal: (fatal: Fatal, e: Graph) => never = (fatal, e) => fatal(`A literal is required where \`${pretty(e)}\` was provided.`)
-const nullary: (op: any) => Normal = op => make("lit", op)
-const unary: (op: (x: any) => any) => Normal = op => make<Normal>("blt", (call, ret, s, fatal, r) =>
-  call(s(r), dx =>
-  dx[0] !== "lit" ? fatal_literal(fatal, dx) :
-  ret(make("lit", op(dx[1])))))
-const binary: (op: (x: any, y: any) => any) => Normal = op => make<Normal>("blt", (call, ret, s, fatal, r) =>
-  call(s(r), dr =>
-  call(s(make("app", dr, car)), dx =>
-  dx[0] !== "lit" ? fatal_literal(fatal, dx) :
-  call(s(make("app", dr, cdr)), dy =>
-  dy[0] !== "lit" ? fatal_literal(fatal, dy) :
-  ret(make("lit", op(dx[1], dy[1])))))))
+const nullary: (op: any) => Value = op => op
+const unary: (op: (x: any) => any) => Value = op => r => (rec, _cc, ret) =>
+  rec([r, {}], dx =>
+  ret(op(dx)))
+const binary: (op: (x: any, y: any) => any) => Value = op => r => (rec, _cc, ret) =>
+  rec([r, {}], dx =>
+  ret(a => (rec, _cc, ret) =>
+  rec([a, {}], dy =>
+  ret(op(dx, dy)))))
 return {
-  __builtin_rec: make<Normal>("blt", (_call, _ret, s, _fatal, r) => (e => (e[2] = e, jmp(s(e))))(make<Graph>("app", r, undefined as unknown as Graph))),
-  __builtin_if: make<Normal>("blt", (call, ret, s, fatal, r) =>
-    call(s(r), dx =>
-    dx[0] !== "lit" ? fatal_literal(fatal, dx) :
-    ret(make("abs", "y", "lazy", make<Normal>("abs", "z", "lazy", make<Normal>("ref", dx[1] ? "y" : "z")))))),
+  __builtin_rec: r => (_rec, cc, _ret) => (e => (e.rhs = e, cc([e, {}])))({ kind: "app", lhs: r, rhs: undefined as unknown as Graph } as App),
+  __builtin_if: r => (rec, _cc, ret) => rec([r, {}], dx => ret(a => (_rec, _cc, ret) => ret(b => (_rec, cc, _ret) => cc([dx ? a : b, {}])))),
   __builtin_add: binary((a, b) => a + b),
   __builtin_sub: binary((a, b) => a - b),
   __builtin_mul: binary((a, b) => a * b),

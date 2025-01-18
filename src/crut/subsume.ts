@@ -66,12 +66,12 @@ import { homproc, jmp, Process } from "./run.js"
 const m = new Map<TypeTree, Map<TypeTree, Inequalities>>()
 export const subsume: (l: TypeTree, r: TypeTree) => Inequalities | string = (l, r) => {
 const o: Inequalities | string = homproc((call, ret) => {
-const p: (l: TypeMap, r: TypeMap, k: string[]) => Process = (l, r, k) => () =>
+const p: (l: TypeMap, k: string[], r: TypeMap) => Process = (l, k, r) => () =>
   !k[0] ? ret(empty_inequalities()) :
   !l[k[0]] ? ret(`Missing property \`${k[0]}\`.`) :
   call(s(l[k[0]] as TypeTree, r[k[0]] as TypeTree), vars =>
   typeof vars === "string" ? ret(vars) :
-  call(p(l, r, k.slice(1)), rest =>
+  call(p(l, k.slice(1), r), rest =>
   typeof rest === "string" ? ret(rest) :
   ret(conjoin_inequalities(vars, rest))))
 const q: (l: TypeTree[], r: TypeTree[]) => Process = (l, r) => () =>
@@ -171,7 +171,7 @@ const sp: (l: TypeTree, r: TypeTree) => Process = (l, r) => () =>
     typeof dx === "string" ? ret(`\`${print_type(l)}\` does not subsume \`${print_type(r)}\`.\n${dx}`) :
     ret(dx)) :
   l.kind === rec ?
-    r.kind === rec ? jmp(p(l.elements, r.elements, Object.keys(r.elements))) :
+    r.kind === rec ? jmp(p(l.elements, Object.keys(l.elements), r.elements)) :
     ret(`\`${print_type(l)}\` does not subsume \`${print_type(r)}\`.`) :
   r.kind === abs ?
     di(result(l, r.lhs), dr =>

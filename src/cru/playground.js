@@ -1,4 +1,4 @@
-import { print, read, tokenizer, evaluate } from './cru.js';
+import { print, read, tokenizer, evaluate, print_value } from './cru.js';
 import { exec } from './io.js';
 import { scanner } from '../scanner.js';
 (async () => {
@@ -185,12 +185,13 @@ import { scanner } from '../scanner.js';
             const text = editor.getValue();
             try {
                 const tree = await read(tokenizer(scanner(text, window.location.href)));
-                output.appendChild(document.createTextNode(`\n-OK-\n${print(evaluate(await exec(tree, s => {
+                const e = await exec(tree, async () => keybuf.shift() || await new Promise(cb => (keywait = cb)), s => {
                     output.appendChild(document.createTextNode(s));
                     output.scrollTop = output.scrollHeight;
                 }, () => {
                     output.removeChild(output.childNodes[output.childNodes.length - 1]);
-                }, async () => keybuf.shift() || await new Promise(cb => (keywait = cb)))))}`));
+                });
+                output.appendChild(document.createTextNode(`\n-OK-\n${print_value(evaluate((_rec, rc, _ret) => rc([e, {}])))}`));
             }
             catch (e) {
                 output.appendChild(document.createTextNode(`\n-ERROR-\n${e.toString()}`));
@@ -211,7 +212,8 @@ import { scanner } from '../scanner.js';
             output.innerHTML = '';
             const text = editor.getValue();
             try {
-                output.appendChild(document.createTextNode(`\n-OK-\n${print(evaluate(await read(tokenizer(scanner(text, window.location.href)))))}`));
+                const e = await read(tokenizer(scanner(text, window.location.href)));
+                output.appendChild(document.createTextNode(`\n-OK-\n${print_value(evaluate((_rec, rc, _ret) => rc([e, {}])))}`));
             }
             catch (e) {
                 output.appendChild(document.createTextNode(`\n-ERROR-\n${e.toString()}`));
