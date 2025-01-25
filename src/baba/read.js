@@ -14,6 +14,17 @@ export const read = tk => {
             if (!tk.take(cont))
                 fatal("Expected `,` or `)`");
         }
+    }, infixl = (table, next) => () => {
+        const rhs = lhs => {
+            for (const entry of table) {
+                if (tk.take(entry[0])) {
+                    return rhs({ kind: entry[1], lhs, rhs: next() || fatal("Expected an expression.") });
+                }
+            }
+            return lhs;
+        };
+        const lhs = next();
+        return lhs && rhs(lhs);
     }, primary = () => {
         if (tk.take("lparen")) {
             const e = comma();
@@ -22,7 +33,7 @@ export const read = tk => {
             return e;
         }
         if (tk.take("lbracket")) {
-            return { kind: "list", opers: list(equality, "comma", "rbracket") };
+            return { kind: "list", opers: list(logor, "comma", "rbracket") };
         }
         const cl = tk.take("literal");
         if (cl) {
@@ -35,9 +46,9 @@ export const read = tk => {
         }
         return null;
     }, call = dest => {
-        return { kind: "call", dest, opers: list(equality, "comma", "rparen") };
+        return { kind: "call", dest, opers: list(logor, "comma", "rparen") };
     }, bracket_access = lhs => {
-        const rhs = equality();
+        const rhs = logor();
         if (!rhs) {
             return null;
         }
@@ -59,70 +70,59 @@ export const read = tk => {
         tk.take("hyphen") ? { kind: "neg", oper: prefix() || fatal("Expected an expression.") } :
             tk.take("exclam") ? { kind: "not", oper: prefix() || fatal("Expected an expression.") } :
                 tk.take("tilde") ? { kind: "bitcmp", oper: prefix() || fatal("Expected an expression.") } :
-                    postfix(), multiplicative_rhs = lhs => tk.take("ast") ? multiplicative_rhs({ kind: "mul", lhs, rhs: prefix() || fatal("Expected an expression.") }) :
-        tk.take("solid") ? multiplicative_rhs({ kind: "div", lhs, rhs: prefix() || fatal("Expected an expression.") }) :
-            tk.take("perc") ? multiplicative_rhs({ kind: "mod", lhs, rhs: prefix() || fatal("Expected an expression.") }) :
-                lhs, multiplicative = () => {
-        const lhs = prefix();
-        return lhs && multiplicative_rhs(lhs);
-    }, additive_rhs = lhs => tk.take("plus") ? additive_rhs({ kind: "add", lhs, rhs: multiplicative() || fatal("Expected an expression.") }) :
-        tk.take("hyphen") ? additive_rhs({ kind: "sub", lhs, rhs: multiplicative() || fatal("Expected an expression.") }) :
-            lhs, additive = () => {
-        const lhs = multiplicative();
-        return lhs && additive_rhs(lhs);
-    }, shift_rhs = lhs => tk.take("ltlt") ? shift_rhs({ kind: "shl", lhs, rhs: additive() || fatal("Expected an expression.") }) :
-        tk.take("gtgt") ? shift_rhs({ kind: "shr", lhs, rhs: additive() || fatal("Expected an expression.") }) :
-            lhs, shift = () => {
-        const lhs = additive();
-        return lhs && shift_rhs(lhs);
-    }, comparison_rhs = lhs => tk.take("gt") ? comparison_rhs({ kind: "gt", lhs, rhs: shift() || fatal("Expected an expression.") }) :
-        tk.take("ge") ? comparison_rhs({ kind: "ge", lhs, rhs: shift() || fatal("Expected an expression.") }) :
-            tk.take("lt") ? comparison_rhs({ kind: "lt", lhs, rhs: shift() || fatal("Expected an expression.") }) :
-                tk.take("le") ? comparison_rhs({ kind: "le", lhs, rhs: shift() || fatal("Expected an expression.") }) :
-                    lhs, comparison = () => {
-        const lhs = shift();
-        return lhs && comparison_rhs(lhs);
-    }, equality_rhs = lhs => tk.take("ee") ? equality_rhs({ kind: "ee", lhs, rhs: comparison() || fatal("Expected an expression.") }) :
-        tk.take("ne") ? equality_rhs({ kind: "ne", lhs, rhs: comparison() || fatal("Expected an expression.") }) :
-            lhs, equality = () => {
-        const lhs = comparison();
-        return lhs && equality_rhs(lhs);
-    }, bitand_rhs = lhs => tk.take("amp") ? bitand_rhs({ kind: "bitand", lhs, rhs: equality() || fatal("Expected an expression.") }) :
-        lhs, bitand = () => {
-        const lhs = equality();
-        return lhs && bitand_rhs(lhs);
-    }, bitxor_rhs = lhs => tk.take("caret") ? bitxor_rhs({ kind: "bitxor", lhs, rhs: bitand() || fatal("Expected an expression.") }) :
-        lhs, bitxor = () => {
-        const lhs = bitand();
-        return lhs && bitxor_rhs(lhs);
-    }, bitor_rhs = lhs => tk.take("pipe") ? bitor_rhs({ kind: "bitor", lhs, rhs: bitxor() || fatal("Expected an expression.") }) :
-        lhs, bitor = () => {
-        const lhs = bitxor();
-        return lhs && bitor_rhs(lhs);
-    }, logand_rhs = lhs => tk.take("ampamp") ? logand_rhs({ kind: "logand", lhs, rhs: bitor() || fatal("Expected an expression.") }) :
-        lhs, logand = () => {
-        const lhs = bitor();
-        return lhs && logand_rhs(lhs);
-    }, logor_rhs = lhs => tk.take("pipepipe") ? logor_rhs({ kind: "logor", lhs, rhs: logand() || fatal("Expected an expression.") }) :
-        lhs, logor = () => {
-        const lhs = logand();
-        return lhs && logor_rhs(lhs);
-    }, assignment = () => {
+                    postfix(), logor = infixl([
+        ["pipepipe", "logor"]
+    ], infixl([
+        ["ampamp", "logand"]
+    ], infixl([
+        ["pipe", "bitor"]
+    ], infixl([
+        ["caret", "bitxor"]
+    ], infixl([
+        ["amp", "bitand"]
+    ], infixl([
+        ["ee", "ee"],
+        ["ne", "ne"]
+    ], infixl([
+        ["gt", "gt"],
+        ["ge", "ge"],
+        ["lt", "lt"],
+        ["le", "le"]
+    ], infixl([
+        ["ltlt", "shl"],
+        ["gtgt", "shr"]
+    ], infixl([
+        ["plus", "add"],
+        ["hyphen", "sub"]
+    ], infixl([
+        ["ast", "mul"],
+        ["solid", "div"],
+        ["perc", "mod"]
+    ], prefix)))))))))), assignment = () => {
         const lhs = logor();
-        return lhs && (tk.take("equal") ? { kind: "assign", lhs, rhs: assignment() || fatal("Expected an expression.") } :
-            tk.take("pluseq") ? { kind: "assignadd", lhs, rhs: assignment() || fatal("Expected an expression.") } :
-                tk.take("hypheneq") ? { kind: "assignsub", lhs, rhs: assignment() || fatal("Expected an expression.") } :
-                    tk.take("asteq") ? { kind: "assignmul", lhs, rhs: assignment() || fatal("Expected an expression.") } :
-                        tk.take("solideq") ? { kind: "assigndiv", lhs, rhs: assignment() || fatal("Expected an expression.") } :
-                            tk.take("perceq") ? { kind: "assignmod", lhs, rhs: assignment() || fatal("Expected an expression.") } :
-                                tk.take("ltlteq") ? { kind: "assignshl", lhs, rhs: assignment() || fatal("Expected an expression.") } :
-                                    tk.take("gtgteq") ? { kind: "assignshr", lhs, rhs: assignment() || fatal("Expected an expression.") } :
-                                        tk.take("ampeq") ? { kind: "assignbitand", lhs, rhs: assignment() || fatal("Expected an expression.") } :
-                                            tk.take("careteq") ? { kind: "assignbitxor", lhs, rhs: assignment() || fatal("Expected an expression.") } :
-                                                tk.take("pipeeq") ? { kind: "assignbitor", lhs, rhs: assignment() || fatal("Expected an expression.") } :
-                                                    tk.take("ampampeq") ? { kind: "assignlogand", lhs, rhs: assignment() || fatal("Expected an expression.") } :
-                                                        tk.take("pipepipeeq") ? { kind: "assignlogor", lhs, rhs: assignment() || fatal("Expected an expression.") } :
-                                                            lhs);
+        if (!lhs)
+            return null;
+        const table = [
+            ["equal", "assign"],
+            ["pluseq", "assignadd"],
+            ["hypheneq", "assignsub"],
+            ["asteq", "assignmul"],
+            ["solideq", "assigndiv"],
+            ["perceq", "assignmod"],
+            ["ltlteq", "assignshl"],
+            ["gtgteq", "assignshr"],
+            ["ampeq", "assignbitand"],
+            ["careteq", "assignbitxor"],
+            ["pipeeq", "assignbitor"],
+            ["ampampeq", "assignlogand"],
+            ["pipepipeeq", "assignlogor"]
+        ];
+        for (const entry of table) {
+            if (tk.take(entry[0])) {
+                return { kind: entry[1], lhs, rhs: assignment() || fatal("Expected an expression.") };
+            }
+        }
+        return lhs;
     }, comma = () => {
         const lhs = assignment();
         return lhs && (tk.take("comma") ? { kind: "comma", lhs, rhs: comma() || fatal("Expected an expression.") } : lhs);
@@ -148,7 +148,7 @@ export const read = tk => {
         }
         else if (tk.take("if")) {
             function go() {
-                const cond = equality() || fatal("Expected an expression.");
+                const cond = logor() || fatal("Expected an expression.");
                 if (!tk.take("lbrace"))
                     fatal("Expected `{`.");
                 const then = statements() || fatal("Expected an expression.");
@@ -168,7 +168,7 @@ export const read = tk => {
             return go();
         }
         else if (tk.take("while")) {
-            const cond = equality() || fatal("Expected an expression.");
+            const cond = logor() || fatal("Expected an expression.");
             if (!tk.take("lbrace"))
                 fatal("Expected `{`.");
             const body = statements();
@@ -182,7 +182,7 @@ export const read = tk => {
                 if (!tk.take("in")) {
                     fatal("Expected `in`.");
                 }
-                const range = equality() || fatal("Expected an expression.");
+                const range = logor() || fatal("Expected an expression.");
                 if (!tk.take("lbrace")) {
                     fatal("Expected `{`.");
                 }
@@ -218,7 +218,7 @@ export const read = tk => {
                 fatal("Expected `}`.");
             if (!tk.take("while"))
                 fatal("Expected `while`.");
-            const cond = equality() || fatal("Expected an expression.");
+            const cond = logor() || fatal("Expected an expression.");
             return { kind: "dowhile", body, cond };
         }
         else if (tk.take("return")) {

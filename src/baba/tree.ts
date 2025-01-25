@@ -84,6 +84,11 @@ export type Expr =
   ExprLit
 
 export type ExprKind = Expr['kind'];
+type ExprSorts = { [i in ExprKind]: Rest<i, Expr> }
+type BinaryExprSorts = { [i in ExprKind]: ExprSorts[i] extends { lhs: Expr, rhs: Expr } ? ExprSorts[i] : never }
+export type BinaryExprKind = BinaryExprSorts[ExprKind]['kind']
+type Rest<i, Graph> = Graph extends { kind: i } & infer R ? R : never
+
 
 export type StmtFunction = { kind: "function", name: ExprRef | ExprLit, params: string[], body: Stmt[] }
 export type StmtIf = { kind: "if", cond: Expr, then: Stmt[] }
