@@ -270,7 +270,7 @@ return null }
 return (() => {
   const vars = new Map<string, ExprLit>()
   enumerate_stmts(all, vars)
-  if (vars.has("print")) {
-    vars.set("print", { kind: "lit", value: x => (print(JSON.stringify(x)), null) }) }
+  vars.set("print", { kind: "lit", value: x => (print(JSON.stringify(x) + "\n"), null) })
+  vars.set("puts", { kind: "lit", value: x => (print(x as string), null) })
   const a = evaluate_stmts(reduce_stmts(all, vars))
   if (a) throw "Illegal break, continue, or return statement outside a loop or function." })() }
