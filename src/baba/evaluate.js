@@ -97,7 +97,7 @@ export const exec = (all, print) => {
             const dest = evaluate_expr(expr.dest).value;
             return dest(...expr.opers.map(oper => evaluate_expr(oper).value));
         })() :
-            expr.kind === "access" ? (() => evaluate_expr(expr.lhs).value[evaluate_expr(expr.rhs).value])() :
+            expr.kind === "access" ? (() => evaluate_expr(expr.lhs).value[evaluate_expr(expr.rhs).value].value)() :
                 expr.kind === "assign" ? (() => evaluate_expr(expr.lhs).value = evaluate_expr(expr.rhs).value)() :
                     expr.kind === "assignadd" ? (() => evaluate_expr(expr.lhs).value += evaluate_expr(expr.rhs).value)() :
                         expr.kind === "assignsub" ? (() => evaluate_expr(expr.lhs).value -= evaluate_expr(expr.rhs).value)() :

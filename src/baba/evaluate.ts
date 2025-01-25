@@ -112,7 +112,7 @@ expr.kind === "call" ? (() => {
   (evaluate_expr(expr.dest).value as any)
   return dest (...expr.opers.map(oper => evaluate_expr(oper).value)) })() :
 expr.kind === "access" ? (() =>
-  (evaluate_expr(expr.lhs).value as any)[evaluate_expr(expr.rhs).value as any])() :
+  (evaluate_expr(expr.lhs).value as any)[evaluate_expr(expr.rhs).value as any].value)() :
 expr.kind === "assign" ? (() =>
   evaluate_expr(expr.lhs).value = evaluate_expr(expr.rhs).value)() :
 expr.kind === "assignadd" ? (() =>
