@@ -1,0 +1,30 @@
+let
+
+logic = #"logic.cru",
+arith = #"arith.cru",
+
+eq = arith.eq,
+sub = arith.sub,
+if = logic.if,
+
+this = {
+
+cat: __builtin_scat,
+slice: __builtin_sslice,
+eq: __builtin_seq,
+gt: __builtin_sgt,
+ge: __builtin_sge,
+lt: __builtin_slt,
+le: __builtin_sle,
+length: __builtin_slen,
+head l: l.[0],
+tail l: this.slice l 1 (this.length l),
+init l: this.slice l 0 (sub (this.length l) 1),
+last l: l.[sub (this.length l) 1],
+empty l: eq (this.length l) 0,
+
+
+uncons s y n: if (eq 0 (this.length s)) n (y (this.head s) (this.tail s)),
+foldr f b: let rec s = if (eq 0 (this.length s)) b (f (this.head s) (rec (this.tail s))) in rec
+
+} in this

@@ -1,8 +1,9 @@
-import { make, evaluate } from './cru.js';
+import { make } from './cru.js';
+import { evaluate } from './evaluate.js';
 export const exec = async (e, get, put, unput) => {
     const s = [], fatal = r => { throw new Error(`Because ${r}, the io is invalid.`); };
     let iops = 0;
-    let io = (_rec, rc, _ret) => rc([e, {}]);
+    let io = (_rec, rc, _ret) => rc(e);
     for (;;) {
         if (iops++ > 1e3) {
             throw new Error("Too many IOs.");
@@ -15,7 +16,7 @@ export const exec = async (e, get, put, unput) => {
             fatal("not enough elements");
         }
         const [opkind, ...args] = ior;
-        const op = evaluate((_rec, rc, _ret) => rc([opkind, {}]));
+        const op = evaluate((_rec, rc, _ret) => rc(opkind));
         if (typeof op !== "string") {
             fatal("a string was expected");
         }
@@ -28,7 +29,7 @@ export const exec = async (e, get, put, unput) => {
                 }
                 const [n, f] = args;
                 s.push(f);
-                io = (_rec, rc, _ret) => rc([n, {}]);
+                io = (_rec, rc, _ret) => rc(n);
                 continue;
             }
             case "return": {
@@ -50,7 +51,7 @@ export const exec = async (e, get, put, unput) => {
                     fatal("not enough elements");
                 }
                 const [s] = args;
-                const e = evaluate((_rec, rc, _ret) => rc([s, {}]));
+                const e = evaluate((_rec, rc, _ret) => rc(s));
                 if (typeof e !== "string") {
                     fatal("a string was expected");
                 }
@@ -87,7 +88,7 @@ export const exec = async (e, get, put, unput) => {
                     fatal("not enough elements");
                 }
                 const [r] = args;
-                const e = evaluate((_rec, rc, _ret) => rc([r, {}]));
+                const e = evaluate((_rec, rc, _ret) => rc(r));
                 x = e;
                 break;
             }
@@ -96,7 +97,7 @@ export const exec = async (e, get, put, unput) => {
                     fatal("not enough elements");
                 }
                 const [r, v] = args;
-                const e = evaluate((_rec, rc, _ret) => rc([r, {}]));
+                const e = evaluate((_rec, rc, _ret) => rc(r));
                 e[1] = v;
                 x = make("lit", undefined);
                 break;
@@ -109,7 +110,7 @@ export const exec = async (e, get, put, unput) => {
         if (!f) {
             return x;
         }
-        io = (_rec, rc, _ret) => rc([make("app", f, x), {}]);
+        io = (_rec, rc, _ret) => rc(make("app", f, x));
     }
 };
 //# sourceMappingURL=io.js.map

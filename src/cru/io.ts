@@ -1,4 +1,5 @@
-import { EvaluateBranch, Graph, make, evaluate, Shr } from './cru.js'
+import { EvaluateBranch, Graph, make, Shr } from './cru.js'
+import { evaluate } from './evaluate.js'
 
 export type Exec = (f: Graph, get: () => Promise<string>, put: (s: string) => void, unput: () => void) => Promise<Graph>
 
@@ -10,7 +11,7 @@ const
   s: Stack = [],
   fatal: Fail = r => { throw new Error(`Because ${r}, the io is invalid.`) }
 let iops = 0
-let io: EvaluateBranch = (_rec, rc, _ret) => rc([e, {}])
+let io: EvaluateBranch = (_rec, rc, _ret) => rc(e)
 for (;;) {
   if (iops++ > 1e3) {
     throw new Error("Too many IOs.") }
@@ -20,7 +21,7 @@ for (;;) {
   if (!(0 in ior)) {
     fatal("not enough elements") }
   const [opkind, ...args] = ior
-  const op = evaluate((_rec, rc, _ret) => rc([opkind, {}]))
+  const op = evaluate((_rec, rc, _ret) => rc(opkind))
   if (typeof op !== "string") {
     fatal("a string was expected") }
   let x!: Graph
@@ -33,7 +34,7 @@ for (;;) {
       fatal("not enough elements") }
     const [n, f] = args
     s.push(f)
-    io = (_rec, rc, _ret) => rc([n, {}])
+    io = (_rec, rc, _ret) => rc(n)
     continue }
   case "return": {
     if (!(0 in args) || !(1 in args)) {
@@ -52,7 +53,7 @@ for (;;) {
     if (!(0 in args)) {
       fatal("not enough elements") }
     const [s] = args
-    const e = evaluate((_rec, rc, _ret) => rc([s, {}]))
+    const e = evaluate((_rec, rc, _ret) => rc(s))
     if (typeof e !== "string") {
       fatal("a string was expected"); }
     put(e)
@@ -85,14 +86,14 @@ for (;;) {
     if (!(0 in args)) {
       fatal("not enough elements") }
     const [r] = args
-    const e = evaluate((_rec, rc, _ret) => rc([r, {}]))
+    const e = evaluate((_rec, rc, _ret) => rc(r))
     x = e as Shr
     break }
   case "set": {
     if (!(0 in args) || !(1 in args)) {
       fatal("not enough elements") }
     const [r, v] = args
-    const e = evaluate((_rec, rc, _ret) => rc([r, {}])) as Shr
+    const e = evaluate((_rec, rc, _ret) => rc(r)) as Shr
     e[1] = v
     x = make("lit", undefined)
     break }
@@ -102,4 +103,4 @@ for (;;) {
   const f = s.pop()
   if (!f) {
     return x }
-  io = (_rec, rc, _ret) => rc([make("app", f, x), {}]) } }
+  io = (_rec, rc, _ret) => rc(make("app", f, x)) } }

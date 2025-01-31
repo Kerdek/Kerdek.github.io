@@ -1,0 +1,25 @@
+import { Graph, Print, Value, visit } from "./cru.js"
+
+export const print: Print = visit({
+mod: () => `<module>`,
+app: () => `<application>`,
+abs: () => `<function>`,
+var: () => `<variable>`,
+acs: () => `<access>`,
+lit: ([, c]) =>
+  Array.isArray(c) ? `[${c.map(print).join(', ')}]` :
+  c === null ? `null` :
+  typeof c === "object" ? `{ ${Object.keys(c).map(k => `${k}: ${print(c[k] as Graph)}`).join(', ')} }` :
+  typeof c === "undefined" ? "undefined" :
+  JSON.stringify(c),
+shr: () => `<shared>`,
+lst: () => `<list>`,
+rec: () => `<record>` })
+
+export const print_value: (e: Value) => string = e =>
+typeof e === "function" ? "<function>" :
+Array.isArray(e) ? `[${e.map(print).join(', ')}]` :
+e === null ? `null` :
+typeof e === "object" ? `{ ${Object.keys(e).map(k => `${e}: ${print(e[k] as Graph)}`).join(', ')} }` :
+typeof e === "undefined" ? "undefined" :
+JSON.stringify(e)

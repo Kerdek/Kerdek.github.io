@@ -1,6 +1,9 @@
-import { print, read, tokenizer, evaluate, print_value } from './cru.js';
 import { exec } from './io.js';
 import { scanner } from '../scanner.js';
+import { tokenizer } from './tokenizer.js';
+import { read } from './read.js';
+import { evaluate } from './evaluate.js';
+import { print, print_value } from './print.js';
 (async () => {
     document.title = "cru playground";
     const include = (type, src) => new Promise(cb => {
@@ -191,7 +194,7 @@ import { scanner } from '../scanner.js';
                 }, () => {
                     output.removeChild(output.childNodes[output.childNodes.length - 1]);
                 });
-                output.appendChild(document.createTextNode(`\n-OK-\n${print_value(evaluate((_rec, rc, _ret) => rc([e, {}])))}`));
+                output.appendChild(document.createTextNode(`\n-OK-\n${print_value(evaluate((_rec, rc, _ret) => rc(e)))}`));
             }
             catch (e) {
                 output.appendChild(document.createTextNode(`\n-ERROR-\n${e.toString()}`));
@@ -213,7 +216,7 @@ import { scanner } from '../scanner.js';
             const text = editor.getValue();
             try {
                 const e = await read(tokenizer(scanner(text, window.location.href)));
-                output.appendChild(document.createTextNode(`\n-OK-\n${print_value(evaluate((_rec, rc, _ret) => rc([e, {}])))}`));
+                output.appendChild(document.createTextNode(`\n-OK-\n${print_value(evaluate((_rec, rc, _ret) => rc(e)))}`));
             }
             catch (e) {
                 output.appendChild(document.createTextNode(`\n-ERROR-\n${e.toString()}`));

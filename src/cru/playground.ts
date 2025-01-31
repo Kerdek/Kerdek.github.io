@@ -1,6 +1,9 @@
-import { print, read, tokenizer, evaluate, print_value } from './cru.js'
 import { exec } from './io.js'
 import { scanner } from '../scanner.js';
+import { tokenizer } from './tokenizer.js';
+import { read } from './read.js';
+import { evaluate } from './evaluate.js';
+import { print, print_value } from './print.js';
 
 (async () => {
 document.title = "cru playground"
@@ -188,7 +191,7 @@ async function run() {
         output.scrollTop = output.scrollHeight },
       () => {
         output.removeChild(output.childNodes[output.childNodes.length - 1] as Element) })
-    output.appendChild(document.createTextNode(`\n-OK-\n${print_value(evaluate((_rec, rc, _ret) => rc([e, {}])))}`)) }
+    output.appendChild(document.createTextNode(`\n-OK-\n${print_value(evaluate((_rec, rc, _ret) => rc(e)))}`)) }
   catch (e: any) {
     output.appendChild(document.createTextNode(`\n-ERROR-\n${e.toString()}`)) } }
 
@@ -206,7 +209,7 @@ async function ev() {
     const text = editor.getValue()
   try {
     const e = await read(tokenizer(scanner(text, window.location.href)))
-    output.appendChild(document.createTextNode(`\n-OK-\n${print_value(evaluate((_rec, rc, _ret) => rc([e, {}])))}`)) }
+    output.appendChild(document.createTextNode(`\n-OK-\n${print_value(evaluate((_rec, rc, _ret) => rc(e)))}`)) }
   catch (e: any) {
     output.appendChild(document.createTextNode(`\n-ERROR-\n${e.toString()}`)) } }
 
