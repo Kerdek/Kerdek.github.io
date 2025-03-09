@@ -126,7 +126,7 @@ const pg0 = playground('(λa b.b) "foo" "bar"')
 const substitution_remark = par(
   t("This is just like when you were asked to substitute variables into equations in grade school. Ben Lynn uses the follwing example. With the help of some built-in arithmetic, we can see that `(λx y.sqrt (add (mul x x) (mul y y))) 3 4` means to substitute `x = 3` and `y = 4` in `sqrt (add (mul x x) (mul y y))`."))
 
-const pg1 = playground("#\"builtin_arithmetic.lm\"λadd sub mul div eq neq gt lt ge le.\n#\"builtin_math.lm\"λpi sqrt log exp sin cos tan asin acos atan atan2 sinh cosh tanh asinh acosh atanh.\n\n(λx y.sqrt (add (mul x x) (mul y y))) 3 4")
+const pg1 = playground("#\"lib/builtin_arithmetic.lm\"λadd sub mul div eq neq gt lt ge le.\n#\"lib/builtin_math.lm\"λpi sqrt log exp sin cos tan asin acos atan atan2 sinh cosh tanh asinh acosh atanh.\n\n(λx y.sqrt (add (mul x x) (mul y y))) 3 4")
 
 const problems_remark = create_element('p', function () {}, [
   t("Problems occur when substituting inside an abstraction because the abstraction could bind variables which appear only after substitution. This problem can be solved by renaming variables as required during subsitution.") ])
@@ -163,22 +163,22 @@ const interpreter_remark = create_element('p', function () {}, [
 const let_remark = create_element('p', function () {}, [
   t("A lovely incantation introduces a combinator which we can use like a `let`.") ])
 
-const pg2 = playground("#\"builtin_arithmetic.lm\"λadd sub mul div eq neq gt lt ge le.\n#\"builtin_math.lm\"λpi sqrt log exp sin cos tan asin acos atan atan2 sinh cosh tanh asinh acosh atanh.\n\n(λa.a a) (λx f.f x) λlet.\n\nlet (λx.mul x x) λsquare.\nlet (λx y.sqrt (add (square x) (square y))) λhypotenuse.\n\nhypotenuse 3 4")
+const pg2 = playground("#\"lib/builtin_arithmetic.lm\"λadd sub mul div eq neq gt lt ge le.\n#\"lib/builtin_math.lm\"λpi sqrt log exp sin cos tan asin acos atan atan2 sinh cosh tanh asinh acosh atanh.\n\n(λa.a a) (λx f.f x) λlet.\n\nlet (λx.mul x x) λsquare.\nlet (λx y.sqrt (add (square x) (square y))) λhypotenuse.\n\nhypotenuse 3 4")
 
 const io_remark = create_element('p', function () {}, [
   t("We can also add IO support and create an IO monad without changing any existing parts (press `Run` in the following box, then click the output area and start typing). This works by mapping normal forms which are cons cells to various operations, one of which is a monadic bind.") ])
 
-const pg3 = playground("#\"preamble.lm\"λlet id car cdr head tail cons compose composer.\n#\"builtin_arithmetic.lm\"λadd sub mul div eq neq gt lt ge le.\n#\"builtin_logic.lm\"λrec if.\n#\"io_playground_console.lm\"λprint get put unput.\n#\"io_sequencing.lm\"λyield return bind bindr do.\n\nlet (rec λf.\n  bind get λx.\n  if (eq x \"Enter\") (\n    return true) $\n  f) λwaitforenter.\n  \n\ndo (print \"hi. tap here and press enter.\") $\ndo (waitforenter) $\ndo (print \"thank you for pressing enter. goodbye.\") $\nreturn true")
+const pg3 = playground("#\"lib/preamble.lm\"λlet id car cdr head tail cons compose composer.\n#\"lib/builtin_arithmetic.lm\"λadd sub mul div eq neq gt lt ge le.\n#\"lib/builtin_logic.lm\"λrec if.\n#\"lib/io_playground_console.lm\"λprint get put unput.\n#\"lib/io_sequencing.lm\"λyield return bind bindr do.\n\nlet (rec λf.\n  bind get λx.\n  if (eq x \"Enter\") (\n    return true) $\n  f) λwaitforenter.\n  \n\ndo (print \"hi. tap here and press enter.\") $\ndo (waitforenter) $\ndo (print \"thank you for pressing enter. goodbye.\") $\nreturn true")
 
 const sophisticated_remark = create_element('p', function() {}, [
   t("We can write very small programs which do complex io tasks. This one will accept your input string and print it out in reverse.") ])
 
-const pg4 = playground("#\"preamble.lm\"λlet id car cdr head tail cons compose composer.\n#\"builtin_logic.lm\"λrec if.\n#\"builtin_arithmetic.lm\"λadd sub mul div eq neq gt lt ge le.\n#\"io_playground_console.lm\"λprint get put unput.\n#\"io_sequencing.lm\"λyield return bind bindr do.\n\nrec (λf s.\n  bind get λx.\n  if (eq x \"Enter\") (\n    do (put (add \"\\n\" $ add s \"\\n\")) $\n    f \"\") $\n  if (eq x \"Escape\") (\n    put \"\\nThanks for using reverser.\\n\") $\n  do (put x) $\n  f (add x s)) \"\"")
+const pg4 = playground("#\"lib/preamble.lm\"λlet id car cdr head tail cons compose composer.\n#\"lib/builtin_logic.lm\"λrec if.\n#\"lib/builtin_arithmetic.lm\"λadd sub mul div eq neq gt lt ge le.\n#\"lib/io_playground_console.lm\"λprint get put unput.\n#\"lib/io_sequencing.lm\"λyield return bind bindr do.\n\nrec (λf s.\n  bind get λx.\n  if (eq x \"Enter\") (\n    do (put (add \"\\n\" $ add s \"\\n\")) $\n    f \"\") $\n  if (eq x \"Escape\") (\n    put \"\\nThanks for using reverser.\\n\") $\n  do (put x) $\n  f (add x s)) \"\"")
 
 const self_parse_remark = create_element('p', function() {}, [
   t("We can even parse and format lambda calculus with lambda calculus.") ])
 
-const pg5 = playground("#\"preamble.lm\"\\let id car cdr head tail cons compose composer.\n#\"io_playground_console.lm\"\\print get put unput.\n#\"io_sequencing.lm\"\\yield return bind bindr do.\n#\"io_fetch.lm\"\\fetch.\n#\"builtin_arithmetic.lm\"\\add sub mul div eq neq gt lt ge le.\n#\"lc.lm\"\\read _ format pretty.\n\n\nbind (fetch \"../lc/small_program.lc\") λtext.\nread text\n  (λx.do (put $ pretty 0 true x) $ put \"\\n\")\n  print\n")
+const pg5 = playground("#\"lib/preamble.lm\"\\let id car cdr head tail cons compose composer.\n#\"lib/io_playground_console.lm\"\\print get put unput.\n#\"lib/io_sequencing.lm\"\\yield return bind bindr do.\n#\"lib/io_fetch.lm\"\\fetch.\n#\"lib/builtin_arithmetic.lm\"\\add sub mul div eq neq gt lt ge le.\n#\"lib/lc.lm\"\\read _ format pretty.\n\n\nbind (fetch \"lib/small_program.lc\") λtext.\nread text\n  (λx.do (put $ pretty 0 true x) $ put \"\\n\")\n  print\n")
 
 document.body.append(
   header,

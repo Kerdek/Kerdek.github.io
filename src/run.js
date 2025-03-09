@@ -8,21 +8,11 @@ This module assists in writing
 non-recursive algorithms on recursive
 data structures.
 
-`run` accepts a `Process`, runs it,
-then returns.
-
-A `Process` takes no arguments and returns
-a `Stack` whose contents are pushed onto
-the existing stack.
-
-`ret` is an empty `Stack`, which indicates
-successful completion of a subroutine.
-
 */
-export const ret = [];
-export const jmp = x => [x];
-export const call = (x, y) => [x, y];
-export const run = s => {
+const ret = [];
+const jmp = x => [x];
+const call = (x, y) => [x, y];
+const run = s => {
     const y = [s];
     let ops = 0;
     for (;;) {
@@ -36,7 +26,7 @@ export const run = s => {
         y.unshift(...f());
     }
 };
-export const async_run = async (s) => {
+const async_run = async (s) => {
     const y = [s];
     let ops = 0;
     for (;;) {
@@ -52,12 +42,12 @@ export const async_run = async (s) => {
 };
 export const homproc = e => {
     let d;
-    run(e((x, v) => call(x, () => v(d)), v => (d = v, ret)));
+    run(e((x, v) => call(x, () => v(d)), x => jmp(x), v => (d = v, ret)));
     return d;
 };
 export const async_homproc = async (e) => {
     let d;
-    await async_run(e((x, v) => call(x, () => v(d)), v => (d = v, ret)));
+    await async_run(e((x, v) => call(x, () => v(d)), x => jmp(x), v => (d = v, ret)));
     return d;
 };
 //# sourceMappingURL=run.js.map

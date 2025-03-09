@@ -1,0 +1,15 @@
+let pre = {
+
+id x: x,
+di x f: f x,
+car a b: a,
+cdr a b: b,
+just a f g: f a,
+cons a b f g: f a b,
+none f g: g,
+empty_maybe x: x (\_.false) true,
+empty_list x: x (\_ _.false) true,
+compose f g x: f (g x),
+composer f g x: g (f x)
+
+} in pre

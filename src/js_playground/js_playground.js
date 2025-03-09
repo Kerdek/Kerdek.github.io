@@ -1,4 +1,3 @@
-"use strict";
 (async () => {
     document.title = 'mystery playground';
     const include = (type, src) => new Promise(cb => {
@@ -121,4 +120,5 @@
         editor.getModel().onDidChangeContent(reset);
     });
 })();
+export {};
 //# sourceMappingURL=js_playground.js.map

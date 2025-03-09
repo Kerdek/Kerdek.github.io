@@ -1,0 +1,28 @@
+type NumberList = \X.(Number -> NumberList -> X) -> X -> X in
+let
+
+  io = #"io.cru",
+  arith = #"arith.cru",
+  stringify = #"stringify.cru",
+
+  return = io.return,
+  do = io.do,
+  put = io.put,
+  add = arith.add,
+  cat = arith.cat,
+
+  cons x y f g = f x y,
+  none f g = g,
+
+  fibab::Number -> Number -> NumberList a b = cons a (fibab b (add a b)),
+  fib = fibab 0 1,
+
+  print_number_list::NumberList -> IO Unknown l =
+  l (\a b.
+    do (put (cat (stringify a) "\n")) $
+    print_number_list b) $
+  return 0
+
+in
+
+print_number_list fib

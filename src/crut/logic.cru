@@ -1,0 +1,8 @@
+{
+
+if: __builtin_if,
+and: __builtin_and,
+or: __builtin_or,
+not: __builtin_not
+
+}

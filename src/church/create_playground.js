@@ -1,6 +1,7 @@
-import { read, pretty, delimit } from './church.js';
 import { exec } from './io.js';
 import { evaluate } from './evaluate.js';
+import { print_value } from './print.js';
+import { read } from './read.js';
 const include = (type, src) => new Promise(cb => {
     const js = document.createElement('script');
     js.src = src;
@@ -156,12 +157,12 @@ export function create_playground(initial) {
             const reada = await read(text);
             const inputs = ["this", "is", "the", "secret", "message"];
             inputs.reverse();
-            output.appendChild(t(`result: ${pretty(evaluate(await exec(delimit(reada)[0], evaluate, async () => keybuf.shift() || await new Promise(cb => (keywait = cb)), s => {
+            output.appendChild(t(`result: ${(e => print_value(evaluate((_rec, cc, _ret) => cc([e, {}]))))(await exec(reada, async () => keybuf.shift() || await new Promise(cb => (keywait = cb)), s => {
                 output.appendChild(t(s));
                 output.scrollTop = output.scrollHeight;
             }, () => {
                 output.removeChild(output.childNodes[output.childNodes.length - 1]);
-            })))}`));
+            }))}`));
             output.scrollTop = output.scrollHeight;
         }
         catch (e) {
@@ -174,20 +175,7 @@ export function create_playground(initial) {
         const text = editor.getValue();
         try {
             const reada = await read(text);
-            output.appendChild(t(pretty(evaluate(delimit(reada)[0]))));
-            output.scrollTop = output.scrollHeight;
-        }
-        catch (e) {
-            output.appendChild(t(e.toString()));
-            output.scrollTop = output.scrollHeight;
-        }
-    }
-    async function pt() {
-        output.innerHTML = '';
-        const text = editor.getValue();
-        try {
-            const reada = await read(text);
-            output.appendChild(t(pretty(reada)));
+            output.appendChild(t(print_value(evaluate((_rec, cc, _ret) => cc([reada, {}])))));
             output.scrollTop = output.scrollHeight;
         }
         catch (e) {
@@ -197,7 +185,6 @@ export function create_playground(initial) {
     }
     const eval_button = button("Evaluate", "(F4) Evaluate the program and show the result.", ev);
     const run_button = button("Run", "(Shift + F4) Run the IO machine on the program and show the result.", run);
-    const pretty_button = button("Pretty", "Show the program as given.", pt);
     const menu = create_element('div', function () {
         this.style.width = "100%";
         this.style.flexShrink = "0";
@@ -208,7 +195,7 @@ export function create_playground(initial) {
         this.style.borderBottomColor = playground_colors.contrast;
         this.style.borderBottomWidth = "1px";
     }, [
-        eval_button, run_button, pretty_button
+        eval_button, run_button
     ]);
     const entry = create_element('div', function () {
         this.style.width = "100%";

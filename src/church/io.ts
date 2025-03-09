@@ -1,144 +1,85 @@
-import { make, read, pretty, Graph, Bar, Evaluate } from './church.js'
+import { Value, EvaluateBranch, Graph } from './church.js'
+import { evaluate } from './evaluate.js'
+import { print_value } from './print.js'
+import { read } from './read.js'
 
-export type Exec = (f: Graph, evaluate: Evaluate, get: () => Promise<string>, put: (s: string) => void, unput: () => void) => Promise<Graph>
+export type Exec = (f: Graph, get: () => Promise<string>, put: (s: string) => void, unput: () => void) => Promise<Graph>
 
 type Fail = (reason: string) => never
-type Stack = Graph[]
+type Stack = Value[]
 
-const car = await read('λx y.x'), cdr = await read('λx y.y')
+const
+  car = await read('λx y.x'),
+  cdr = await read('λx y.y')
 
-export const exec: Exec = async (io, evaluate, get_in, put_out, unput_out) => {
+export const exec: Exec = async (e, get, put, unput) => {
 const
   s: Stack = [],
-  fatal: Fail = r => { throw new Error(`Because ${r}, the io \`${io = evaluate(io), pretty(io)}\` is invalid.`) }
+  fatal: Fail = r => { throw new Error(`Because ${r}, the io is invalid.`) }
 let iops = 0
-const get_lit: (e: Graph) => any = e => (e = evaluate(e), e[0] !== "lit" ? fatal(`a literal is required where \`${pretty(e)}\` was provided`) : e[1])
+let io: EvaluateBranch = (_rec, cc, _ret) => cc([e, {}])
 for (;;) {
   if (iops++ > 1e3) {
     throw new Error("Too many IOs.") }
-  const op = get_lit(make("app", io, car))
+  const ior = evaluate(io);
+  if (typeof ior !== "function") {
+    fatal("a function was expected") }
+  const op = evaluate(ior(car))
+  if (typeof op !== "string") {
+    fatal("a string was expected") }
   let x!: Graph
   switch (op) {
 
   // sequencing
 
-
   case "bind": {
-    const iol: Bar = make(make("app", io, cdr))
-    s.push(make("app", make<Graph>("ind", iol), cdr))
-    io = make("app", make<Graph>("ind", iol), car)
+    const iol = evaluate(ior(cdr))
+    if (typeof iol !== "function") {
+      fatal("a function was expected") }
+    s.push(evaluate(iol(cdr)))
+    io = iol(car)
     continue }
   case "return": {
-    x = make("app", io, cdr)
+    x = { kind: "app", lhs: { kind: "lit", value: ior }, rhs: cdr }
     break }
   case "yield": {
     await new Promise(c => window.setTimeout(c, 0))
-    x = make("lit", true)
-    break }
-
-  // js
-
-  case "invoke": {
-    const iol0: Bar = make(make("app", io, cdr))
-    const iol1: Bar = make(make("app", make<Graph>("ind", iol0), cdr))
-    x = make("lit",
-      get_lit(make("app", make<Graph>("ind", iol0), car))[get_lit(make("app", make<Graph>("ind", iol1), car))](
-        ...get_lit(make("app", make<Graph>("ind", iol1), cdr))))
-    break }
-  case "new": {
-    const iol: Bar = make(make("app", io, cdr))
-    x = make("lit",
-      new (get_lit(make("app", make<Graph>("ind", iol), car)))(
-        ...get_lit(make("app", make<Graph>("ind", iol), cdr))))
-    break }
-  case "elem": {
-    const iol: Bar = make(make("app", io, cdr))
-    x = make("lit",
-      get_lit(make("app", make<Graph>("ind", iol), car))[
-        get_lit(make("app", make<Graph>("ind", iol), cdr))])
-    break }
-  case "delete": {
-    const iol: Bar = make(make("app", io, cdr))
-    delete get_lit(make("app", make<Graph>("ind", iol), car))[
-      get_lit(make("app", make<Graph>("ind", iol), cdr))]
-    make("lit", true)
-    break }
-  case "newArray": {
-    x = make("lit", [])
-    break }
-  case "newObject": {
-    x = make("lit", {})
-    break }
-  case "push": {
-    const iol: Bar = make(make("app", io, cdr))
-    get_lit(make("app", make<Graph>("ind", iol), car)).push(
-      get_lit(make("app", make<Graph>("ind", iol), cdr)))
-    x = make("lit", true)
-    break }
-  case "unshift": {
-    const iol: Bar = make(make("app", io, cdr))
-    get_lit(make("app", make<Graph>("ind", iol), car)).unshift(
-      get_lit(make("app", make<Graph>("ind", iol), cdr)))
-    x = make("lit", true)
-    break }
-  case "pop": {
-    x = make("lit", get_lit(make("app", io, cdr)).pop())
-    break }
-  case "shift": {
-    x = make("lit", get_lit(make("app", io, cdr)).shift())
-    break }
-  case "get": {
-    x = make("lit", await get_in())
-    break }
-
-  // websockets
-
-  case "waitOpen": {
-    const r = get_lit(make("app", io, cdr))
-    await new Promise(c => r.onopen = c)
-    x = make("lit", true)
-    break }
-  case "send": {
-    const iol: Bar = make(make("app", io, cdr))
-    x = make("lit",
-      get_lit(make("app", make<Graph>("ind", iol), car)).send(
-        get_lit(make("app", make<Graph>("ind", iol), cdr))))
-    break }
-  case "waitMessage": {
-    const r = get_lit(make("app", io, cdr))
-    x = make("lit", await new Promise(c => r.onmessage = (e: any) => { delete r.onmessage; c(e) }))
+    x = { kind: "lit", value: true }
     break }
 
   // fetch
 
   case "fetch": {
-    const r = get_lit(make("app", io, cdr))
+    const r = evaluate(ior(cdr))
+    if (typeof r !== "string") {
+      fatal("a string was expected") }
     let res = await fetch(`./${r}`);
     if (!res.ok) {
       fatal(`HTTP status ${res.status} while fetching \`./${r}\``) }
-    x = make("lit", await res.text())
+    x = { kind: "lit", value: await res.text() }
     break }
 
-  // playground console io
+  // console io
 
   case "print": {
-    put_out(pretty(evaluate(make("app", io, cdr))))
-    put_out("\n")
-    x = make("lit", true)
+    put(print_value(evaluate(ior(cdr))))
+    put("\n")
+    x = { kind: "lit", value: true }
+    break }
+
+  case "get": {
+    x = { kind: "lit", value: await get() }
     break }
   case "put": {
-    put_out(get_lit(make("app", io, cdr)))
-    x = make("lit", true)
+    const e = evaluate(ior(cdr))
+    if (typeof e !== "string") {
+      fatal("a string was expected"); }
+    put(e)
+    x = { kind: "lit", value: true }
     break }
   case "unput": {
-    unput_out()
-    x = make("lit", true)
-    break }
-
-  // eval
-
-  case "eval": {
-    x = make("lit", eval(get_lit(make("app", io, cdr))))
+    unput()
+    x = { kind: "lit", value: true }
     break }
 
   default: {
@@ -146,4 +87,6 @@ for (;;) {
   const f = s.pop()
   if (!f) {
     return x }
-  io = make("app", f, x) } }
+  if (typeof f !== "function") {
+    fatal("a function was expected") }
+  io = f(x) } }

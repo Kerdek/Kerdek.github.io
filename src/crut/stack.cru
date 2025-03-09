@@ -1,0 +1,20 @@
+type List = \X.(Number -> List -> X) -> X -> X in
+type Maybe = \X.(Number -> X) -> X -> X in
+type Stack = {
+  empty: Boolean,
+  push: Number -> Stack,
+  pop: Stack,
+  peek: Maybe } in
+let
+  make :: List -> Stack,
+  none f g = g,
+  some x f g = f x,
+  make head =
+    let
+      on_empty :: Stack,
+      on_nonempty :: Number -> List -> Stack,
+      push x = make (\f g.f x head),
+      on_empty = { empty: true, push, peek: none, pop: on_empty },
+      on_nonempty a b = { empty: false, push, peek: some a, pop: make b } in
+    head on_nonempty on_empty in
+make none

@@ -8,41 +8,39 @@ This module assists in writing
 non-recursive algorithms on recursive
 data structures.
 
-`run` accepts a `Process`, runs it,
-then returns.
-
-A `Process` takes no arguments and returns
-a `Stack` whose contents are pushed onto
-the existing stack.
-
-`ret` is an empty `Stack`, which indicates
-successful completion of a subroutine.
-
 */
 
 type Stack = Process[]
-export type Branch = [] | [Process] | [Process, Process]
-export type Process = () => Branch
-export type Run = (x: Process) => void
+type Branch = [] | [Process] | [Process, Process]
+type Process = () => Branch
+type Run = (x: Process) => void
 
 type AsyncStack = AsyncProcess[]
-export type AsyncBranch = [] | [AsyncProcess] | [AsyncProcess, AsyncProcess]
-export type AsyncProcess = () => Promise<AsyncBranch>
-export type AsyncRun = (x: AsyncProcess) => Promise<void>
+type AsyncBranch = [] | [AsyncProcess] | [AsyncProcess, AsyncProcess]
+type AsyncProcess = () => Promise<AsyncBranch>
+type AsyncRun = (x: AsyncProcess) => Promise<void>
 
-type HomProc = <T>(e: (c: (u: Process, v: (x: T) => Branch) => Branch, r: (x: T) => Branch) => Process) => T
-type AsyncHomProc = <T>(e: (c: (u: AsyncProcess, v: (x: T) => Promise<AsyncBranch>) => AsyncBranch, r: (x: T) => AsyncBranch) => AsyncProcess) => Promise<T>
+type HomCall<Result, RealWorld> = (u: () => RealWorld, v: (x: Result) => RealWorld) => RealWorld
+type HomCC<_Result, RealWorld> = (u: () => RealWorld) => RealWorld
+type HomRet<Result, RealWorld> = (x: Result) => RealWorld
 
-export const ret: Branch = []
-export const jmp: {
-  (destination: Process): Branch
-  (destination: AsyncProcess): AsyncBranch }= x => [x] as any
+type AsyncHomCall<Result, RealWorld> = (u: () => Promise<RealWorld>, v: (x: Result) => Promise<RealWorld>) => RealWorld
+type AsyncHomCC<_Result, RealWorld> = (u: () => Promise<RealWorld>) => RealWorld
+type AsyncHomRet<Result, RealWorld> = (x: Result) => RealWorld
 
-export const call: {
-  (destination: Process, then: Process): Branch
-  (destination: AsyncProcess, then: AsyncProcess): AsyncBranch } = (x, y) => [x, y] as any
+type HomProc = <Result>(e: <RealWorld>(call: HomCall<Result, RealWorld>, cc: HomCC<Result, RealWorld>, ret: HomRet<Result, RealWorld>) => () => RealWorld) => Result
+type AsyncHomProc = <Result>(e: <RealWorld>(call: AsyncHomCall<Result, RealWorld>, cc: AsyncHomCC<Result, RealWorld>, ret: AsyncHomRet<Result, RealWorld>) => () => Promise<RealWorld>) => Promise<Result>
 
-export const run: Run = s => {
+const ret: Branch = []
+const jmp: {
+  (destination: () => Branch): Branch
+  (destination: () => Promise<AsyncBranch>): AsyncBranch }= x => [x] as any
+
+const call: {
+  (destination: () => Branch, then: Process): Branch
+  (destination: () => Promise<AsyncBranch>, then: AsyncProcess): AsyncBranch } = (x, y) => [x, y] as any
+
+const run: Run = s => {
 const y: Stack = [s]
 let ops: number = 0
 for (;;) {
@@ -53,7 +51,7 @@ for (;;) {
     return }
   y.unshift(...f()) } }
 
-export const async_run: AsyncRun = async s => {
+const async_run: AsyncRun = async s => {
 const y: AsyncStack = [s]
 let ops: number = 0
 for (;;) {
@@ -66,10 +64,10 @@ for (;;) {
 
 export const homproc: HomProc = e => {
 let d!: any
-run(e((x, v) => call(x, () => v(d)), v => (d = v, ret)))
+run(e((x, v) => call(x, () => v(d)), x => jmp(x), v => (d = v, ret)))
 return d }
 
 export const async_homproc: AsyncHomProc = async e => {
 let d!: any
-await async_run(e((x, v) => call(x, () => v(d)), v => (d = v, ret)))
+await async_run(e((x, v) => call(x, () => v(d)), x => jmp(x), v => (d = v, ret)))
 return d }

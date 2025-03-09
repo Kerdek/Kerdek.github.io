@@ -1,0 +1,29 @@
+{
+  ...sequencing,
+  ...references,
+  ...console_io,
+  ...rng } where (
+
+sequencing = { return, bind, yield, do, pass },
+
+return x = ["return", x],
+bind x y = ["bind", x, y],
+yield = monad "yield",
+do x y = bind x (\_ -> y),
+pass = return undefined,
+
+references = { new, get, set },
+
+new = monad "new",
+get = monad "get",
+set = monad "set",
+
+console_io = { puts, print, printf },
+
+puts x = ["puts", x],
+print x = puts (#"to_string.cru" x),
+printf s a = puts (#"format.cru" s a),
+
+rng = { random },
+
+random = monad "random")

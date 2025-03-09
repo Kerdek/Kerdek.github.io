@@ -1,0 +1,28 @@
+format where (
+
+to_string = #"to_string.cru",
+arith = #"arith.cru",
+logic = #"logic.cru",
+tuple = #"tuple.cru",
+
+add = arith.add,
+eq = arith.eq,
+if = logic.if,
+
+insert s a =
+  if (tuple.empty s) "%" $
+  let
+    heads = tuple.head s,
+    rtaila = rest (tuple.tail a),
+    rest = format (tuple.tail s) in
+  if (eq heads "v") (
+    add (to_string (tuple.head a)) rtaila) $
+  if (eq heads "s") (
+    add (tuple.head a) rtaila) $
+  add "%" $ add heads $ add (rest a),
+
+format s a =
+  if (tuple.empty s) "" $
+  let head = tuple.head s, tails = tuple.tail s in
+  if (eq head "%") (insert tails a) $
+  add head (format tails a))

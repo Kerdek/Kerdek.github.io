@@ -1,0 +1,13 @@
+fold where (
+
+fold uncons = {
+  r g b: rec
+    where (
+      rec s = uncons s nonempty b,
+      nonempty x y = g x (rec y)),
+
+  l g: rec
+    where (
+      rec b s = uncons s nonempty b
+        where (
+          nonempty x y = rec (g x b) y)) })

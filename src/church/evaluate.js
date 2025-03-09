@@ -1,20 +1,19 @@
-import { make, pretty, reduce, visit } from './church.js';
+import { visit } from './church.js';
 import { get_builtin } from './builtin.js';
-import { homproc, jmp } from '../run.js';
-export const evaluate = e => homproc((call, ret) => {
-    const fatal = m => { throw new Error(m); };
-    const s = visit({
-        app: e => call(s(e[1]), dx => jmp(visit({
-            abs: ([, i, o, x]) => o === "lazy" ? jmp(s(make("ext", i, make(e[2]), x))) : call(s(e[2]), dy => jmp(s(make("ext", i, make(dy), x)))),
-            blt: ([, r]) => r(call, ret, s, fatal, e[2]),
-            lit: ([, r]) => fatal(`Cannot apply literal \`${JSON.stringify(r)}\` to \`${pretty(e[2])}\`.`)
-        })(dx))),
-        ext: e => jmp(s(reduce(e))),
-        elm: e => jmp(s(e[2])),
-        ind: e => call(s(e[1][0]), dx => (e[1][0] = dx, ret(dx))),
-        ref: ([, i]) => (r => r ? ret(r) : fatal(`No known built-in named \`${i}\`.`))(get_builtin[i]),
-        abs: ret, lit: ret, blt: ret
+import { stam } from '../stam.js';
+const fatal = m => { throw new Error(m); };
+export const evaluate = stam((rec, rc, ret) => {
+    const table = visit({
+        app: ({ lhs, rhs }, o) => rec([lhs, o], dx => typeof dx !== "function" ? fatal(`Expected a function.`) :
+            dx({ kind: "ext", defs: o, body: rhs })(rec, rc, ret)),
+        ext: ({ defs, body }, o) => rc([body, { ...o, ...defs }]),
+        shr: (e, _o) => 'value' in e ? ret(e.value) : rec([e.body, {}], dx => (e.value = dx, ret(dx))),
+        abs: ({ param, body }, o) => ret(a => (_rec, cc, _ret) => cc([body, { ...o, [param]: { kind: "shr", body: a } }])),
+        ref: ({ id }, o) => (r => r ? rc([r, {}]) :
+            (r => r !== undefined ? ret(r) :
+                fatal(`Undefined reference to \`${id}\`.`))(get_builtin[id]))(o[id]),
+        lit: ({ value }, _o) => ret(value)
     });
-    return s(e);
+    return ([e, o]) => () => table(e, o);
 });
 //# sourceMappingURL=evaluate.js.map

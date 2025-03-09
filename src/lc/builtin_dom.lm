@@ -1,7 +1,0 @@
-#"preamble.lm"\let id car cdr head tail cons compose composer.
-
-let __builtin_document λdocument.
-let __builtin_console λconsole.
-let __builtin_WebSocket λWebSocket.
-
-\f.f document console WebSocket

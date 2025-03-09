@@ -64,7 +64,7 @@ document.title = 'hi'
 map(style_rule)(
   `@font-face {
     font-family: CMU Typewriter Text;
-    src: url('./cmuntt.ttf') }`,
+    src: url('../cmuntt.ttf') }`,
 
   `:root {
     --foreground_color: white;
@@ -73,7 +73,7 @@ map(style_rule)(
   `* { margin: 0; padding: 0 }`,
 
   `body {
-    font-family: Typewriter;
+    font-family: CMU Typewriter Text;
     background: var(--background_color);
     color: var(--foreground_color); }`)
 
@@ -259,6 +259,7 @@ input.addEventListener('keydown', async ev => {
   if (ev.key === "Escape") {
     await coop() }
   if (ev.key === "Enter") {
+    if (ev.shiftKey) { return }
     const cb_make = (e, a) => {
       if (e.kind === 'thk') return
       const term_element = svg_text({})(t(cap(e)))
