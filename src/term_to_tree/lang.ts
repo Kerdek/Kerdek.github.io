@@ -5,12 +5,6 @@ type Ref = ["ref", string]
 export type Term = Abs | App | Ref
 export type Kind = Term[0]
 
-export type PrettyOptions = {
-  overcomeBarriers?: boolean,
-  showExistentials?: boolean,
-  showEliminators?: boolean,
-  surroundTrailingQuantifiers?: boolean }
-
 export type Fatal = (m: string) => never
 export type Print = (e: Term) => string
 
@@ -41,8 +35,8 @@ const
       colo = m.index + w[2]
       w[1]++ } },
   ws = k(/^\s*/),
-  id = k(/^\w[\w0-9]*/),
-  lm = k(/^(\\|λ)/), dt = k(/^\./),
+  id = k(/^[^\s\\λ\.\(\)]+/),
+  lm = k(/^[\\λ]/), dt = k(/^\./),
   lp = k(/^\(/), rp = k(/^\)/),
   fatal: Fatal = m => { throw new Error(`(${w}): ${m}`) },
   parameters: () => Term = () => (ws(), dt() ? expression() : (i => i ? make("abs", i, parameters()) : fatal("Expected `.` or an identifier."))((ws(), id()))),

@@ -104,45 +104,50 @@ import { read, to_digraph } from "./lang.js";
     cmd.style.color = "inherit";
     cmd.style.whiteSpace = "pre-wrap";
     cmd.style.wordBreak = "break-all";
-    cmd.style.height = "12pt";
+    cmd.style.minHeight = "12pt";
+    cmd.style.overflow = "hidden";
     cmd.style.width = "100%";
     const output = document.createElement('div');
     document.body.appendChild(output);
     output.style.position = "relative";
     const dispatch = async () => {
         const s = cmd.textContent || '';
-        const e = read(s);
-        if (!e) {
+        try {
+            const e = read(s);
+            const input_segment = document.createElement('div');
+            output.appendChild(input_segment);
+            const output_segment = document.createElement('div');
+            output.appendChild(output_segment);
+            output_segment.appendChild(await to_digraph("state", e));
+        }
+        catch {
             const p = document.createElement("p");
             p.innerText = " # parse error #";
             output.appendChild(p);
             window.scrollTo(0, document.body.scrollHeight);
             return;
         }
-        const input_segment = document.createElement('div');
-        output.appendChild(input_segment);
-        const output_segment = document.createElement('div');
-        output.appendChild(output_segment);
-        output_segment.appendChild(await to_digraph("state", e));
     };
     const reset = () => {
         cmd.innerHTML = '';
         output.innerHTML = '';
     };
     reset_link.addEventListener('click', reset);
-    cmd.addEventListener('keydown', e => {
+    cmd.onkeydown = e => {
         if (e.key === 'Enter') {
             if (e.ctrlKey) {
                 reset();
+                e.preventDefault();
                 return false;
             }
             if (!e.shiftKey) {
                 dispatch();
+                e.preventDefault();
                 return false;
             }
         }
-        return false;
-    });
+        return true;
+    };
     cmd.focus();
 })();
 //# sourceMappingURL=repl.js.map

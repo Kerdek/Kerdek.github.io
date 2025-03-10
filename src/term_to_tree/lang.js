@@ -17,7 +17,7 @@ export const read = x => {
             colo = m.index + w[2];
             w[1]++;
         }
-    }, ws = k(/^\s*/), id = k(/^\w[\w0-9]*/), lm = k(/^(\\|λ)/), dt = k(/^\./), lp = k(/^\(/), rp = k(/^\)/), fatal = m => { throw new Error(`(${w}): ${m}`); }, parameters = () => (ws(), dt() ? expression() : (i => i ? make("abs", i, parameters()) : fatal("Expected `.` or an identifier."))((ws(), id()))), primary = () => (ws(),
+    }, ws = k(/^\s*/), id = k(/^[^\s\\λ\.\(\)]+/), lm = k(/^[\\λ]/), dt = k(/^\./), lp = k(/^\(/), rp = k(/^\)/), fatal = m => { throw new Error(`(${w}): ${m}`); }, parameters = () => (ws(), dt() ? expression() : (i => i ? make("abs", i, parameters()) : fatal("Expected `.` or an identifier."))((ws(), id()))), primary = () => (ws(),
         lm() ? parameters() :
             lp() ? (wp => (x => rp() ? x : fatal(`Expected \`)\` to match \`(\` at (${wp}).`))(expression()))([...w]) :
                 (r => r ? make("ref", r) : null)(id())), juxt_rhs = x => (u => u ? juxt_rhs(make("app", x, u)) : x)(primary()), juxt = () => (u => u ? juxt_rhs(u) : fatal("Expected a term."))(primary()), expression = juxt;
