@@ -1,0 +1,19 @@
+(λa.a a) (λx f.f x) λlet.
+let (λa b f.f a b) λcons.
+
+let (cons "return") λreturn.
+let (λx y.cons "bind" $ cons x y) λbind.
+let (cons "get" cdr) λget.
+let (cons "put") λput.
+
+let (λget_prev.
+  bind get_prev λstr.
+  bind get λnext.
+  return $ next + " " + str)
+λrecursive_case.
+
+let get λbase_case.
+
+let (5 recursive_case base_case) λreader.
+
+bind reader put

@@ -1,0 +1,6 @@
+(\a.a a) (\x f.f x) \let.
+let (\a b.a) \left.
+let (\a b.b) \right.
+let (\a b f.f a b) \pair.
+
+pair "foo" (pair "bar" "baz") right left

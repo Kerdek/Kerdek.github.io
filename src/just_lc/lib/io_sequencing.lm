@@ -1,0 +1,10 @@
+#"preamble.lm"\let id car cdr head tail cons compose composer.
+#"io_declarators.lm"\nullary_io unary_io binary_io ternary_io.
+
+nullary_io "yield" λyield.
+unary_io "return" λreturn.
+binary_io "bind" λbind.
+let (λx y.bind x (car y)) λdo.
+let (λx y.bind y x) \bindr.
+
+λf.f yield return bind bindr do

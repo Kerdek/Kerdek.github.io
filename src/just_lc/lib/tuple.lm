@@ -1,0 +1,6 @@
+#"preamble.lm"\let id car cdr head tail cons compose composer.
+#"ary.lm"\ary aryl aryr.
+
+let (aryr composer let id id) \tuple.
+
+\f.f tuple

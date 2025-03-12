@@ -1,0 +1,5 @@
+#"io_declarators.lm"\nullary_io unary_io binary_io ternary_io.
+
+unary_io "fetch" λfetch.
+
+\f.f fetch

@@ -1,0 +1,12 @@
+#"preamble.lm"\let id car cdr head tail cons compose composer.
+#"builtin_arithmetic.lm"\add sub mul div eq neq gt lt ge le.
+#"io_sequencing.lm"\yield return bind bindr do.
+#"io_playground_console.lm"\print get put unput.
+#"ary.lm"\ary aryl aryr.
+#"doall.lm"\doall.
+
+doall 3
+  (car $ get)
+  (print)
+  (car $ print "that's the key you pressed")
+  true

@@ -1,0 +1,9 @@
+#"preamble.lm"\let id car cdr head tail cons compose composer.
+
+let __builtin_shead λshead.
+let __builtin_stail λstail.
+let __builtin_sempty λsempty.
+let __builtin_jsonstringify λjsonstringify.
+let __builtin_jsonparse λjsonparse.
+
+\f.f shead stail sempty jsonstringify jsonparse

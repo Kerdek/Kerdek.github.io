@@ -1,0 +1,10 @@
+#"preamble.lm"\let id car cdr head tail cons compose composer.
+#"io_playground_console.lm"\print get put unput.
+#"io_sequencing.lm"\yield return bind bindr do.
+#"builtin_logic.lm"\rec if.
+
+let (rec \f.cons "hi" $ cons "bye" f) \hibye.
+
+let (rec \f l.l (\a b _.do (print a) $ do yield $ f b) (return 0)) \printlist.
+
+printlist hibye
