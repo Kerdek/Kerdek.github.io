@@ -39,8 +39,9 @@ if (x.kind === "app" && y.kind === "app") {
   y = y.lhs
   continue }
 else if (x.kind === "abs" && y.kind === "abs") {
-  x = beta(x.id, ref(y.id), x.body)
-  y = y.body
+  const f = ref(fresh(x.id))
+  x = beta(x.id, f, x.body)
+  y = beta(y.id, f, y.body)
   continue }
 else if (x.kind === "imp" && y.kind === "imp") {
   s.push([x.rhs, y.rhs])
@@ -58,11 +59,11 @@ y = f[1] } }
 export const evaluate = (e: Term) => homproc<Term>((call, cc, ret) => {
 type RealWorld = ReturnType<typeof ret>
 const t: (e: Term) => RealWorld = visit({
-  app: e => call(s(e.lhs), dx => visit({
-    app: dx => ret(app(dx, e.rhs)),
-    abs: dx => cc(s(beta(dx.id, e.rhs, dx.body))),
-    imp: dx => (c => c ? fatal(`Assertion Failed:\n${print(c[0])}\n\nis not equivalent to\n\n${print(c[1])}`) : cc(s(dx.rhs)))(compare(dx.lhs, e.rhs)),
-    ref: dx => ret(app(dx, e.rhs)) })(dx)),
+  app: e => call(s(e.lhs), dx => call(s(e.rhs), dy => visit({
+    app: dx => ret(app(dx, dy)),
+    abs: dx => cc(s(beta(dx.id, dy, dx.body))),
+    imp: dx => (c => c ? fatal(`Assertion Failed:\n${print(c[0])}\n\nis not equivalent to\n\n${print(c[1])}`) : cc(s(dx.rhs)))(compare(dx.lhs, dy)),
+    ref: dx => ret(app(dx, dy)) })(dx))),
   abs: e => ret(e),
   imp: e => ret(e),
   ref: e => ret(e)})
