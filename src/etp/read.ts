@@ -39,10 +39,10 @@ export const scanner = (x: string, doc: string): Scanner => {
 export const read_prop: (s: Scanner) => Prop = s => homproc((call, cc, ret) => {
 type Branch = ReturnType<typeof ret>
 const
-  id = s.take(/^[^\s\\\.\(\)->\*]+/),
-  ws = s.take(/^\s*/), ar = s.take(/^->/),
+  id = s.take(/^[^\s\\∀\.\(\)\->→\*]+/),
+  ws = s.take(/^\s*/), ar = s.take(/^(->|→)/),
   as = s.take(/^\*/),
-  lm = s.take(/^\\/), dt = s.take(/^\./),
+  lm = s.take(/^[\\∀]/), dt = s.take(/^\./),
   lp = s.take(/^\(/), rp = s.take(/^\)/),
   parameters: () => Branch = () => (ws(), dt() ? cc(arrow) : ((star, param) => param ? call(parameters, body => ret(all(param, star ? true : false, body))) : s.fatal("Expected `.` or an identifier."))(as(), (ws(), id()))),
   primary: () => (() => Branch) | null = () => (ws(),
@@ -57,9 +57,9 @@ if (!u) {
   return s.fatal("Expected expression.") }
 return u() })
 
-export const read_proof: (s: Scanner) => [Proof, string[]] = s => {
+export const read_proof: (s: Scanner) => [Proof, string[], number] = s => {
 const
-  id = s.take(/^[^\s\\\.\(\)->]+/),
+  id = s.take(/^[^\s\\∀\.\(\)\->→\*]+/),
   ws = s.take(/^([^\S\n]|--[^\n]*|\(\*([^\*]|\*[^\)])*\*\))*/),
   nl = s.take(/^(\s|--[^\n]*|\(\*([^\*]|\*[^\)])*\*\))*/),
   gu = s.take(/^[^\n]*($|\n(\s|--[^\n]*|\(\*([^\*]|\*[^\)])*\*\))*)/)
@@ -70,7 +70,7 @@ for (;;) {
   ws()
   if (s.eof()) {
     m.push(s.msg("Unexpected end of file."))
-    return [l, m] }
+    return [l, m, s.pos()[1]] }
   const lhs = id()
   if (!lhs) {
     m.push(s.msg("Expected a directive."))
@@ -78,7 +78,7 @@ for (;;) {
     continue }
   switch (lhs) {
     case "qed":
-      return [l, m]
+      return [l, m, s.pos()[1]]
     case "intro":
       const ids: string[] = []
       for (;;) {
@@ -89,7 +89,7 @@ for (;;) {
           m.push(s.msg("Expected an identifier."))
           break }
         ids.push(i) }
-      l.push({ kind: "intro", ids })
+      l.push({ kind: "intro", ids, where: [...s.pos()] })
       continue
     case "apply":
       ws()
@@ -108,36 +108,49 @@ for (;;) {
           m.push(s.msg((e as Error).message))
           gu()
           break } }
-      l.push({ kind: "apply", hyp, ops })
+      l.push({ kind: "apply", hyp, ops, where: [...s.pos()] })
       continue
     case "sorry":
       if (!nl() && !s.eof()) {
         m.push(s.msg("Expected a newline.")) }
-      l.push({ kind: "sorry" })
+      l.push({ kind: "sorry", where: [...s.pos()] })
       continue
     default:
       m.push(s.msg("Unrecognized directive."))
       continue } } }
 
-export const read_article: (s: Scanner) => [[string, Prop, Proof][], string[]] = s => {
+export const read_article: (s: Scanner) => [[string, Prop, Proof, TextPosition][], string[], string[]] = s => {
 const
-  id = s.take(/^[^\s\\\.\(\)->]+/),
+  id = s.take(/^[^\s\\∀\.\(\)\->→\*]+/),
   ws = s.take(/^([^\S\n]|--[^\n]*|\(\*([^\*]|\*[^\)])*\*\))*/),
   nl = s.take(/^(\s|--[^\n]*|\(\*([^\*]|\*[^\)])*\*\))*/),
   gu = s.take(/^[^\n]*($|\n(\s|--[^\n]*|\(\*([^\*]|\*[^\)])*\*\))*)/)
-const l: [string, Prop, Proof][] = []
+const l: [string, Prop, Proof, TextPosition][] = []
+const props: string[] = []
 const m: string[] = []
 nl()
 for (;;) {
   ws()
   if (s.eof()) {
-    return [l, m] }
+    return [l, props, m] }
+  const w: TextPosition = [...s.pos()]
   const lhs = id()
   if (!lhs) {
     m.push(s.fatal("Expected a directive."))
     gu()
     continue }
   switch (lhs) {
+    case "declare": {
+      for (;;) {
+        ws()
+        if (nl() || s.eof()) break
+        const i = id()
+        if (!i) {
+          m.push(s.msg("Expected an identifier."))
+          gu()
+          break }
+        props.push(i) }
+      continue }
     case "theorem": {
       ws()
       const n = id()
@@ -156,7 +169,7 @@ for (;;) {
         gu() }
       const [u, m2] = read_proof(s)
       m.push(...m2)
-      l.push([n, prop, u])
+      l.push([n, prop, u, w])
       break }
     case "axiom": {
       ws()
@@ -172,7 +185,7 @@ for (;;) {
         m.push((e as Error).message)
         prop = ref("???")
         gu() }
-      l.push([n, prop, [{ kind: "sorry" }]])
+      l.push([n, prop, [{ kind: "sorry", where: [...s.pos()] }], w])
       break }
     default:
       m.push(s.msg("Unrecognized directive."))

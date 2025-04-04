@@ -1,3 +1,5 @@
+import { TextPosition } from "./read.js"
+
 export type Prop =
   { kind: "all", id: string, schema: boolean, body: Prop } |
   { kind: "imp", lhs: Prop, rhs: Prop } |
@@ -5,9 +7,10 @@ export type Prop =
   { kind: "ref", id: string }
 
 export type ProofStep =
+  { where: TextPosition } & (
   { kind: "intro", ids: string[] } |
   { kind: "apply", hyp: string, ops: Prop[] } |
-  { kind: "sorry" }
+  { kind: "sorry" })
 
 export type Proof = ProofStep[]
 
@@ -15,8 +18,6 @@ export type Scope = { props: Set<string>, proofs: { [i: string]: Prop } }
 export type Goal = { scope: Scope, prop: Prop }
 
 export type Goals = Goal[]
-
-export type Article = { [i: string]: [Prop, Proof] }
 
 export type Kind = Prop['kind']
 export type Sorts = { [i in Kind]: Prop & { kind: i } }

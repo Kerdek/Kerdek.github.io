@@ -1,5 +1,5 @@
 import { scanner, read_article } from './read.js';
-import { evaluate } from './evaluate.js';
+import { evaluate, is_closed } from './evaluate.js';
 import { print_goals, print_prop } from './print.js';
 const include = (type, src) => new Promise(cb => {
     const js = document.createElement('script');
@@ -26,8 +26,8 @@ const church_monarch_tokens = {
             [/\(\*/, { token: "comment", next: "@block_comment" }],
             [/--/, { token: "comment", next: "@line_comment" }],
             [/[()]/, 'brackets'],
-            [/\\|λ|->|\./, 'lambda'],
-            [/[^\s\\λ\.\(\)\->]+/, 'reference']
+            [/\\|∀|->|→|\.|(\b(theorem|axiom|declare|proof|apply|intro|sorry|qed)\b)/, 'lambda'],
+            [/[^\s\\∀\.\(\)\->]+/, 'reference']
         ],
         block_comment: [
             [/([^\*]|\*[^\)])+/, "comment"],
@@ -48,10 +48,12 @@ const church_language_config = {
         ["(", ")"]
     ],
     autoClosingPairs: [
-        { open: "(", close: ")" }
+        { open: "(", close: ")" },
+        { open: "(*", close: "*)" }
     ],
     surroundingPairs: [
-        { open: "(", close: ")" }
+        { open: "(", close: ")" },
+        { open: "(*", close: "*)" }
     ],
     folding: { "markers": { start: /\(/, end: /\)/ } }
 };
@@ -79,7 +81,7 @@ export const playground_colors_dark = {
     'contrast': '#FFFFFF',
     'invalid': '#FF0000',
     'reference': '#FFAACC',
-    'lambda': '#AA2255',
+    'lambda': '#CC3366',
     'brackets': '#5522AA',
     'string': '#AAAAFF',
     'numerical': '#AAFFAA',
@@ -115,6 +117,12 @@ const church_theme = {
         { token: 'comment', foreground: playground_colors.comment }
     ],
     colors: {
+        "editorBracketHighlight.foreground1": "#512881",
+        "editorBracketHighlight.foreground2": "#6e1680",
+        "editorBracketHighlight.foreground3": "#892365",
+        "editorBracketHighlight.foreground4": "#a32e5b",
+        "editorBracketHighlight.foreground5": "#a13648",
+        "editorBracketHighlight.foreground6": "#a85334",
         "editor.lineHighlightBackground": playground_colors.lineHighlight,
         "editorRuler.foreground": playground_colors.ruler,
         "editorIndentGuide.background": playground_colors.guide
@@ -133,42 +141,68 @@ const create_element = (tag, mod, children) => {
 };
 const t = s => document.createTextNode(s);
 export function create_playground(initial) {
-    async function ev() {
-        output.innerHTML = '';
-        try {
-            let ok = true;
-            const [l, m] = read_article(scanner(editor.getValue(), "article"));
-            m.length !== 0 && (ok = false, output.appendChild(t(`${m.join('\n')}\n\n`)));
-            const article = {};
-            for (const [name, prop, proof] of l) {
-                const [g, m] = evaluate(proof, prop, article);
-                article[name] = [prop, proof];
-                if (m || g.length !== 0) {
-                    output.appendChild(t(`theorem ${name} ${print_prop(prop, true)}\n`));
-                    m && output.appendChild(t(`${m}\n`));
-                    output.appendChild(t(`${print_goals(g)}\n\n`));
-                    ok = false;
-                }
-            }
-            ok && output.appendChild(t("👍"));
-        }
-        catch (e) {
-            output.appendChild(t(e.toString()));
+    let kg = false;
+    let ig = false;
+    function ev() {
+        kg = true;
+        if (!ig) {
+            ig = true;
+            evl();
         }
     }
+    async function evl() {
+        while (kg) {
+            kg = false;
+            output.style.opacity = "50%";
+            const otext = [];
+            try {
+                let ok = true;
+                const [l, p, m] = read_article(scanner(editor.getValue(), "article"));
+                m.length !== 0 && (ok = false, otext.push(`${m.join('\n')}\n\n`));
+                const article = { props: new Set(p), proofs: {} };
+                for (const [name, prop, proof, where] of l) {
+                    const [g, m] = evaluate(proof, prop, article);
+                    if (!is_closed(prop, [...article.props])) {
+                        m.push(`Theorem proposition is not closed.`);
+                    }
+                    if (name in article.proofs) {
+                        m.push(`Theorem name already used.`);
+                    }
+                    else {
+                        article.proofs[name] = prop;
+                    }
+                    if (m.length !== 0 || g.length !== 0) {
+                        otext.push(`(${where}): theorem ${name} ${print_prop(prop, true)}\n`);
+                        m.length !== 0 && otext.push(`${m.join('\n')}\n`);
+                        otext.push(`${print_goals(g)}\n\n`);
+                        ok = false;
+                    }
+                    await new Promise(c => window.setTimeout(c, 0));
+                }
+                ok && otext.push("👍");
+            }
+            catch (e) {
+                otext.push(e.toString());
+            }
+            output.innerHTML = '';
+            output.style.removeProperty("opacity");
+            output.appendChild(t(otext.join('')));
+        }
+        ig = false;
+    }
     const proof = create_element('div', function () {
-        this.style.height = "70%";
+        this.style.width = "70%";
         this.style.flexShrink = "0";
     }, []);
     const editor = monaco.editor.create(proof, church_editor_config);
     editor.setValue(initial);
     const output = create_element("div", function () {
         this.tabIndex = 0;
+        this.style.fontSize = "10pt";
         this.style.whiteSpace = "pre-wrap";
         this.style.overflowWrap = "break-word";
         this.style.overflowX = "hidden";
         this.style.overflowY = "scroll";
-        this.style.wordBreak = "break-all";
         this.style.flexShrink = "1";
         this.style.flexGrow = "1";
     }, []);
@@ -187,13 +221,14 @@ export function create_playground(initial) {
     const playground = create_element('div', function () {
         this.style.textAlign = "left";
         this.style.display = "inline-flex";
-        this.style.flexDirection = "column";
+        this.style.flexDirection = "row";
     }, [
         proof, formatting
     ]);
     // playground.addEventListener('keydown', e =>
     //   e.key === "F4" ? (ev(), true) : true)
-    editor.getModel().onDidChangeContent(ev);
+    const m = editor.getModel();
+    m && m.onDidChangeContent(ev);
     ev();
     return [playground, editor];
 }

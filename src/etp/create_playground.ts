@@ -1,7 +1,7 @@
 import { scanner, read_article } from './read.js'
-import { evaluate } from './evaluate.js'
+import { evaluate, is_closed } from './evaluate.js'
 import { print_goals, print_prop } from './print.js'
-import { Article } from './lang.js'
+import { Scope } from './lang.js'
 
 const include: (type: string, src: string) => Promise<Event> =
 (type, src) => new Promise(cb => {
@@ -15,7 +15,7 @@ await include('text/javascript', '../monaco/loader.js')
 require.config({ paths: { vs: '../monaco' } })
 await new Promise (cb => require(['vs/editor/editor.main'], cb))
 
-const church_monarch_tokens: IMonarchLanguage = {
+const church_monarch_tokens: monaco.languages.IMonarchLanguage = {
   brackets: [
     { open: "(", close: ")", token: "brackets"} ],
   unicode: true,
@@ -29,8 +29,8 @@ const church_monarch_tokens: IMonarchLanguage = {
       [/\(\*/,  { token: "comment", next: "@block_comment" }],
       [/--/, { token: "comment", next: "@line_comment" }],
       [/[()]/, 'brackets'],
-      [/\\|λ|->|\./, 'lambda'],
-      [/[^\s\\λ\.\(\)\->]+/, 'reference']],
+      [/\\|∀|->|→|\.|(\b(theorem|axiom|declare|proof|apply|intro|sorry|qed)\b)/, 'lambda'],
+      [/[^\s\\∀\.\(\)\->]+/, 'reference']],
     block_comment: [
       [/([^\*]|\*[^\)])+/, "comment"],
       [/\*\)/, { token: "comment", next: "@pop" }]],
@@ -38,19 +38,22 @@ const church_monarch_tokens: IMonarchLanguage = {
       [/[^\n]+/, "comment"],
       [/\n/, { token: "comment", next: "@pop" }]] } }
 
-const church_language_config: LanguageConfiguration = {
+const church_language_config: monaco.languages.LanguageConfiguration = {
   comments: {
     lineComment: "--",
     blockComment: ["(*", "*)"] },
   brackets: [
     ["(", ")"] ],
   autoClosingPairs: [
-    { open: "(", close: ")" } ],
+    { open: "(", close: ")" },
+    { open: "(*", close: "*)" } ],
   surroundingPairs: [
-    { open: "(", close: ")" } ],
-  folding: { "markers": { start: /\(/, end: /\)/ } } }
+    { open: "(", close: ")" },
+    { open: "(*", close: "*)" } ],
+  folding: { "markers":
+    { start: /\(/, end: /\)/ } } }
 
-const church_editor_config: IStandaloneEditorConstructionOptions = {
+const church_editor_config: monaco.editor.IStandaloneEditorConstructionOptions = {
   bracketPairColorization: {
     enabled: true },
   matchBrackets: "always",
@@ -72,7 +75,7 @@ export const playground_colors_dark = {
   'contrast': '#FFFFFF',
   'invalid': '#FF0000',
   'reference': '#FFAACC',
-  'lambda': '#AA2255',
+  'lambda': '#CC3366',
   'brackets': '#5522AA',
   'string': '#AAAAFF',
   'numerical': '#AAFFAA',
@@ -95,7 +98,7 @@ export const playground_colors_light = {
 
 export const playground_colors = use_dark ? playground_colors_dark : playground_colors_light
 
-const church_theme: IStandaloneThemeData = {
+const church_theme: monaco.editor.IStandaloneThemeData = {
   base: use_dark ? 'hc-black' : 'vs',
   inherit: true,
   rules: [
@@ -107,6 +110,12 @@ const church_theme: IStandaloneThemeData = {
     { token: 'numerical', foreground: playground_colors.numerical },
     { token: 'comment', foreground: playground_colors.comment } ],
   colors: {
+    "editorBracketHighlight.foreground1": "#512881",
+    "editorBracketHighlight.foreground2": "#6e1680",
+    "editorBracketHighlight.foreground3": "#892365",
+    "editorBracketHighlight.foreground4": "#a32e5b",
+    "editorBracketHighlight.foreground5": "#a13648",
+    "editorBracketHighlight.foreground6": "#a85334",
     "editor.lineHighlightBackground": playground_colors.lineHighlight,
     "editorRuler.foreground": playground_colors.ruler,
     "editorIndentGuide.background": playground_colors.guide } }
@@ -114,6 +123,7 @@ const church_theme: IStandaloneThemeData = {
 monaco.languages.register({ id: 'church' })
 monaco.languages.setMonarchTokensProvider('church', church_monarch_tokens)
 monaco.languages.setLanguageConfiguration('church', church_language_config)
+
 monaco.editor.defineTheme('church', church_theme)
 monaco.editor.setTheme('church')
 
@@ -126,29 +136,50 @@ const create_element: CreateElement = (tag, mod, children) => {
 
 const t: (s: string) => Text = s => document.createTextNode(s)
 
-export function create_playground(initial: string): [HTMLElement, IStandaloneCodeEditor] {
+export function create_playground(initial: string): [HTMLElement, monaco.editor.IStandaloneCodeEditor] {
 
-  async function ev() {
-    output.innerHTML = ''
-    try {
-      let ok = true
-      const [l, m] = read_article(scanner(editor.getValue(), "article"))
-      m.length !== 0 && (ok = false, output.appendChild(t(`${m.join('\n')}\n\n`)))
-      const article: Article = {}
-      for (const [name, prop, proof] of l) {
-        const [g, m] = evaluate(proof, prop, article)
-        article[name] = [prop, proof]
-        if (m || g.length !== 0) {
-          output.appendChild(t(`theorem ${name} ${print_prop(prop, true)}\n`))
-          m && output.appendChild(t(`${m}\n`))
-          output.appendChild(t(`${print_goals(g)}\n\n`))
-          ok = false } }
-      ok && output.appendChild(t("👍")) }
-    catch (e: any) {
-      output.appendChild(t(e.toString())) } }
+  let kg = false
+  let ig = false
+  function ev() {
+    kg = true
+    if (!ig) {
+      ig = true
+      evl() } }
+
+  async function evl() {
+    while (kg) {
+      kg = false
+      output.style.opacity = "50%"
+      const otext: string[] = []
+      try {
+        let ok = true
+        const [l, p, m] = read_article(scanner(editor.getValue(), "article"))
+        m.length !== 0 && (ok = false, otext.push(`${m.join('\n')}\n\n`))
+        const article: Scope = { props: new Set(p), proofs: {} }
+        for (const [name, prop, proof, where] of l) {
+          const [g, m] = evaluate(proof, prop, article)
+          if (!is_closed(prop, [...article.props])) {
+            m.push(`Theorem proposition is not closed.`)}
+          if (name in article.proofs) {
+            m.push(`Theorem name already used.`) }
+          else {
+            article.proofs[name] = prop }
+          if (m.length !== 0 || g.length !== 0) {
+            otext.push(`(${where}): theorem ${name} ${print_prop(prop, true)}\n`)
+            m.length !== 0 && otext.push(`${m.join('\n')}\n`)
+            otext.push(`${print_goals(g)}\n\n`)
+            ok = false }
+          await new Promise(c => window.setTimeout(c, 0)) }
+        ok && otext.push("👍") }
+      catch (e: any) {
+        otext.push(e.toString()) }
+      output.innerHTML = ''
+      output.style.removeProperty("opacity")
+      output.appendChild(t(otext.join(''))) }
+    ig = false }
 
   const proof = create_element('div', function () {
-    this.style.height = "70%"
+    this.style.width = "70%"
     this.style.flexShrink = "0" }, [])
 
   const editor = monaco.editor.create(proof, church_editor_config)
@@ -156,11 +187,11 @@ export function create_playground(initial: string): [HTMLElement, IStandaloneCod
 
   const output = create_element("div", function () {
     this.tabIndex = 0
+    this.style.fontSize = "10pt"
     this.style.whiteSpace = "pre-wrap"
     this.style.overflowWrap = "break-word"
     this.style.overflowX = "hidden"
     this.style.overflowY = "scroll"
-    this.style.wordBreak = "break-all"
     this.style.flexShrink = "1"
     this.style.flexGrow = "1" }, [])
 
@@ -180,14 +211,15 @@ export function create_playground(initial: string): [HTMLElement, IStandaloneCod
   const playground = create_element('div', function() {
     this.style.textAlign = "left"
     this.style.display = "inline-flex"
-    this.style.flexDirection = "column" }, [
+    this.style.flexDirection = "row" }, [
     proof, formatting])
 
 
   // playground.addEventListener('keydown', e =>
   //   e.key === "F4" ? (ev(), true) : true)
 
-  editor.getModel().onDidChangeContent(ev)
+  const m = editor.getModel()
+  m && m.onDidChangeContent(ev)
   ev()
 
 return [playground, editor] }

@@ -1,11 +1,22 @@
 import { homproc } from "./run.js";
 import { all, app, imp, ref, visit } from "./lang.js";
+import { print_prop } from "./print.js";
 const fatal = (m) => { throw new Error(m); };
+export const is_closed = (e, o) => homproc((call, cc, ret) => {
+    const t = visit({
+        all: e => (o, l) => l ? ret(false) : cc(s(e.body, [[e.id, e.schema], ...o], false)),
+        imp: e => (o, l) => l ? ret(false) : call(s(e.lhs, o, false), dx => dx ? cc(s(e.rhs, o, false)) : ret(false)),
+        app: e => (o, _l) => call(s(e.lhs, o, true), dx => dx ? cc(s(e.rhs, o, false)) : ret(false)),
+        ref: e => (o, l) => ret(-1 !== o.findIndex(([i, s]) => l ? s && i == e.id : i == e.id))
+    });
+    const s = (e, o, l) => () => t(e)(o, l);
+    return s(e, o.map(e => [e, true]), false)();
+});
 const occurs_free = (i, e) => homproc((call, cc, ret) => {
     const t = visit({
         all: e => e.id === i ? ret(false) : cc(s(e.body)),
         imp: e => call(s(e.lhs), dx => dx ? ret(true) : cc(s(e.rhs))),
-        app: e => cc(s(e.rhs)),
+        app: e => call(s(e.lhs), dx => dx ? ret(true) : cc(s(e.rhs))),
         ref: e => ret(e.id === i)
     });
     const s = (e) => () => t(e);
@@ -15,22 +26,22 @@ const fresh = (() => {
     let n = 0;
     return (i) => `†${i}${n++}`;
 })();
-const beta = (i, x, e, g) => homproc((call, _cc, ret) => {
+const beta = (i, x, e) => homproc((call, _cc, ret) => {
     const t = visit({
-        all: e => l => l ? ret(e) : e.id === i ? ret(e) : occurs_free(e.id, x) ? (j => call(s(beta(e.id, ref(j), e.body), false), dx => ret(all(j, e.schema, dx))))(fresh(e.id)) : call(s(e.body, false), dx => ret(all(e.id, e.schema, dx))),
+        all: e => l => l ? ret(e) : e.id === i ? ret(e) : occurs_free(e.id, x) ? (j => call(s(e.schema ? betap(e.id, ref(j), e.body) : beta(e.id, ref(j), e.body), false), dx => ret(all(j, e.schema, dx))))(fresh(e.id)) : call(s(e.body, false), dx => ret(all(e.id, e.schema, dx))),
         imp: e => l => l ? ret(e) : call(s(e.lhs, false), dx => call(s(e.rhs, false), dy => ret(imp(dx, dy)))),
-        app: e => () => call(s(e.lhs, true), dx => call(s(e.rhs, false), dy => dx.kind === "all" ? ret(beta(dx.id, dy, dx.body)) : ret(app(dx, dy)))),
-        ref: e => l => ret(!l && e.id === i ? x : e.id === "?" ? g || e : e)
+        app: e => () => call(s(e.lhs, true), dx => call(s(e.rhs, false), dy => dx.kind === "all" ? ret(dx.schema ? betap(dx.id, dy, dx.body) : beta(dx.id, dy, dx.body)) : ret(app(dx, dy)))),
+        ref: e => l => ret(!l && e.id === i ? x : e)
     });
     const s = (e, l) => () => t(e)(l);
     return s(e, false)();
 });
-const betap = (i, x, e, g) => homproc((call, _cc, ret) => {
+const betap = (i, x, e) => homproc((call, _cc, ret) => {
     const t = visit({
-        all: e => e.id === i ? ret(e) : occurs_free(e.id, x) ? (j => call(s(beta(e.id, ref(j), e.body)), dx => ret(all(j, e.schema, dx))))(fresh(e.id)) : call(s(e.body), dx => ret(all(e.id, e.schema, dx))),
+        all: e => e.id === i ? ret(e) : occurs_free(e.id, x) ? (j => call(s(e.schema ? betap(e.id, ref(j), e.body) : beta(e.id, ref(j), e.body)), dx => ret(all(j, e.schema, dx))))(fresh(e.id)) : call(s(e.body), dx => ret(all(e.id, e.schema, dx))),
         imp: e => call(s(e.lhs), dx => call(s(e.rhs), dy => ret(imp(dx, dy)))),
-        app: e => call(s(e.lhs), dx => call(s(e.rhs), dy => dx.kind === "all" ? ret(beta(dx.id, dy, dx.body)) : ret(app(dx, dy)))),
-        ref: e => ret(e.id === i ? x : e.id === "?" ? g || e : e)
+        app: e => call(s(e.lhs), dx => call(s(e.rhs), dy => dx.kind === "all" ? ret(dx.schema ? betap(dx.id, dy, dx.body) : beta(dx.id, dy, dx.body)) : ret(app(dx, dy)))),
+        ref: e => ret(e.id === i ? x : e)
     });
     const s = (e) => () => t(e);
     return s(e)();
@@ -81,21 +92,27 @@ export const evaluate = (l, e, o) => {
         for (;;) {
             const s = l.shift();
             if (!s) {
-                return [g, ""];
+                return [g, []];
             }
             const gp = g.shift();
             if (!gp) {
-                return fatal("No goals.");
+                return fatal(`(${s.where}): Expected \`qed\`.`);
             }
             switch (s.kind) {
                 case "intro":
                     for (const id of s.ids) {
                         switch (gp.prop.kind) {
                             case "all":
+                                if (gp.scope.props.has(id) || o.props.has(id)) {
+                                    fatal(`(${s.where}): Proposition name \`${id}\` already used.`);
+                                }
                                 gp.scope.props.add(id);
-                                gp.prop = beta(gp.prop.id, ref(id), gp.prop.body);
+                                gp.prop = gp.prop.schema ? betap(gp.prop.id, ref(id), gp.prop.body) : beta(gp.prop.id, ref(id), gp.prop.body);
                                 continue;
                             case "imp":
+                                if (id in gp.scope.proofs || id in o.proofs) {
+                                    fatal(`(${s.where}): Evidence or theorem name \`${id}\` already used.`);
+                                }
                                 gp.scope.proofs[id] = gp.prop.lhs;
                                 gp.prop = gp.prop.rhs;
                                 continue;
@@ -106,22 +123,44 @@ export const evaluate = (l, e, o) => {
                     g.unshift(gp);
                     continue;
                 case "apply":
-                    let h = gp.scope.proofs[s.hyp];
-                    if (!h) {
-                        const hp = o[s.hyp];
-                        if (!hp)
-                            return fatal("Unknown hypothesis or theorem.");
-                        h = hp[0];
+                    let ho = gp.scope.proofs[s.hyp];
+                    if (!ho) {
+                        ho = o.proofs[s.hyp];
+                        if (!ho)
+                            return fatal(`(${s.where}): Unknown evidence or theorem \`${s.hyp}\` .`);
                     }
                     for (const op of s.ops) {
-                        if (h.kind != "all") {
-                            return fatal("Bad specialization.");
+                        while (ho.kind === "all" && ho.id[0] === "?") {
+                            ho = beta(ho.id, gp.prop, ho.body);
                         }
-                        h = h.schema ? betap(h.id, op, h.body, gp.prop) : beta(h.id, op, h.body, gp.prop);
+                        if (ho.kind === "all") {
+                            if (!is_closed(op, [...o.props, ...gp.scope.props])) {
+                                fatal(`(${s.where}): Specialization is not closed:\n\n${print_prop(op, false)}`);
+                            }
+                            ho = ho.schema ? betap(ho.id, op, ho.body) : beta(ho.id, op, ho.body);
+                        }
+                        else if (ho.kind === "imp" && op.kind === "ref") {
+                            let hu = gp.scope.proofs[op.id];
+                            if (!hu) {
+                                hu = o.proofs[op.id];
+                                if (!hu)
+                                    return fatal(`(${s.where}): Unknown evidence or theorem.`);
+                            }
+                            if (!compare(ho.lhs, hu))
+                                return fatal(`(${s.where}): Bad modus ponens. Antecedent:\n\n${print_prop(ho.lhs, false)}\n\nMotive:\n\n${print_prop(hu, false)}`);
+                            ho = ho.rhs;
+                        }
+                        else
+                            return fatal(`(${s.where}): \`apply\` can't do anything with the goal proposition:\n\n${print_prop(gp.prop, false)}`);
                     }
+                    while (ho.kind === "all" && ho.id[0] === "?") {
+                        ho = beta(ho.id, gp.prop, ho.body);
+                    }
+                    let h = ho;
                     const gn = [];
                     for (;;) {
                         if (compare(h, gp.prop)) {
+                            g.unshift(...gn);
                             break;
                         }
                         else if (h.kind === "imp") {
@@ -129,11 +168,10 @@ export const evaluate = (l, e, o) => {
                             h = h.rhs;
                         }
                         else {
-                            gn.push({ scope: { props: new Set([...gp.scope.props]), proofs: { ...gp.scope.proofs } }, prop: imp(h, gp.prop) });
+                            g.unshift({ scope: { props: new Set([...gp.scope.props]), proofs: { ...gp.scope.proofs } }, prop: imp(ho, gp.prop) });
                             break;
                         }
                     }
-                    g.unshift(...gn);
                     continue;
                 case "sorry":
                     continue;
@@ -141,7 +179,7 @@ export const evaluate = (l, e, o) => {
         }
     }
     catch (e) {
-        return [g, e.message];
+        return [g, [e.message]];
     }
 };
 //# sourceMappingURL=evaluate.js.map

@@ -36,7 +36,7 @@ export const scanner = (x, doc) => {
     };
 };
 export const read_prop = s => homproc((call, cc, ret) => {
-    const id = s.take(/^[^\s\\\.\(\)->\*]+/), ws = s.take(/^\s*/), ar = s.take(/^->/), as = s.take(/^\*/), lm = s.take(/^\\/), dt = s.take(/^\./), lp = s.take(/^\(/), rp = s.take(/^\)/), parameters = () => (ws(), dt() ? cc(arrow) : ((star, param) => param ? call(parameters, body => ret(all(param, star ? true : false, body))) : s.fatal("Expected `.` or an identifier."))(as(), (ws(), id()))), primary = () => (ws(),
+    const id = s.take(/^[^\s\\∀\.\(\)\->→\*]+/), ws = s.take(/^\s*/), ar = s.take(/^(->|→)/), as = s.take(/^\*/), lm = s.take(/^[\\∀]/), dt = s.take(/^\./), lp = s.take(/^\(/), rp = s.take(/^\)/), parameters = () => (ws(), dt() ? cc(arrow) : ((star, param) => param ? call(parameters, body => ret(all(param, star ? true : false, body))) : s.fatal("Expected `.` or an identifier."))(as(), (ws(), id()))), primary = () => (ws(),
         lm() ? () => cc(parameters) :
             lp() ? () => (wp => call(arrow, x => rp() ? ret(x) : s.fatal(`Expected \`)\` to match \`(\` at (${wp}).`)))([...s.pos()]) :
                 (r => r ? () => ret(ref(r)) : null)(id())), juxt_rhs = x => (u => u ? call(u, y => juxt_rhs(app(x, y))) : ret(x))(primary()), juxt = () => (u => u ? call(u, x => juxt_rhs(x)) : s.fatal("Expected a term."))(primary()), arrow = () => call(juxt, dx => (ws(), ar() ? call(arrow, dy => ret(imp(dx, dy))) : ret(dx)));
@@ -47,7 +47,7 @@ export const read_prop = s => homproc((call, cc, ret) => {
     return u();
 });
 export const read_proof = s => {
-    const id = s.take(/^[^\s\\\.\(\)->]+/), ws = s.take(/^([^\S\n]|--[^\n]*|\(\*([^\*]|\*[^\)])*\*\))*/), nl = s.take(/^(\s|--[^\n]*|\(\*([^\*]|\*[^\)])*\*\))*/), gu = s.take(/^[^\n]*($|\n(\s|--[^\n]*|\(\*([^\*]|\*[^\)])*\*\))*)/);
+    const id = s.take(/^[^\s\\∀\.\(\)\->→\*]+/), ws = s.take(/^([^\S\n]|--[^\n]*|\(\*([^\*]|\*[^\)])*\*\))*/), nl = s.take(/^(\s|--[^\n]*|\(\*([^\*]|\*[^\)])*\*\))*/), gu = s.take(/^[^\n]*($|\n(\s|--[^\n]*|\(\*([^\*]|\*[^\)])*\*\))*)/);
     const l = [];
     const m = [];
     nl();
@@ -55,7 +55,7 @@ export const read_proof = s => {
         ws();
         if (s.eof()) {
             m.push(s.msg("Unexpected end of file."));
-            return [l, m];
+            return [l, m, s.pos()[1]];
         }
         const lhs = id();
         if (!lhs) {
@@ -65,7 +65,7 @@ export const read_proof = s => {
         }
         switch (lhs) {
             case "qed":
-                return [l, m];
+                return [l, m, s.pos()[1]];
             case "intro":
                 const ids = [];
                 for (;;) {
@@ -79,7 +79,7 @@ export const read_proof = s => {
                     }
                     ids.push(i);
                 }
-                l.push({ kind: "intro", ids });
+                l.push({ kind: "intro", ids, where: [...s.pos()] });
                 continue;
             case "apply":
                 ws();
@@ -103,13 +103,13 @@ export const read_proof = s => {
                         break;
                     }
                 }
-                l.push({ kind: "apply", hyp, ops });
+                l.push({ kind: "apply", hyp, ops, where: [...s.pos()] });
                 continue;
             case "sorry":
                 if (!nl() && !s.eof()) {
                     m.push(s.msg("Expected a newline."));
                 }
-                l.push({ kind: "sorry" });
+                l.push({ kind: "sorry", where: [...s.pos()] });
                 continue;
             default:
                 m.push(s.msg("Unrecognized directive."));
@@ -118,15 +118,17 @@ export const read_proof = s => {
     }
 };
 export const read_article = s => {
-    const id = s.take(/^[^\s\\\.\(\)->]+/), ws = s.take(/^([^\S\n]|--[^\n]*|\(\*([^\*]|\*[^\)])*\*\))*/), nl = s.take(/^(\s|--[^\n]*|\(\*([^\*]|\*[^\)])*\*\))*/), gu = s.take(/^[^\n]*($|\n(\s|--[^\n]*|\(\*([^\*]|\*[^\)])*\*\))*)/);
+    const id = s.take(/^[^\s\\∀\.\(\)\->→\*]+/), ws = s.take(/^([^\S\n]|--[^\n]*|\(\*([^\*]|\*[^\)])*\*\))*/), nl = s.take(/^(\s|--[^\n]*|\(\*([^\*]|\*[^\)])*\*\))*/), gu = s.take(/^[^\n]*($|\n(\s|--[^\n]*|\(\*([^\*]|\*[^\)])*\*\))*)/);
     const l = [];
+    const props = [];
     const m = [];
     nl();
     for (;;) {
         ws();
         if (s.eof()) {
-            return [l, m];
+            return [l, props, m];
         }
+        const w = [...s.pos()];
         const lhs = id();
         if (!lhs) {
             m.push(s.fatal("Expected a directive."));
@@ -134,6 +136,21 @@ export const read_article = s => {
             continue;
         }
         switch (lhs) {
+            case "declare": {
+                for (;;) {
+                    ws();
+                    if (nl() || s.eof())
+                        break;
+                    const i = id();
+                    if (!i) {
+                        m.push(s.msg("Expected an identifier."));
+                        gu();
+                        break;
+                    }
+                    props.push(i);
+                }
+                continue;
+            }
             case "theorem": {
                 ws();
                 const n = id();
@@ -156,7 +173,7 @@ export const read_article = s => {
                 }
                 const [u, m2] = read_proof(s);
                 m.push(...m2);
-                l.push([n, prop, u]);
+                l.push([n, prop, u, w]);
                 break;
             }
             case "axiom": {
@@ -176,7 +193,7 @@ export const read_article = s => {
                     prop = ref("???");
                     gu();
                 }
-                l.push([n, prop, [{ kind: "sorry" }]]);
+                l.push([n, prop, [{ kind: "sorry", where: [...s.pos()] }], w]);
                 break;
             }
             default:
