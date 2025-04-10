@@ -1,10 +1,11 @@
 import { homproc } from "./run.js";
-import { all, app, imp, ref, visit } from "./lang.js";
+import { all, app, exs, imp, ref, visit } from "./lang.js";
 import { print_prop } from "./print.js";
 const fatal = (m) => { throw new Error(m); };
 export const is_closed = (e, o) => homproc((call, cc, ret) => {
     const t = visit({
-        all: e => (o, l) => l ? ret(false) : cc(s(e.body, [[e.id, e.schema], ...o], false)),
+        all: e => (o, l) => l ? ret(false) : cc(s(e.body, [[e.id, false], ...o], false)),
+        exs: e => (o, l) => l ? ret(false) : cc(s(e.body, [[e.id, false], ...o], false)),
         imp: e => (o, l) => l ? ret(false) : call(s(e.lhs, o, false), dx => dx ? cc(s(e.rhs, o, false)) : ret(false)),
         app: e => (o, _l) => call(s(e.lhs, o, true), dx => dx ? cc(s(e.rhs, o, false)) : ret(false)),
         ref: e => (o, l) => ret(-1 !== o.findIndex(([i, s]) => l ? s && i == e.id : i == e.id))
@@ -15,6 +16,7 @@ export const is_closed = (e, o) => homproc((call, cc, ret) => {
 const occurs_free = (i, e) => homproc((call, cc, ret) => {
     const t = visit({
         all: e => e.id === i ? ret(false) : cc(s(e.body)),
+        exs: e => e.id === i ? ret(false) : cc(s(e.body)),
         imp: e => call(s(e.lhs), dx => dx ? ret(true) : cc(s(e.rhs))),
         app: e => call(s(e.lhs), dx => dx ? ret(true) : cc(s(e.rhs))),
         ref: e => ret(e.id === i)
@@ -28,30 +30,32 @@ const fresh = (() => {
 })();
 const beta = (i, x, e) => homproc((call, _cc, ret) => {
     const t = visit({
-        all: e => l => l ? ret(e) : e.id === i ? ret(e) : occurs_free(e.id, x) ? (j => call(s(e.schema ? betap(e.id, ref(j), e.body) : beta(e.id, ref(j), e.body), false), dx => ret(all(j, e.schema, dx))))(fresh(e.id)) : call(s(e.body, false), dx => ret(all(e.id, e.schema, dx))),
-        imp: e => l => l ? ret(e) : call(s(e.lhs, false), dx => call(s(e.rhs, false), dy => ret(imp(dx, dy)))),
-        app: e => () => call(s(e.lhs, true), dx => call(s(e.rhs, false), dy => dx.kind === "all" ? ret(dx.schema ? betap(dx.id, dy, dx.body) : beta(dx.id, dy, dx.body)) : ret(app(dx, dy)))),
-        ref: e => l => ret(!l && e.id === i ? x : e)
-    });
-    const s = (e, l) => () => t(e)(l);
-    return s(e, false)();
-});
-const betap = (i, x, e) => homproc((call, _cc, ret) => {
-    const t = visit({
-        all: e => e.id === i ? ret(e) : occurs_free(e.id, x) ? (j => call(s(e.schema ? betap(e.id, ref(j), e.body) : beta(e.id, ref(j), e.body)), dx => ret(all(j, e.schema, dx))))(fresh(e.id)) : call(s(e.body), dx => ret(all(e.id, e.schema, dx))),
+        all: e => e.id === i ? ret(e) : occurs_free(e.id, x) ? (j => call(s(beta(e.id, ref(j), e.body)), dx => ret(all(j, dx))))(fresh(e.id)) : call(s(e.body), dx => ret(all(e.id, dx))),
+        exs: e => e.id === i ? ret(e) : occurs_free(e.id, x) ? (j => call(s(beta(e.id, ref(j), e.body)), dx => ret(exs(j, dx))))(fresh(e.id)) : call(s(e.body), dx => ret(exs(e.id, dx))),
         imp: e => call(s(e.lhs), dx => call(s(e.rhs), dy => ret(imp(dx, dy)))),
-        app: e => call(s(e.lhs), dx => call(s(e.rhs), dy => dx.kind === "all" ? ret(dx.schema ? betap(dx.id, dy, dx.body) : beta(dx.id, dy, dx.body)) : ret(app(dx, dy)))),
+        app: e => call(s(e.lhs), dx => call(s(e.rhs), dy => dx.kind === "all" ? ret(beta(dx.id, dy, dx.body)) : ret(app(dx, dy)))),
         ref: e => ret(e.id === i ? x : e)
     });
     const s = (e) => () => t(e);
     return s(e)();
 });
-const compare = (x, y) => {
+export const compare = (x, y) => {
     const s = [];
     for (;;) {
         if (x === y) { }
         else {
             if (x.kind === "all" && y.kind === "all") {
+                if (x.id === y.id) {
+                    x = x.body;
+                    y = y.body;
+                    continue;
+                }
+                const f = ref(fresh(x.id));
+                x = beta(x.id, f, x.body);
+                y = beta(y.id, f, y.body);
+                continue;
+            }
+            else if (x.kind === "exs" && y.kind === "exs") {
                 if (x.id === y.id) {
                     x = x.body;
                     y = y.body;
@@ -87,7 +91,7 @@ const compare = (x, y) => {
     }
 };
 export const evaluate = (l, e, o) => {
-    const g = [{ scope: { props: new Set, proofs: {} }, prop: e }];
+    const g = [{ scope: { props: [], proofs: [] }, prop: e }];
     try {
         for (;;) {
             const s = l.shift();
@@ -99,62 +103,172 @@ export const evaluate = (l, e, o) => {
                 return fatal(`(${s.where}): Expected \`qed\`.`);
             }
             switch (s.kind) {
-                case "intro":
+                case "intro": {
                     for (const id of s.ids) {
                         switch (gp.prop.kind) {
-                            case "all":
-                                if (gp.scope.props.has(id) || o.props.has(id)) {
-                                    fatal(`(${s.where}): Proposition name \`${id}\` already used.`);
+                            case "all": {
+                                if (id.kind !== "ref") {
+                                    return fatal(`(${s.where}): Expected an identifier to bind proposition.`);
                                 }
-                                gp.scope.props.add(id);
-                                gp.prop = gp.prop.schema ? betap(gp.prop.id, ref(id), gp.prop.body) : beta(gp.prop.id, ref(id), gp.prop.body);
-                                continue;
-                            case "imp":
-                                if (id in gp.scope.proofs || id in o.proofs) {
-                                    fatal(`(${s.where}): Evidence or theorem name \`${id}\` already used.`);
+                                if (gp.scope.props.indexOf(id.id) !== -1 || o.props.indexOf(id.id) !== -1) {
+                                    fatal(`(${s.where}): Proposition name \`${id.id}\` already used.`);
                                 }
-                                gp.scope.proofs[id] = gp.prop.lhs;
-                                gp.prop = gp.prop.rhs;
+                                gp.scope.props.push(id.id);
+                                gp.prop = beta(gp.prop.id, ref(id.id), gp.prop.body);
                                 continue;
-                            default:
-                                fatal("Not enough binders.");
+                            }
+                            case "imp": {
+                                if (gp.prop.lhs.kind === "exs") {
+                                    if (id.kind !== "ref") {
+                                        return fatal(`(${s.where}): Expected an identifier to bind proposition.`);
+                                    }
+                                    if (gp.scope.props.indexOf(id.id) !== -1 || o.props.indexOf(id.id) !== -1) {
+                                        fatal(`(${s.where}): Proposition name \`${id.id}\` already used.`);
+                                    }
+                                    gp.scope.props.push(id.id);
+                                    gp.prop = imp(beta(gp.prop.lhs.id, id, gp.prop.lhs.body), gp.prop.rhs);
+                                }
+                                else {
+                                    if (-1 !== gp.scope.proofs.findIndex(([k, _v]) => compare(k, id)) ||
+                                        -1 !== o.proofs.findIndex(([k, _v]) => compare(k, id))) {
+                                        fatal(`(${s.where}): Evidence or theorem name \`${print_prop(id, false)}\` already used.`);
+                                    }
+                                    gp.scope.proofs.push([id.kind === "ref" && id.id === "*" ? gp.prop.lhs : id, [], gp.prop.lhs]);
+                                    gp.prop = gp.prop.rhs;
+                                }
+                                continue;
+                            }
+                            default: {
+                                fatal(`(${s.where}): No binders in goal proposition for \`intro\`:\n\n${print_prop(gp.prop, false)}`);
+                            }
                         }
                     }
                     g.unshift(gp);
                     continue;
-                case "apply":
-                    let ho = gp.scope.proofs[s.hyp];
-                    if (!ho) {
-                        ho = o.proofs[s.hyp];
-                        if (!ho)
-                            return fatal(`(${s.where}): Unknown evidence or theorem \`${s.hyp}\` .`);
+                }
+                case "use": {
+                    if (gp.prop.kind !== "exs") {
+                        return fatal(`(${s.where}): \`use\` can't do anything with the goal proposition:\n\n${print_prop(gp.prop, false)}\n\n`);
+                    }
+                    if (!is_closed(s.prop, [...o.props, ...gp.scope.props])) {
+                        return fatal(`(${s.where}): Specialization is not closed:\n\n${print_prop(s.prop, false)}`);
+                    }
+                    g.unshift({ scope: { props: [...gp.scope.props], proofs: [...gp.scope.proofs] }, prop: beta(gp.prop.id, s.prop, gp.prop.body) });
+                    continue;
+                }
+                case "push": {
+                    let hop = gp.scope.proofs.find(([k, _v]) => compare(k, s.hyp));
+                    let ho;
+                    if (!hop) {
+                        hop = o.proofs.find(([k, _v]) => compare(k, s.hyp));
+                        if (!hop)
+                            return fatal(`(${s.where}): Unknown evidence or theorem \`${print_prop(s.hyp, false)}\`.`);
+                        ho = hop[2];
+                        for (const param of hop[1]) {
+                            const op = s.ops.shift();
+                            if (!op) {
+                                return fatal(`(${s.where}): Expected a specialization for schema \`${print_prop(hop[0], false)}\``);
+                            }
+                            if (!is_closed(op, [...o.props, ...gp.scope.props])) {
+                                return fatal(`(${s.where}): Specialization is not closed:\n\n${print_prop(op, false)}`);
+                            }
+                            ho = beta(param, op, ho);
+                        }
+                    }
+                    else {
+                        ho = hop[2];
                     }
                     for (const op of s.ops) {
-                        while (ho.kind === "all" && ho.id[0] === "?") {
-                            ho = beta(ho.id, gp.prop, ho.body);
-                        }
                         if (ho.kind === "all") {
-                            if (!is_closed(op, [...o.props, ...gp.scope.props])) {
-                                fatal(`(${s.where}): Specialization is not closed:\n\n${print_prop(op, false)}`);
+                            if (op.kind === "ref" && op.id === "?") {
+                                ho = beta(ho.id, gp.prop, ho.body);
                             }
-                            ho = ho.schema ? betap(ho.id, op, ho.body) : beta(ho.id, op, ho.body);
+                            else {
+                                if (!is_closed(op, [...o.props, ...gp.scope.props])) {
+                                    fatal(`(${s.where}): Specialization is not closed:\n\n${print_prop(op, false)}`);
+                                }
+                                ho = beta(ho.id, op, ho.body);
+                            }
                         }
-                        else if (ho.kind === "imp" && op.kind === "ref") {
-                            let hu = gp.scope.proofs[op.id];
-                            if (!hu) {
-                                hu = o.proofs[op.id];
-                                if (!hu)
-                                    return fatal(`(${s.where}): Unknown evidence or theorem.`);
+                        else if (ho.kind === "imp") {
+                            let hup = gp.scope.proofs.find(([k, _v]) => compare(k, op));
+                            if (!hup) {
+                                hup = o.proofs.find(([k, _v]) => compare(k, op));
+                                if (!hup)
+                                    return fatal(`(${s.where}): Unknown evidence or theorem \`${print_prop(op, false)}\`.`);
+                            }
+                            let hu = hup[2];
+                            if (hup[1].length !== 0) {
+                                return fatal(`(${s.where}): Need a specialization for schema \`${print_prop(hup[0], false)}\``);
                             }
                             if (!compare(ho.lhs, hu))
-                                return fatal(`(${s.where}): Bad modus ponens. Antecedent:\n\n${print_prop(ho.lhs, false)}\n\nMotive:\n\n${print_prop(hu, false)}`);
+                                return fatal(`(${s.where}): Bad modus ponens. Antecedent:\n\n${print_prop(ho.lhs, false)}\n\nMotive:\n\n${print_prop(hu, false)}\n\n`);
                             ho = ho.rhs;
                         }
                         else
-                            return fatal(`(${s.where}): \`apply\` can't do anything with the goal proposition:\n\n${print_prop(gp.prop, false)}`);
+                            return fatal(`(${s.where}): \`apply\` can't do anything with the operand:\n\n${print_prop(ho, false)}\n\nApplied to:\n\n${print_prop(op, false)}\n\n`);
                     }
-                    while (ho.kind === "all" && ho.id[0] === "?") {
-                        ho = beta(ho.id, gp.prop, ho.body);
+                    g.unshift({ scope: { props: [...gp.scope.props], proofs: [...gp.scope.proofs] }, prop: imp(ho, gp.prop) });
+                    continue;
+                }
+                case "with": {
+                    if (s.hyp.kind !== "ref" || -1 === [...o.props, ...gp.scope.props].indexOf(s.hyp.id)) {
+                        return fatal(`(${s.where}): Generalization is not closed:\n\n${print_prop(s.hyp, false)}`);
+                    }
+                    g.unshift({ scope: { props: [...gp.scope.props], proofs: [...gp.scope.proofs] }, prop: all(s.hyp.id, gp.prop) });
+                    continue;
+                }
+                case "apply": {
+                    let hop = gp.scope.proofs.find(([k, _v]) => compare(k, s.hyp));
+                    let ho;
+                    if (!hop) {
+                        hop = o.proofs.find(([k, _v]) => compare(k, s.hyp));
+                        if (!hop)
+                            return fatal(`(${s.where}): Unknown evidence or theorem \`${print_prop(s.hyp, false)}\`.`);
+                        ho = hop[2];
+                        for (const param of hop[1]) {
+                            const op = s.ops.shift();
+                            if (!op) {
+                                return fatal(`(${s.where}): Expected a specialization for schema \`${print_prop(hop[0], false)}\``);
+                            }
+                            if (!is_closed(op, [...o.props, ...gp.scope.props])) {
+                                return fatal(`(${s.where}): Specialization is not closed:\n\n${print_prop(op, false)}`);
+                            }
+                            ho = beta(param, op, ho);
+                        }
+                    }
+                    else {
+                        ho = hop[2];
+                    }
+                    for (const op of s.ops) {
+                        if (ho.kind === "all") {
+                            if (op.kind === "ref" && op.id === "?") {
+                                ho = beta(ho.id, gp.prop, ho.body);
+                            }
+                            else {
+                                if (!is_closed(op, [...o.props, ...gp.scope.props])) {
+                                    fatal(`(${s.where}): Specialization is not closed:\n\n${print_prop(op, false)}`);
+                                }
+                                ho = beta(ho.id, op, ho.body);
+                            }
+                        }
+                        else if (ho.kind === "imp") {
+                            let hup = gp.scope.proofs.find(([k, _v]) => compare(k, op));
+                            if (!hup) {
+                                hup = o.proofs.find(([k, _v]) => compare(k, op));
+                                if (!hup)
+                                    return fatal(`(${s.where}): Unknown evidence or theorem \`${print_prop(op, false)}\`.`);
+                            }
+                            let hu = hup[2];
+                            if (hup[1].length !== 0) {
+                                return fatal(`(${s.where}): Need a specialization for schema \`${print_prop(hup[0], false)}\``);
+                            }
+                            if (!compare(ho.lhs, hu))
+                                return fatal(`(${s.where}): Bad modus ponens. Antecedent:\n\n${print_prop(ho.lhs, false)}\n\nMotive:\n\n${print_prop(hu, false)}\n\n`);
+                            ho = ho.rhs;
+                        }
+                        else
+                            return fatal(`(${s.where}): \`apply\` can't do anything with the operand:\n\n${print_prop(ho, false)}\n\nApplied to:\n\n${print_prop(op, false)}\n\n`);
                     }
                     let h = ho;
                     const gn = [];
@@ -164,15 +278,15 @@ export const evaluate = (l, e, o) => {
                             break;
                         }
                         else if (h.kind === "imp") {
-                            gn.push({ scope: { props: new Set([...gp.scope.props]), proofs: { ...gp.scope.proofs } }, prop: h.lhs });
+                            gn.push({ scope: { props: [...gp.scope.props], proofs: [...gp.scope.proofs] }, prop: h.lhs });
                             h = h.rhs;
                         }
                         else {
-                            g.unshift({ scope: { props: new Set([...gp.scope.props]), proofs: { ...gp.scope.proofs } }, prop: imp(ho, gp.prop) });
-                            break;
+                            return fatal(`(${s.where}): \`apply\` couldn't make progress. Goal:\n\n${print_prop(gp.prop, false)}\n\nOperand:\n\n${print_prop(ho, false)}`);
                         }
                     }
                     continue;
+                }
                 case "sorry":
                     continue;
             }

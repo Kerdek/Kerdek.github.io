@@ -28,10 +28,8 @@ style_rule(`@media (prefers-color-scheme: dark) {
     background: black;
     color: white;
     caret-color: white; } }`);
-const [pg, e1] = create_playground(localStorage.getItem('proof-playground') || "");
+const [pg, _e] = create_playground();
 pg.style.width = "100%";
 pg.style.height = "100%";
-const m = e1.getModel();
-m && m.onDidChangeContent(() => localStorage.setItem('proof-playground', e1.getValue()));
 document.body.append(pg);
 //# sourceMappingURL=playground.js.map

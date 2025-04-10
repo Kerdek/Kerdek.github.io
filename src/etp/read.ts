@@ -1,5 +1,5 @@
 import { homproc } from "./run.js"
-import { Proof, Prop, all, app, imp, ref } from "./lang.js"
+import { Article, Proof, Prop, all, app, exs, imp, ref } from "./lang.js"
 
 export type TextPosition = [string, number, number]
 export type Token = () => string | null
@@ -36,17 +36,20 @@ export const scanner = (x: string, doc: string): Scanner => {
     fatal(m) {
       throw new Error(`(${w}): ${m}`) } } }
 
+const idreg = /^[^\s\\\/∀∃\.\(\)\->→]+/
+
 export const read_prop: (s: Scanner) => Prop = s => homproc((call, cc, ret) => {
 type Branch = ReturnType<typeof ret>
 const
-  id = s.take(/^[^\s\\∀\.\(\)\->→\*]+/),
+  id = s.take(idreg),
   ws = s.take(/^\s*/), ar = s.take(/^(->|→)/),
-  as = s.take(/^\*/),
-  lm = s.take(/^[\\∀]/), dt = s.take(/^\./),
+  lm = s.take(/^[\\∀]/), ex = s.take(/^[\/∃]/), dt = s.take(/^\./),
   lp = s.take(/^\(/), rp = s.take(/^\)/),
-  parameters: () => Branch = () => (ws(), dt() ? cc(arrow) : ((star, param) => param ? call(parameters, body => ret(all(param, star ? true : false, body))) : s.fatal("Expected `.` or an identifier."))(as(), (ws(), id()))),
+  uparameters: () => Branch = () => (ws(), dt() ? cc(arrow) : (param => param ? call(uparameters, body => ret(all(param, body))) : s.fatal("Expected `.` or an identifier."))(id())),
+  eparameters: () => Branch = () => (ws(), dt() ? cc(arrow) : (param => param ? call(uparameters, body => ret(exs(param, body))) : s.fatal("Expected `.` or an identifier."))(id())),
   primary: () => (() => Branch) | null = () => (ws(),
-    lm() ? () => cc(parameters) :
+    lm() ? () => cc(uparameters) :
+    ex() ? () => cc(eparameters) :
     lp() ? () => (wp => call(arrow, x => rp() ? ret(x) : s.fatal(`Expected \`)\` to match \`(\` at (${wp}).`)))([...s.pos()]) :
     (r => r ? () => ret(ref(r)) : null)(id())),
   juxt_rhs: (e: Prop) => Branch = x => (u => u ? call(u, y => juxt_rhs(app(x, y))) : ret(x))(primary()),
@@ -59,7 +62,7 @@ return u() })
 
 export const read_proof: (s: Scanner) => [Proof, string[], number] = s => {
 const
-  id = s.take(/^[^\s\\∀\.\(\)\->→\*]+/),
+  id = s.take(idreg),
   ws = s.take(/^([^\S\n]|--[^\n]*|\(\*([^\*]|\*[^\)])*\*\))*/),
   nl = s.take(/^(\s|--[^\n]*|\(\*([^\*]|\*[^\)])*\*\))*/),
   gu = s.take(/^[^\n]*($|\n(\s|--[^\n]*|\(\*([^\*]|\*[^\)])*\*\))*)/)
@@ -77,25 +80,66 @@ for (;;) {
     gu()
     continue }
   switch (lhs) {
-    case "qed":
-      return [l, m, s.pos()[1]]
-    case "intro":
-      const ids: string[] = []
+    case "qed": {
+      return [l, m, s.pos()[1]] }
+    case "intro": {
+      const ids: Prop[] = []
       for (;;) {
         ws()
         if (nl() || s.eof()) break
-        const i = id()
+        const i = read_prop(s)
         if (!i) {
-          m.push(s.msg("Expected an identifier."))
+          m.push(s.msg("Expected a binding."))
           break }
         ids.push(i) }
       l.push({ kind: "intro", ids, where: [...s.pos()] })
-      continue
-    case "apply":
+      continue }
+    case "use": {
       ws()
-      let hyp = id()
+      let prop = read_prop(s)
+      if (!prop) {
+        m.push(s.msg("Expected a proposition."))
+        gu()
+        continue }
+      if (!nl()) {
+        m.push(s.msg("Expected a newline.")) }
+      l.push({ kind: "use", prop, where: [...s.pos()] })
+      continue }
+    case "push": {
+      ws()
+      let hyp = read_prop(s)
       if (!hyp) {
+        m.push(s.msg("Expected a binder."))
+        gu()
+        continue }
+      const ops: Prop[] = []
+      for (;;) {
+        ws()
+        if (nl() || s.eof()) break
+        try {
+          ops.push(read_prop(s)) }
+        catch (e) {
+          m.push(s.msg((e as Error).message))
+          gu()
+          break } }
+      l.push({ kind: "push", hyp, ops, where: [...s.pos()] })
+      continue }
+    case "with": {
+      ws()
+      let hyp = read_prop(s)
+      if (!hyp || hyp.kind !== "ref") {
         m.push(s.msg("Expected an identifier."))
+        gu()
+        continue }
+      if (!nl() && !s.eof()) {
+        m.push(s.msg("Expected a newline."))}
+      l.push({ kind: "with", hyp, where: [...s.pos()] })
+      continue }
+    case "apply": {
+      ws()
+      let hyp = read_prop(s)
+      if (!hyp) {
+        m.push(s.msg("Expected a binder."))
         gu()
         continue }
       const ops: Prop[] = []
@@ -109,87 +153,106 @@ for (;;) {
           gu()
           break } }
       l.push({ kind: "apply", hyp, ops, where: [...s.pos()] })
-      continue
-    case "sorry":
+      continue }
+    case "sorry": {
       if (!nl() && !s.eof()) {
         m.push(s.msg("Expected a newline.")) }
       l.push({ kind: "sorry", where: [...s.pos()] })
-      continue
-    default:
+      continue }
+    default: {
       m.push(s.msg("Unrecognized directive."))
-      continue } } }
+      continue } } } }
 
-export const read_article: (s: Scanner) => [[string, Prop, Proof, TextPosition][], string[], string[]] = s => {
+export const read_article: (s: Scanner) => [Article, string[]] = s => {
 const
-  id = s.take(/^[^\s\\∀\.\(\)\->→\*]+/),
+  id = s.take(idreg),
   ws = s.take(/^([^\S\n]|--[^\n]*|\(\*([^\*]|\*[^\)])*\*\))*/),
   nl = s.take(/^(\s|--[^\n]*|\(\*([^\*]|\*[^\)])*\*\))*/),
   gu = s.take(/^[^\n]*($|\n(\s|--[^\n]*|\(\*([^\*]|\*[^\)])*\*\))*)/)
-const l: [string, Prop, Proof, TextPosition][] = []
-const props: string[] = []
-const m: string[] = []
+const article: Article = []
+const messages: string[] = []
+let scheme: string[] = []
 nl()
 for (;;) {
   ws()
   if (s.eof()) {
-    return [l, props, m] }
-  const w: TextPosition = [...s.pos()]
+    return [article, messages] }
+  const where: TextPosition = [...s.pos()]
   const lhs = id()
+  const last_scheme = scheme
+  scheme = []
   if (!lhs) {
-    m.push(s.fatal("Expected a directive."))
+    messages.push(s.fatal("Expected a directive."))
     gu()
     continue }
   switch (lhs) {
     case "declare": {
+      const ids: string[] = []
       for (;;) {
         ws()
         if (nl() || s.eof()) break
         const i = id()
         if (!i) {
-          m.push(s.msg("Expected an identifier."))
+          messages.push(s.msg("Expected an identifier."))
           gu()
           break }
-        props.push(i) }
+        ids.push(i) }
+      article.push({ kind: "declare", ids, where })
+      continue }
+    case "schema": {
+      for (;;) {
+        ws()
+        if (nl() || s.eof()) break
+        const i = id()
+        if (!i) {
+          messages.push(s.msg("Expected an identifier."))
+          gu()
+          break }
+          scheme.push(i) }
       continue }
     case "theorem": {
       ws()
-      const n = id()
-      if (!n) {
-        m.push(s.fatal("Expected an identifier."))
+      let name: Prop
+      try {
+        name = read_prop(s) }
+      catch (e) {
+        messages.push(s.msg((e as Error).message))
         gu()
-        continue }
-      let prop!: Prop
+        break }
+      let prop: Prop
       try {
         prop = read_prop(s)
         if (!nl() && !s.eof()) {
-          m.push(s.msg("Expected a newline.")) } }
+          messages.push(s.msg("Expected a newline.")) } }
       catch (e) {
-        m.push((e as Error).message)
+        messages.push((e as Error).message)
         prop = ref("???")
         gu() }
-      const [u, m2] = read_proof(s)
-      m.push(...m2)
-      l.push([n, prop, u, w])
+      const [proof, proof_messages] = read_proof(s)
+      messages.push(...proof_messages)
+      article.push({ kind: "theorem", name, scheme: last_scheme, prop, proof, where })
       break }
     case "axiom": {
       ws()
-      const n = id()
-      if (!n) {
-        m.push(s.fatal("Expected an identifier."))
+      let name: Prop
+      try {
+        name = read_prop(s) }
+      catch (e) {
+        messages.push(s.msg((e as Error).message))
         gu()
-        continue }
+        break }
       let prop!: Prop
       try {
         prop = read_prop(s) }
       catch (e) {
-        m.push((e as Error).message)
+        messages.push((e as Error).message)
         prop = ref("???")
         gu() }
-      l.push([n, prop, [{ kind: "sorry", where: [...s.pos()] }], w])
+      article.push({ kind: "axiom", name, scheme: last_scheme, prop, where })
       break }
     default:
-      m.push(s.msg("Unrecognized directive."))
+      messages.push(s.msg("Unrecognized directive."))
       gu()
       continue }
   if (!nl() && !s.eof()) {
-    m.push(s.msg("Expected a newline.")) } } }
+    messages.push(s.msg("Expected a newline.")) } } }
