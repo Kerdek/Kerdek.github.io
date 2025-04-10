@@ -141,6 +141,8 @@ type MFile = {
   text: string,
   exports: Scope }
 
+const preset = await (await fetch("./preset.json")).text()
+
 export function create_playground(): [HTMLElement, monaco.editor.IStandaloneCodeEditor] {
 
   let mfiles: MFile[]
@@ -150,9 +152,9 @@ export function create_playground(): [HTMLElement, monaco.editor.IStandaloneCode
     try {
       mfiles = JSON.parse(pg) as MFile[] }
     catch (e) {
-      mfiles = [] } }
+      mfiles = JSON.parse(preset) as MFile[] } }
   else {
-    mfiles = [] }
+    mfiles = JSON.parse(preset) as MFile[] }
 
   let active_file: MFile
 

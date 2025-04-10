@@ -140,6 +140,7 @@ const create_element = (tag, mod, children) => {
     return elem;
 };
 const t = s => document.createTextNode(s);
+const preset = await (await fetch("./preset.json")).text();
 export function create_playground() {
     let mfiles;
     const pg = localStorage.getItem('proof-playground');
@@ -148,11 +149,11 @@ export function create_playground() {
             mfiles = JSON.parse(pg);
         }
         catch (e) {
-            mfiles = [];
+            mfiles = JSON.parse(preset);
         }
     }
     else {
-        mfiles = [];
+        mfiles = JSON.parse(preset);
     }
     let active_file;
     if (!mfiles[0]) {
