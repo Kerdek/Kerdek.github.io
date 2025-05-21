@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<script type="module">
+const AsyncFunction = async function () { }.constructor;
+const run_script = (text, print) => {
+    const go = async (text) => {
+        const include = async (name) => {
+            const text = await (await fetch(new URL(`${document.documentURI}/../${name}`).toString())).text();
+            if (text === undefined) {
+                throw new Error(`include: Specified file not found: ${name}`);
+            }
+            const blob = new Blob([`const print = window.print_proxy;const include = window.include_proxy;${text}`], { type: 'text/javascript' });
+            const url = URL.createObjectURL(blob);
+            window['print_proxy'] = print;
+            window['include_proxy'] = include;
+            const val = await import(url);
+            URL.revokeObjectURL(url);
+            return val;
+        };
+        return await AsyncFunction("print", "include", text)(print, include);
+    };
+    return go(text);
+};
+const elem = await run_script(await (await fetch('./index.js')).text(), console.log);
+if (elem instanceof Node) {
+    document.body.appendChild(elem);
+}
+else {
+    console.log("Returned value was not a Node.");
+}
+</script>
+</head>
+<body></body>
+</html>
