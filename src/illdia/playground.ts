@@ -21,34 +21,36 @@ height: 100%;
 margin: 0;
 padding: 0;
 font-size: 13px;
-background: black;
 overflow: hidden;
+background: black;
 color: white;
 caret-color: white; }`)
 
 export const create_button = (text: string, mod: (this: HTMLDivElement) => void) => html_element('div', function () {
+this.style.borderStyle = "solid"
+this.style.borderWidth = "1px"
+this.style.borderColor = "white"
 this.style.userSelect = "none"
 this.style.whiteSpace = "pre"
 this.style.display = "flex"
 this.style.justifyContent = "center"
 this.style.alignItems = "center"
 this.style.overflow = "hidden"
-this.style.borderStyle = "solid"
-this.style.borderWidth = "1px"
-this.style.borderColor = "white"
 this.style.height = '18px'
 this.style.paddingLeft = '8px'
 this.style.paddingRight = '8px'
 this.style.cursor = "pointer"
 this.tabIndex = 0
-this.addEventListener('mouseenter', () => {
-  this.style.background = "white"
-  this.style.color = "black" })
-this.addEventListener('mouseleave', () => {
-  this.style.removeProperty("background")
-  this.style.removeProperty("color") })
-mod.apply(this) }, [
-text_node(text)])
+const highlight = () => {
+  this.style.background = 'white'
+  this.style.color = 'black' }
+const unhighlight = () => {
+  this.style.background = 'black'
+  this.style.color = 'white' }
+unhighlight()
+this.addEventListener('mouseenter', highlight)
+this.addEventListener('mouseleave', unhighlight)
+mod.apply(this) }, [text_node(text)])
 
 export const create_textbox = (text: string, mod: (this: HTMLDivElement) => void): [Text, HTMLElement] => {
   const node = text_node(text)
@@ -99,6 +101,7 @@ export const context_menu = (x: number, y: number, items: ContextMenuItem[]) => 
           this.style.marginRight = '8px' }, []) :
       item.type === 'text' ?
         html_element('div', function () {
+          this.style.height = '100%'
           this.style.userSelect = "none"
           this.style.display = "flex"
           this.style.justifyContent = "start"
@@ -111,12 +114,15 @@ export const context_menu = (x: number, y: number, items: ContextMenuItem[]) => 
           this.addEventListener('click', e => {
             if (e.button === 0) {
               item.handler() } })
-          this.addEventListener('mouseenter', () => {
-            this.style.background = "white"
-            this.style.color = "black" })
-          this.addEventListener('mouseleave', () => {
-            this.style.removeProperty("background")
-            this.style.removeProperty("color") }) }, [
+          const highlight = () => {
+            this.style.background = 'white'
+            this.style.color = 'black' }
+          const unhighlight = () => {
+            this.style.background = 'black'
+            this.style.color = 'white' }
+          unhighlight()
+          this.addEventListener('mouseenter', highlight)
+          this.addEventListener('mouseleave', unhighlight) }, [
           text_node(item.label)]) :
       item) }
   context_menu_element = html_element('div', function () {
@@ -137,16 +143,35 @@ export const context_menu = (x: number, y: number, items: ContextMenuItem[]) => 
     removeEventListener('click', click, true) }
   addEventListener('click', click, true) }
 
-const panes: HTMLElement[] = []
+type PaneMeta = [HTMLElement, HTMLElement]
+
+const panes: PaneMeta[] = []
 const closers = new Set<() => void>()
 
-const activate = (p: HTMLElement) => {
-const i = parseInt(p.style.zIndex)
+const shift_down = (i: number) => {
 for (const pane of panes) {
-  const j = parseInt(pane.style.zIndex)
+  const j = parseInt(pane[0].style.zIndex)
   if (j > i) {
-    pane.style.zIndex = `${j - 1}` } }
-p.style.zIndex = `${panes.length - 1}` }
+    pane[0].style.zIndex = `${j - 1}` } } }
+
+const to_front = (p: HTMLElement) => {
+const i = parseInt(p.style.zIndex)
+p.style.zIndex = `${panes.length}`
+shift_down(i) }
+
+const set_emph = () => {
+for (const pane of panes) {
+  const i = parseInt(pane[0].style.zIndex)
+  if (i == panes.length - 1) {
+    pane[1].style.background = 'white'
+    pane[1].style.color = 'black' }
+  else {
+    pane[1].style.background = 'black'
+    pane[1].style.color = 'white' } } }
+
+const activate = (p: HTMLElement) => {
+to_front(p)
+set_emph() }
 
 type Pane = {
   client_width(): number,
@@ -183,11 +208,13 @@ const create_pane: CreatePane = (element, options): [Pane, PaneUser] => {
   const close = () => {
     for (const handler of close_handlers) {
       handler() }
-    const i = panes.indexOf(all)
-    if (i !== -1) {
-      panes.splice(i, 1) }
+    const k = panes.findIndex(x => x[0] == all)
+    if (k !== -1) {
+      panes.splice(k, 1) }
     closers.delete(close)
-    document.body.removeChild(all) }
+    document.body.removeChild(all)
+    shift_down(parseInt(all.style.zIndex))
+    set_emph() }
 
   const title_text = text_node('')
   const title_text_box = html_element('div', function() {
@@ -262,17 +289,19 @@ const create_pane: CreatePane = (element, options): [Pane, PaneUser] => {
     ...!options || !('user_size' in options) || options.user_size ? [resize_button()] : [],
     close_button])
   const titlebar = html_element('div', function() {
-    this.style.userSelect = "none"
     this.style.borderBottomStyle = "solid"
     this.style.borderBottomWidth = "1px"
     this.style.borderBottomColor = "white"
+    this.style.userSelect = "none"
     this.style.alignItems = "center"
     this.style.display = "flex"
     this.style.padding = '1px'
     this.style.flexDirection = "row"
     this.style.flexGrow = "0"
     this.style.flexShrink = "0"
-    this.style.flexBasis = "auto" }, [
+    this.style.flexBasis = "auto"
+    this.style.background = 'black'
+    this.style.color = 'white' }, [
     title_text_box,
     title_button_area])
   const contents_box = html_element('div', function() {
@@ -301,14 +330,14 @@ const create_pane: CreatePane = (element, options): [Pane, PaneUser] => {
       activate(this) }) }, [
     titlebar,
     contents_box])
-  panes.push(all)
+  panes.push([all, titlebar])
   closers.add(close)
   document.body.appendChild(all)
   if (options?.auto_size) {
     size = [element.offsetWidth + 2, element.offsetHeight + 26]
     all.style.width = `${size[0] - 2}px`
     all.style.height = `${size[1] - 2}px` }
-  activate(all)
+  set_emph()
   return [{
     client_width() {
       return size[0] - 2 },
@@ -487,8 +516,8 @@ const prompt_filename = async (name: string) => {
 const new_name = await prompt("Enter File Name", name)
 if (new_name === undefined) {
   return undefined }
-if (!valid_filename(name)) {
-  await alert("Error", `Invalid file name entered: ${name}`)
+if (!valid_filename(new_name)) {
+  await alert("Error", `Invalid file name entered: ${new_name}`)
   return undefined }
 return name }
 
