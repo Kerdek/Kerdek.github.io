@@ -519,7 +519,7 @@ if (new_name === undefined) {
 if (!valid_filename(new_name)) {
   await alert("Error", `Invalid file name entered: ${new_name}`)
   return undefined }
-return name }
+return new_name }
 
 const files: { [i in string]: string } = (() => {
   const text = localStorage.getItem('illdia_files')

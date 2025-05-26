@@ -555,7 +555,7 @@ const prompt_filename = async (name) => {
         await alert("Error", `Invalid file name entered: ${new_name}`);
         return undefined;
     }
-    return name;
+    return new_name;
 };
 const files = (() => {
     const text = localStorage.getItem('illdia_files');
