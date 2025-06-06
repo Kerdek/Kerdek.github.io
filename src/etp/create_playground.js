@@ -8,8 +8,8 @@ const include = (type, src) => new Promise(cb => {
     js.addEventListener('load', cb);
     document.head.appendChild(js);
 });
-await include('text/javascript', '../monaco/loader.js');
-require.config({ paths: { vs: '../monaco' } });
+await include('text/javascript', '../monaco/vs/loader.js');
+require.config({ paths: { vs: new URL(`${document.documentURI}/../../monaco/vs`).toString() } });
 await new Promise(cb => require(['vs/editor/editor.main'], cb));
 const church_monarch_tokens = {
     brackets: [
@@ -373,6 +373,7 @@ export function create_playground() {
             }
             const text = await files[0].text();
             mfiles = JSON.parse(text);
+            uf();
         };
         input.click();
     });

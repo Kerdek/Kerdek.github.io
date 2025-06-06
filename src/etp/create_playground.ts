@@ -11,9 +11,9 @@ const include: (type: string, src: string) => Promise<Event> =
   js.addEventListener('load', cb)
   document.head.appendChild(js) })
 
-await include('text/javascript', '../monaco/loader.js')
-require.config({ paths: { vs: '../monaco' } })
-await new Promise (cb => require(['vs/editor/editor.main'], cb))
+  await include('text/javascript', '../monaco/vs/loader.js')
+  require.config({ paths: { vs: new URL(`${document.documentURI}/../../monaco/vs`).toString() } })
+  await new Promise(cb => require(['vs/editor/editor.main'], cb))
 
 const church_monarch_tokens: monaco.languages.IMonarchLanguage = {
   brackets: [
@@ -344,7 +344,8 @@ export function create_playground(): [HTMLElement, monaco.editor.IStandaloneCode
       if (!files || !files[0]) {
         return }
       const text = await files[0].text()
-      mfiles = JSON.parse(text) }
+      mfiles = JSON.parse(text)
+      uf() }
     input.click() })
 
   export_all.addEventListener("click", () => {
