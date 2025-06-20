@@ -10,11 +10,11 @@ const include: (type: string, src: string) => Promise<Event> =
   js.addEventListener('load', cb)
   document.head.appendChild(js) })
 
-await include('text/javascript', '../monaco/loader.js')
-require.config({ paths: { vs: '../monaco' } })
-await new Promise (cb => require(['vs/editor/editor.main'], cb))
+await include('text/javascript', '../monaco/vs/loader.js')
+require.config({ paths: { vs: new URL(`${document.documentURI}/../../monaco/vs`).toString() } })
+await new Promise(cb => require(['vs/editor/editor.main'], cb))
 
-const church_monarch_tokens: IMonarchLanguage = {
+const church_monarch_tokens: monaco.languages.IMonarchLanguage = {
   brackets: [
     { open: "(", close: ")", token: "brackets"} ],
   unicode: true,
@@ -25,11 +25,22 @@ const church_monarch_tokens: IMonarchLanguage = {
   symbols: /\\|λ|\*|\.|#/,
   tokenizer: {
     root: [
+      [/\(\*/,  { token: "comment", next: "@block_comment" }],
+      [/--/, { token: "comment", next: "@line_comment" }],
       [/[()]/, 'brackets'],
       [/\\|λ|->|\./, 'lambda'],
-      [/[^\s\\λ\.\(\)->]+/, 'reference']] } }
+      [/[^\s\\λ\.\(\)\->]+/, 'reference']],
+    block_comment: [
+      [/([^\*]|\*[^\)])+/, "comment"],
+      [/\*\)/, { token: "comment", next: "@pop" }]],
+    line_comment: [
+      [/[^\n]+/, "comment"],
+      [/\n/, { token: "comment", next: "@pop" }]] } }
 
-const church_language_config: LanguageConfiguration = {
+const church_language_config: monaco.languages.LanguageConfiguration = {
+  comments: {
+    lineComment: "--",
+    blockComment: ["(*", "*)"] },
   brackets: [
     ["(", ")"] ],
   autoClosingPairs: [
@@ -38,7 +49,7 @@ const church_language_config: LanguageConfiguration = {
     { open: "(", close: ")" } ],
   folding: { "markers": { start: /\(/, end: /\)/ } } }
 
-const church_editor_config: IStandaloneEditorConstructionOptions = {
+const church_editor_config: monaco.editor.IStandaloneEditorConstructionOptions = {
   bracketPairColorization: {
     enabled: true },
   matchBrackets: "always",
@@ -81,7 +92,7 @@ export const playground_colors_light = {
 
 export const playground_colors = use_dark ? playground_colors_dark : playground_colors_light
 
-const church_theme: IStandaloneThemeData = {
+const church_theme: monaco.editor.IStandaloneThemeData = {
   base: use_dark ? 'hc-black' : 'vs',
   inherit: true,
   rules: [
@@ -124,7 +135,7 @@ const button: Button = (text, title, action) => create_element('div',
     this.addEventListener('click', action) }, [
   t(text)])
 
-export function create_playground(initial: string): [HTMLElement, IStandaloneCodeEditor] {
+export function create_playground(initial: string): [HTMLElement, monaco.editor.IStandaloneCodeEditor] {
 
   async function ev() {
     output.innerHTML = ''

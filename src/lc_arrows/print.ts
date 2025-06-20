@@ -1,5 +1,5 @@
 import { homproc } from "./run.js"
-import { Sorts, Term, visit } from "./church.js"
+import { Scope, Sorts, Term, visit } from "./church.js"
 
 const parens = (c: boolean, s: string) => c ? `(${s})` : s
 
@@ -13,3 +13,5 @@ const t: (e: Term) => (p: number, r: boolean) => RealWorld = visit({
   ref: ({ id }) => (_p, _r) => ret(id) })
 const s = (e : Term) => (p: number, r: boolean) => () => t(e)(p, r)
 return s(e)(0, true)() })
+
+export const print_scope: (o: Scope) => string = o => `{ ${Object.keys(o).map(k => `${k}: ${print(o[k] as Term)}`).join(', ')} }`

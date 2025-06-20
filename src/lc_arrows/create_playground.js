@@ -8,8 +8,8 @@ const include = (type, src) => new Promise(cb => {
     js.addEventListener('load', cb);
     document.head.appendChild(js);
 });
-await include('text/javascript', '../monaco/loader.js');
-require.config({ paths: { vs: '../monaco' } });
+await include('text/javascript', '../monaco/vs/loader.js');
+require.config({ paths: { vs: new URL(`${document.documentURI}/../../monaco/vs`).toString() } });
 await new Promise(cb => require(['vs/editor/editor.main'], cb));
 const church_monarch_tokens = {
     brackets: [
@@ -23,13 +23,27 @@ const church_monarch_tokens = {
     symbols: /\\|λ|\*|\.|#/,
     tokenizer: {
         root: [
+            [/\(\*/, { token: "comment", next: "@block_comment" }],
+            [/--/, { token: "comment", next: "@line_comment" }],
             [/[()]/, 'brackets'],
             [/\\|λ|->|\./, 'lambda'],
-            [/[^\s\\λ\.\(\)->]+/, 'reference']
+            [/[^\s\\λ\.\(\)\->]+/, 'reference']
+        ],
+        block_comment: [
+            [/([^\*]|\*[^\)])+/, "comment"],
+            [/\*\)/, { token: "comment", next: "@pop" }]
+        ],
+        line_comment: [
+            [/[^\n]+/, "comment"],
+            [/\n/, { token: "comment", next: "@pop" }]
         ]
     }
 };
 const church_language_config = {
+    comments: {
+        lineComment: "--",
+        blockComment: ["(*", "*)"]
+    },
     brackets: [
         ["(", ")"]
     ],

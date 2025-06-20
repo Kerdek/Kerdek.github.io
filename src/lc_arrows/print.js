@@ -12,4 +12,5 @@ export const print = e => homproc((call, _cc, ret) => {
     const s = (e) => (p, r) => () => t(e)(p, r);
     return s(e)(0, true)();
 });
+export const print_scope = o => `{ ${Object.keys(o).map(k => `${k}: ${print(o[k])}`).join(', ')} }`;
 //# sourceMappingURL=print.js.map

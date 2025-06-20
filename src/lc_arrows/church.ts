@@ -4,6 +4,7 @@ export type Term =
   { kind: "imp", lhs: Term, rhs: Term } |
   { kind: "ref", id: string }
 
+export type Scope = { [i: string]: Term }
 export type Kind = Term['kind']
 export type Sorts = { [i in Kind]: Term & { kind: i } }
 

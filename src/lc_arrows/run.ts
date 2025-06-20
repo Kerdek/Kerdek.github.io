@@ -16,12 +16,12 @@ const cc: HomCC<Result, boolean> = u => (e = u, true)
 const ret: HomRet<Result, boolean> = x => (d = x, false)
 let e = () => s(call, cc, ret)
 for (;;) {
-  if (ops++ > 1e7) {
+  if (ops++ > 1e9) {
     throw new Error("Too many steps.") }
   if (e()) {
     continue }
   for (;;) {
-    if (ops++ > 1e7) {
+    if (ops++ > 1e9) {
       throw new Error("Too many steps.") }
     const f = y.shift()
     if (!f) {
