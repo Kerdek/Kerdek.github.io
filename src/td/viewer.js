@@ -1,12 +1,14 @@
-import { html_element, pointer_hold } from "./dom.js";
-import { axis_angle, mmul, perspective, translate } from "./matrix.js";
+import { e, pointer_hold } from "./dom.js";
+import { axis_angle, inverse, mmul, perspective, translate, vmul } from "./matrix.js";
+// const entries: <K extends string | symbol, E>(e: [K, E][]) => { [i in K]: E } = e =>
+// Object.fromEntries(e) as any
 const map = (o, f) => Object.fromEntries(Reflect.ownKeys(o).map((sym) => f(sym, o[sym])));
 export const create_viewer = (width, height) => {
     let spiny = 0.0;
     let spinx = 0.0;
     let standback = 4.0;
-    let zoom = 2.5;
-    const canvas = html_element('canvas', function () {
+    let zoom = 1.0;
+    const canvas = e('canvas', function () {
         this.width = width;
         this.height = height;
     }, []);
@@ -74,8 +76,8 @@ export const create_viewer = (width, height) => {
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, target_depth, 0);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     const resize = (w, h) => {
-        canvas.width = w + 1;
-        canvas.height = h + 1;
+        canvas.width = w;
+        canvas.height = h;
         target = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, target);
         gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA32F, canvas.width, canvas.height);
@@ -144,7 +146,8 @@ export const create_viewer = (width, height) => {
             gl.linkProgram(prog);
             return [sym, {
                     program: prog,
-                    transform_location: gl.getUniformLocation(prog, program.transform_name)
+                    transform_location: gl.getUniformLocation(prog, program.transform_name),
+                    view_location: gl.getUniformLocation(prog, program.view_name)
                 }];
         });
         const draw_textures = map(prep.textures, (sym, texture) => {
@@ -223,6 +226,9 @@ export const create_viewer = (width, height) => {
                             throw new Error("Specified buffer not found.");
                         }
                         const location = gl.getAttribLocation(prog.program, attribute.name);
+                        if (location === -1) {
+                            throw new Error("Specified attribute not found in program.");
+                        }
                         return {
                             location,
                             size: attribute.size,
@@ -320,21 +326,21 @@ void main(void) {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         const transform = mmul(axis_angle([0.0, 1.0, 0.0], spinx), mmul(axis_angle([1.0, 0.0, 0.0], spiny), translate([0.0, 0.0, -standback])));
         const all = mmul(transform, perspective(zoom, canvas.width, canvas.height));
+        const vp = vmul([0.0, 0.0, 0.0, 1.0], inverse(transform));
         for (const task of draw_scene.tasks) {
             gl.useProgram(task.program.program);
             gl.uniformMatrix4fv(task.program.transform_location, false, all);
+            gl.uniform3fv(task.program.view_location, [vp[0], vp[1], vp[2]]);
             for (const uniform of task.uniforms) {
-                if (uniform.location !== null) {
+                if (uniform.location) {
                     PrepUniformSetterMap[uniform.type](uniform.location, uniform.value);
                 }
             }
             for (const attribute of task.attributes) {
-                if (attribute.location !== null) {
-                    gl.enableVertexAttribArray(attribute.location);
-                    gl.bindBuffer(gl.ARRAY_BUFFER, attribute.buffer);
-                    gl.vertexAttribPointer(attribute.location, attribute.size, attribute.type, false, 0, 0);
-                    gl.bindBuffer(gl.ARRAY_BUFFER, null);
-                }
+                gl.enableVertexAttribArray(attribute.location);
+                gl.bindBuffer(gl.ARRAY_BUFFER, attribute.buffer);
+                gl.vertexAttribPointer(attribute.location, attribute.size, attribute.type, false, 0, 0);
+                gl.bindBuffer(gl.ARRAY_BUFFER, null);
             }
             if ('indices' in task) {
                 gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, task.indices);
@@ -360,7 +366,7 @@ void main(void) {
         if (!valid) {
             valid = true;
             render();
-            requestAnimationFrame(animate);
+            window.requestAnimationFrame(animate);
         }
         else {
             running = false;

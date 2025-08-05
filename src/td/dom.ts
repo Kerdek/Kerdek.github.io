@@ -15,11 +15,11 @@ export const pointer_hold = (elem: HTMLElement, button: number, id: number, lock
   if (lock && !document.pointerLockElement) {
     elem.requestPointerLock() } }
 
-export const html_element: CreateElement = (tag, mod, children) => {
+export const e: CreateElement = (tag, mod, children) => {
 const elem = document.createElement(tag)
 mod.apply(elem)
 elem.append(...children)
 return elem }
 
-export const text_node: CreateText = s =>
+export const t: CreateText = s =>
 document.createTextNode(s)

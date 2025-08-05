@@ -1,4 +1,3 @@
-const { Math } = self;
 export const mag = (v) => Math.sqrt(Math.pow(v[0], 2.0) +
     Math.pow(v[1], 2.0) +
     Math.pow(v[2], 2.0));

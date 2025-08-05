@@ -1,5 +1,5 @@
-import { html_element, pointer_hold } from "./dom.js"
-import { Mat4, Vec3, Vec4, axis_angle, mmul, perspective, translate } from "./matrix.js"
+import { e, pointer_hold } from "./dom.js"
+import { Mat4, Vec3, Vec4, axis_angle, inverse, mmul, perspective, translate, vmul } from "./matrix.js"
 
 export type TypeDesc =
   "float" |
@@ -40,7 +40,8 @@ export type ShaderDesc = {
 export type ProgramDesc = {
   vertex_shader: symbol
   fragment_shader: symbol
-  transform_name: string }
+  transform_name: string
+  view_name: string }
 
 export type TaskKindDesc =
   "triangles" |
@@ -106,7 +107,8 @@ type DrawScene = {
 
 type DrawProgram = {
   program: WebGLProgram
-  transform_location: WebGLUniformLocation | null }
+  transform_location: WebGLUniformLocation | null
+  view_location: WebGLUniformLocation | null }
 
 type DrawTask = {
   program: DrawProgram
@@ -162,6 +164,9 @@ type DrawAttribute = {
   type: number
   buffer: WebGLBuffer }
 
+// const entries: <K extends string | symbol, E>(e: [K, E][]) => { [i in K]: E } = e =>
+// Object.fromEntries(e) as any
+
 const map: <K extends string | symbol, E, KP extends string | symbol, EP>(o: { [i in K]: E }, f: (k: K, e: E) => [KP, EP]) => { [i in KP]: EP } = (o, f) =>
 Object.fromEntries(Reflect.ownKeys(o).map((sym: any) => f(sym, (o as any)[sym]))) as any
 
@@ -170,9 +175,9 @@ export const create_viewer = (width: number, height: number): [HTMLCanvasElement
 let spiny = 0.0
 let spinx = 0.0
 let standback = 4.0
-let zoom = 2.5
+let zoom = 1.0
 
-const canvas = html_element('canvas', function() {
+const canvas = e('canvas', function() {
   this.width = width
   this.height = height }, [])
 
@@ -245,8 +250,8 @@ gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, targ
 gl.bindFramebuffer(gl.FRAMEBUFFER, null)
 
 const resize = (w: number, h: number) => {
-canvas.width = w + 1
-canvas.height = h + 1
+canvas.width = w
+canvas.height = h
 
 target = gl.createTexture()
 gl.bindTexture(gl.TEXTURE_2D, target)
@@ -313,7 +318,8 @@ gl.linkProgram(prog)
 
 return [sym, {
   program: prog,
-  transform_location: gl.getUniformLocation(prog, program.transform_name) }] })
+  transform_location: gl.getUniformLocation(prog, program.transform_name),
+  view_location: gl.getUniformLocation(prog, program.view_name) }] })
 
 const draw_textures = map(prep.textures, (sym, texture) => {
 const tex = gl.createTexture()
@@ -377,6 +383,8 @@ draw_scene = {
         if (!desc) {
           throw new Error("Specified buffer not found.") }
         const location = gl.getAttribLocation(prog.program, attribute.name)
+        if (location === -1) {
+          throw new Error("Specified attribute not found in program.") }
         return {
           location,
           size: attribute.size,
@@ -476,22 +484,23 @@ mmul(axis_angle([1.0, 0.0, 0.0], spiny),
 translate([0.0, 0.0, -standback])))
 
 const all = mmul(transform, perspective(zoom, canvas.width, canvas.height))
+const vp = vmul([0.0, 0.0, 0.0, 1.0], inverse(transform))
 
 for (const task of draw_scene.tasks) {
   gl.useProgram(task.program.program)
 
   gl.uniformMatrix4fv(task.program.transform_location, false, all)
+  gl.uniform3fv(task.program.view_location, [vp[0], vp[1], vp[2]])
 
   for (const uniform of task.uniforms) {
-    if (uniform.location !== null) {
+    if (uniform.location) {
       PrepUniformSetterMap[uniform.type](uniform.location, uniform.value as any) } }
 
   for (const attribute of task.attributes) {
-    if (attribute.location !== null) {
-      gl.enableVertexAttribArray(attribute.location)
-      gl.bindBuffer(gl.ARRAY_BUFFER, attribute.buffer)
-      gl.vertexAttribPointer(attribute.location, attribute.size, attribute.type, false, 0, 0)
-      gl.bindBuffer(gl.ARRAY_BUFFER, null) } }
+    gl.enableVertexAttribArray(attribute.location)
+    gl.bindBuffer(gl.ARRAY_BUFFER, attribute.buffer)
+    gl.vertexAttribPointer(attribute.location, attribute.size, attribute.type, false, 0, 0)
+    gl.bindBuffer(gl.ARRAY_BUFFER, null) }
 
   if ('indices' in task) {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, task.indices)
@@ -510,7 +519,8 @@ gl.bindTexture(gl.TEXTURE_2D, target)
 gl.uniform1ui(iFrame, frame++)
 gl.uniform1i(tex, 0)
 
-gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4) }
+gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
+}
 
 let valid = false
 let running = true
@@ -518,7 +528,7 @@ const animate = () => {
   if (!valid) {
     valid = true
     render()
-    requestAnimationFrame(animate) }
+    window.requestAnimationFrame(animate) }
   else {
     running = false } }
 animate()

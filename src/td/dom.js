@@ -17,11 +17,11 @@ export const pointer_hold = (elem, button, id, lock, handler) => {
         elem.requestPointerLock();
     }
 };
-export const html_element = (tag, mod, children) => {
+export const e = (tag, mod, children) => {
     const elem = document.createElement(tag);
     mod.apply(elem);
     elem.append(...children);
     return elem;
 };
-export const text_node = s => document.createTextNode(s);
+export const t = s => document.createTextNode(s);
 //# sourceMappingURL=dom.js.map
