@@ -1,15 +1,21 @@
-import { make_viewer_desc } from "./compile.js"
-import { Geometry, Scene } from "./desc.js"
-import { add_scene_changed_handler, create_pane, remove_scene_changed_handler } from "./playground.js"
-import { create_viewer } from "./viewer.js"
+// import { make_geometry_viewer_desc } from "./compile.js"
+// import { PaneUser, add_scene_changed_handler, create_pane, remove_scene_changed_handler, rep } from "./playground.js"
+// import { create_viewer } from "./viewer.js"
 
-export const add_geometry_viewer = (scene: Scene, geometry: Geometry) => create_pane({}, pane => {
-  pane.set_title('Geometry Viewer')
-  const [canvas, update_viewer, resize_viewer] = create_viewer(pane.get_width(), pane.get_height())
-  pane.add_resize_handler(resize_viewer)
-  const load = () => update_viewer(make_viewer_desc(scene, geometry))
-  add_scene_changed_handler(load)
-  pane.add_close_handler(() => {
-    remove_scene_changed_handler(load) })
-  load()
-  return canvas })
+// const { Error } = self
+
+// export const add_geometry_viewer = (name: string): PaneUser => {
+// const [canvas, update_viewer, resize_viewer] = create_viewer(640, 480)
+// const [pane, user] = create_pane(canvas, { autosize: true })
+// pane.set_title(`Geometry Viewer (${name})`)
+// pane.add_resize_handler(resize_viewer)
+// const load = async () => {
+//   const geometry = rep.geometry[name]
+//   if (!geometry) {
+//     throw new Error('Specified geometry not found.') }
+//   update_viewer(make_geometry_viewer_desc(rep, geometry)) }
+// add_scene_changed_handler(load)
+// pane.add_close_handler(() => {
+//   remove_scene_changed_handler(load) })
+// load()
+// return user }

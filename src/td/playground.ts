@@ -1,18 +1,13 @@
-import { Scene } from './desc.js'
-import { e, pointer_hold, t } from './dom.js'
-import { add_geometry_browser } from './geometry_browser.js'
-import { add_material_browser } from './material_browser.js'
-import { add_script_browser } from './script_browser.js'
-import { add_script_editor } from './script_editor.js'
+import { html_element, pointer_hold, text_node } from './scripts/dom.js'
+
+onbeforeunload = () => true
 
 document.title = 'Four'
 
-window.addEventListener('contextmenu', e => {
+addEventListener('contextmenu', e => {
   e.stopPropagation()
   e.preventDefault()
   return false }, true)
-
-window.onbeforeunload = () => true
 
 const style_rule: (x: string) => number = (() => {
 const style = document.head.appendChild(document.createElement('style'))
@@ -32,7 +27,7 @@ overflow: hidden;
 color: white;
 caret-color: white; }`)
 
-export const button = (text: string, mod: (this: HTMLDivElement) => void) => e('div', function () {
+export const create_button = (text: string, mod: (this: HTMLDivElement) => void) => html_element('div', function () {
 this.style.userSelect = "none"
 this.style.whiteSpace = "pre"
 this.style.display = "flex"
@@ -43,10 +38,10 @@ this.style.borderStyle = "solid"
 this.style.borderWidth = "1px"
 this.style.borderColor = "white"
 this.style.height = '18px'
-this.style.margin = '1px'
 this.style.paddingLeft = '8px'
 this.style.paddingRight = '8px'
 this.style.cursor = "pointer"
+this.tabIndex = 0
 this.addEventListener('mouseenter', () => {
   this.style.background = "white"
   this.style.color = "black" })
@@ -54,12 +49,12 @@ this.addEventListener('mouseleave', () => {
   this.style.removeProperty("background")
   this.style.removeProperty("color") })
 mod.apply(this) }, [
-t(text)])
+text_node(text)])
 
-export const textbox = (text: string, mod: (this: HTMLDivElement) => void) => e('div', function () {
+export const create_textbox = (text: string, mod: (this: HTMLDivElement) => void) => html_element('div', function () {
 this.toggleAttribute('contenteditable')
 this.style.whiteSpace = "pre"
-this.style.display = "flex"
+this.style.display = "inline-flex"
 this.style.justifyContent = "start"
 this.style.alignItems = "center"
 this.style.overflow = "scroll"
@@ -67,12 +62,12 @@ this.style.borderStyle = "solid"
 this.style.borderWidth = "1px"
 this.style.borderColor = "white"
 this.style.height = '18px'
-this.style.margin = '1px'
 this.style.paddingLeft = '8px'
 this.style.paddingRight = '8px'
 this.style.cursor = 'text'
+this.tabIndex = 0
 mod.apply(this) }, [
-t(text)])
+text_node(text), html_element('br', function() {}, [])])
 
 type ContextMenuItemText = {
   type: 'text',
@@ -96,13 +91,13 @@ export const context_menu = (x: number, y: number, items: ContextMenuItem[]) => 
   for (const item of items) {
     elems.push(
       item.type === 'separator' ?
-        e('div', function () {
+        html_element('div', function () {
           this.style.height = '1px'
           this.style.background = 'white'
           this.style.marginLeft = '8px'
           this.style.marginRight = '8px' }, []) :
       item.type === 'text' ?
-        e('div', function () {
+        html_element('div', function () {
           this.style.userSelect = "none"
           this.style.display = "flex"
           this.style.justifyContent = "start"
@@ -112,7 +107,7 @@ export const context_menu = (x: number, y: number, items: ContextMenuItem[]) => 
           this.style.paddingLeft = '8px'
           this.style.paddingRight = '8px'
           this.style.cursor = "pointer"
-          this.addEventListener('pointerdown', e => {
+          this.addEventListener('click', e => {
             if (e.button === 0) {
               item.handler() } })
           this.addEventListener('mouseenter', () => {
@@ -121,9 +116,9 @@ export const context_menu = (x: number, y: number, items: ContextMenuItem[]) => 
           this.addEventListener('mouseleave', () => {
             this.style.removeProperty("background")
             this.style.removeProperty("color") }) }, [
-          t(item.label)]) :
+          text_node(item.label)]) :
       item) }
-  context_menu_element = e('div', function () {
+  context_menu_element = html_element('div', function () {
     this.style.zIndex = '2'
     this.style.background = 'black'
     this.style.borderStyle = "solid"
@@ -134,12 +129,12 @@ export const context_menu = (x: number, y: number, items: ContextMenuItem[]) => 
   document.body.appendChild(context_menu_element)
   context_menu_element.style.left = `${x + context_menu_element.offsetWidth > document.body.offsetWidth ? x - context_menu_element.offsetWidth : x}px`
   context_menu_element.style.top = `${y + context_menu_element.offsetHeight > document.body.offsetHeight ? y - context_menu_element.offsetHeight : y}px`
-  const pointerdown = () => {
+  const click = () => {
     if (context_menu_element) {
       document.body.removeChild(context_menu_element)
       context_menu_element = undefined }
-    window.removeEventListener('pointerdown', pointerdown, true) }
-  window.addEventListener('pointerdown', pointerdown, true) }
+    removeEventListener('click', click, true) }
+  addEventListener('click', click, true) }
 
 const panes: HTMLElement[] = []
 const closers = new Set<() => void>()
@@ -152,68 +147,49 @@ for (const pane of panes) {
     pane.style.zIndex = `${j - 1}` } }
 p.style.zIndex = `${panes.length - 1}` }
 
-export type Pane = {
-  get_selection(): Selection | null
-  get_width(): number,
-  get_height(): number,
-  add_resize_handler(handler: (w: number, h: number) => void): void
-  remove_resize_handler(handler: (w: number, h: number) => void): void
+type Pane = {
+  client_width(): number,
+  client_height(): number,
   add_close_handler(handler: () => void): void
   remove_close_handler(handler: () => void): void
   set_title(title: string): void
   close(): void }
 
-export type CreatePaneOptions = {
-  autosize?: true | false }
+type PaneUser = {
+  offset_width(): number,
+  offset_height(): number,
+  close(): void }
 
-export type CreatePaneHandler = (functions: Pane) => HTMLElement
+type CreatePaneOptions = {
+  size?: [number, number],
+  auto_size?: true | false,
+  user_size?: true | false }
+
+type CreatePane = (element: HTMLElement, options?: CreatePaneOptions) => [Pane, PaneUser]
 
 let pane_spawn = 100
 
-export const create_pane = (options: CreatePaneOptions, contents: CreatePaneHandler) => {
+const create_pane: CreatePane = (element, options): [Pane, PaneUser] => {
   if (pane_spawn > document.body.clientHeight - 100) {
     pane_spawn -= document.body.clientHeight - 200 }
   let pos: [number, number] = [pane_spawn, pane_spawn]
-  let size: [number, number] = [700, 700]
+  let size: [number, number] = options?.size || [700, 700]
 
   pane_spawn += 100
 
-  const resize_handlers = new Set<(w: number, h: number) => void>()
   const close_handlers = new Set<() => void>()
 
   const close = () => {
     for (const handler of close_handlers) {
       handler() }
-    const i = panes.indexOf(pane)
+    const i = panes.indexOf(all)
     if (i !== -1) {
       panes.splice(i, 1) }
     closers.delete(close)
-    document.body.removeChild(pane) }
+    document.body.removeChild(all) }
 
-  const functions: Pane = {
-    get_selection() {
-      const s = document.getSelection()
-      if (!s || !pane.contains(s.getRangeAt(0).commonAncestorContainer)) {
-        return null }
-      return s },
-    get_width() {
-      return size[0] },
-    get_height() {
-      return size[1] },
-    add_resize_handler: handler => {
-      resize_handlers.add(handler) },
-    remove_resize_handler: handler => {
-      resize_handlers.delete(handler) },
-    add_close_handler: handler => {
-      close_handlers.add(handler) },
-    remove_close_handler: handler => {
-      close_handlers.delete(handler) },
-    close,
-    set_title: title => {
-      title_text.data = title } }
-
-  const title_text = t('')
-  const title_text_box = e('div', function() {
+  const title_text = text_node('')
+  const title_text_box = html_element('div', function() {
     this.style.whiteSpace = "pre"
     this.style.height = "100%"
     this.style.display = "flex"
@@ -235,8 +211,8 @@ export const create_pane = (options: CreatePaneOptions, contents: CreatePaneHand
           pos[1] = pos_start[1] + e.screenY - drag_start[1]
           pos[1] = Math.min(pos[1], document.body.scrollHeight - 100)
           pos[1] = Math.max(pos[1], 0)
-          pane.style.left = `${pos[0]}px`
-          pane.style.top = `${pos[1]}px` }) }
+          all.style.left = `${pos[0]}px`
+          all.style.top = `${pos[1]}px` }) }
       else if (e.button === 2) {
         context_menu(e.clientX, e.clientY, [{
           type: 'text',
@@ -245,10 +221,8 @@ export const create_pane = (options: CreatePaneOptions, contents: CreatePaneHand
             close() } }]) } }) }, [
     title_text])
 
-  const resize_button = button("⤢", function () {
-    this.style.margin = "1px"
-    this.style.width = "18px"
-    this.style.height = "18px"
+  const resize_button = () => create_button("⤢", function () {
+    this.style.margin = '1px'
 
     this.addEventListener('pointerdown', async e => {
       if (e.button === 0) {
@@ -258,54 +232,50 @@ export const create_pane = (options: CreatePaneOptions, contents: CreatePaneHand
         pointer_hold(this, 0, e.pointerId, false, e => {
           if (drag_start) {
             size[0] = size_start[0] + e.screenX - drag_start[0]
-            size[0] = Math.max(size[0], title_button_area.scrollWidth)
+            size[0] = Math.max(size[0], title_button_area.offsetWidth + 4)
             size[0] = Math.max(size[0], 100 - pos_start[0])
             size[1] = size_start[1] + drag_start[1] - e.screenY
-            size[1] = Math.max(size[1], titlebar.scrollHeight)
+            size[1] = Math.max(size[1], title_button_area.offsetHeight + 4)
             size[1] = Math.max(size[1], size_start[1] + 100 + pos_start[1] - document.body.scrollHeight)
             size[1] = Math.min(size[1], size_start[1] + pos_start[1])
             pos[1] = pos_start[1] + size_start[1] - size[1]
-            pane.style.top = `${pos[1]}px`
-            pane.style.width = `${size[0]}px`
-            pane.style.height = `${size[1]}px`
-            for (const handler of resize_handlers) {
-              handler(...size) } } }) } }) })
+            all.style.top = `${pos[1]}px`
+            all.style.width = `${size[0] - 2}px`
+            all.style.height = `${size[1] - 2}px` } }) } }) })
 
-  const close_button = button("✕", function () {
-    this.style.margin = "1px"
-    this.style.width = "18px"
-    this.style.height = "18px"
+  const close_button = create_button("✕", function () {
+    this.style.margin = '1px'
     this.addEventListener("click", () => {
       close() }) })
-  const title_button_area = e('div', function() {
+  const title_button_area = html_element('div', function() {
     this.style.display = "flex"
     this.style.flexDirection = "row"
     this.style.flexBasis = "auto"
     this.style.flexGrow = "0"
     this.style.flexShrink = "0" }, [
-    resize_button,
+    ...!options || !('user_size' in options) || options.user_size ? [resize_button()] : [],
     close_button])
-  const titlebar = e('div', function() {
+  const titlebar = html_element('div', function() {
     this.style.userSelect = "none"
     this.style.borderBottomStyle = "solid"
     this.style.borderBottomWidth = "1px"
     this.style.borderBottomColor = "white"
     this.style.alignItems = "center"
     this.style.display = "flex"
+    this.style.padding = '1px'
     this.style.flexDirection = "row"
     this.style.flexGrow = "0"
     this.style.flexShrink = "0"
     this.style.flexBasis = "auto" }, [
     title_text_box,
     title_button_area])
-  const elem = contents(functions)
-  const contents_box = e('div', function() {
+  const contents_box = html_element('div', function() {
     this.style.flexGrow = "1"
     this.style.flexShrink = "0"
     this.style.flexBasis = "0"
     this.style.overflow = "hidden"  }, [
-    elem ])
-  const pane = e('div', function() {
+    element ])
+  const all = html_element('div', function() {
     this.style.background = "black"
     this.style.borderStyle = "solid"
     this.style.borderWidth = "1px"
@@ -315,8 +285,8 @@ export const create_pane = (options: CreatePaneOptions, contents: CreatePaneHand
     this.style.position = "absolute"
     this.style.left = `${pos[0]}px`
     this.style.top = `${pos[1]}px`
-    this.style.width = `${size[0]}px`
-    this.style.height = `${size[1]}px`
+    this.style.width = `${size[0] - 2}px`
+    this.style.height = `${size[1] - 2}px`
     this.style.overflow = "hidden"
     this.style.zIndex = `${panes.length}`
 
@@ -324,26 +294,34 @@ export const create_pane = (options: CreatePaneOptions, contents: CreatePaneHand
       activate(this) }) }, [
     titlebar,
     contents_box])
-  panes.push(pane)
+  panes.push(all)
   closers.add(close)
-  document.body.appendChild(pane)
-  if (options.autosize) {
-    size = [elem.offsetWidth + 2, elem.offsetHeight + 25]
-    pane.style.width = `${size[0]}px`
-    pane.style.height = `${size[1]}px` }
-  activate(pane) }
+  document.body.appendChild(all)
+  if (options?.auto_size) {
+    size = [element.offsetWidth + 2, element.offsetHeight + 26]
+    all.style.width = `${size[0] - 2}px`
+    all.style.height = `${size[1] - 2}px` }
+  activate(all)
+  return [{
+    client_width() {
+      return size[0] - 2 },
+    client_height() {
+      return size[1] - 26 },
+    add_close_handler: handler => {
+      close_handlers.add(handler) },
+    remove_close_handler: handler => {
+      close_handlers.delete(handler) },
+    close,
+    set_title: title => {
+      title_text.data = title } },
+  {
+    offset_width() {
+      return size[0] },
+    offset_height() {
+      return size[1] },
+    close }] }
 
-export type Vars = { [i in string]: any }
-
-let global: Vars = {}
-
-let scene: Scene = {
-  scripts: {},
-  materials: {},
-  surfaces: {},
-  geometry: {} }
-
-const scene_changed_handlers = new Set<() => void>()
+let scene_changed_handlers = new Set<() => void>()
 
 export const add_scene_changed_handler = (handler: () => void) => {
   scene_changed_handlers.add(handler) }
@@ -355,74 +333,59 @@ export const scene_changed = () => {
   for (const handler of scene_changed_handlers) {
     handler() }}
 
-document.body.appendChild(e('div', function () { }, [
-  button('File', function () {
-    this.style.display = 'inline-flex'
-    this.addEventListener('click', async () => {
-      context_menu(this.offsetLeft, this.offsetTop + this.offsetHeight, [{
-        type: 'text',
-        label: 'New',
-        handler: () => {
-          if (!window.confirm("Erase everything?")) {
-            return }
-          scene = {
-            scripts: {},
-            geometry: {},
-            materials: {},
-            surfaces: {} }
-          for (const closer of closers) {
-            closer() }
-          scene_changed() } },{
-        type: 'text',
-        label: 'Open',
-        handler: () => {
-          let input = document.createElement('input')
-          input.type = 'file'
-          input.onchange = async () => {
-            let files = input.files
-            if (!files || !files[0]) {
-              return }
-            const text = await files[0].text()
-            scene = JSON.parse(text)
-            global = {}
-            for (const closer of closers) {
-              closer() }
-            scene_changed() }
-          input.click() } },
-      {
-        type: 'text',
-        label: 'Save',
-        handler: () => {
-          const blob = new Blob([JSON.stringify(scene)], { type: "text/plain" })
-          const url = window.URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.style.display = 'none'
-          a.href = url
-          a.download = 'scene.json'
-          document.body.appendChild(a)
-          a.click()
-          document.body.removeChild(a)
-          window.URL.revokeObjectURL(url) } }]) }) }),
-  button('Window', function () {
-    this.style.display = 'inline-flex'
-    this.addEventListener('click', async () => {
-      context_menu(this.offsetLeft, this.offsetTop + this.offsetHeight, [{
-        type: 'text',
-        label: 'Geometry Browser',
-        handler: () => {
-          add_geometry_browser(scene) } },
-      {
-        type: 'text',
-        label: 'Material Browser',
-        handler: () => {
-          add_material_browser(scene) } },
-      {
-        type: 'text',
-        label: 'Script Browser',
-        handler: () => {
-          add_script_browser(scene, global) } },
-      {
-        type: 'text',
-        label: 'Script Editor',
-        handler: () => {
-          add_script_editor(scene, global, '', 'new_script') } }]) }) })]))
+const prompt = async (title: string) => new Promise<string>(c => {
+  const ok = () => {
+    pane.close()
+    c(box.innerText) }
+  const box = create_textbox('', function() {
+    this.style.margin = '4px'
+    this.style.flexGrow = '1'
+    this.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        ok() } })})
+  const [pane, _user] = create_pane(
+    html_element('div', function() {
+      this.style.padding = '4px'
+      this.style.display = 'flex'
+      this.style.flexDirection = 'row' }, [
+      box,
+      create_button('Ok', function() {
+        this.style.margin = '4px'
+        this.addEventListener('click', ok) })]), {
+    user_size: false,
+    auto_size: true })
+  pane.set_title(title)
+  box.focus() })
+
+type PaneMenuDesc = { name: string, handler: () => void }
+
+const pane_menu_list: PaneMenuDesc[] = []
+
+const add_menu_pane = (desc: PaneMenuDesc) => {
+  pane_menu_list.push(desc) }
+
+document.body.appendChild(html_element('div', function () { }, [create_button('Pane', function () {
+  this.style.margin = '1px'
+  this.style.display = 'inline-flex'
+  this.addEventListener('click', () => {
+    context_menu(this.offsetLeft, this.offsetTop + this.offsetHeight, pane_menu_list.map(item => ({
+      type: 'text',
+      label: item.name,
+      handler: item.handler }))) }) })]))
+
+const AsyncFunction = async function () {}.constructor
+
+const run_script = async (text: string, print: (s: string) => void): Promise<unknown> =>
+await AsyncFunction("out", text)(print)
+
+const ui = Object.create(null)
+Object.defineProperty(self, 'ui', { value: ui })
+Object.defineProperty(ui, 'create_pane', { value: create_pane })
+Object.defineProperty(ui, 'create_button', { value: create_button })
+Object.defineProperty(ui, 'create_textbox', { value: create_textbox })
+Object.defineProperty(ui, 'context_menu', { value: context_menu })
+Object.defineProperty(ui, 'add_menu_pane', { value: add_menu_pane })
+Object.defineProperty(ui, 'run_script', { value: run_script })
+Object.freeze(ui)
+
+await run_script(`await import('./scripts/start.js')`, (s: string) => console.log(s))

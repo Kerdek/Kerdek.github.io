@@ -19,7 +19,10 @@ export type BufferDesc = {
   data: number[] }
 
 export type TextureDesc = {
-  image: HTMLImageElement }
+  image: HTMLImageElement } | {
+  width: number,
+  height: number,
+  data: Float32Array }
 
 export type ObjectDesc = {
   shaders: { [i: symbol]: ShaderDesc }
@@ -162,10 +165,13 @@ type DrawAttribute = {
   type: number
   buffer: WebGLBuffer }
 
+// const entries: <K extends string | symbol, E>(e: [K, E][]) => { [i in K]: E } = e =>
+// Object.fromEntries(e) as any
+
 const map: <K extends string | symbol, E, KP extends string | symbol, EP>(o: { [i in K]: E }, f: (k: K, e: E) => [KP, EP]) => { [i in KP]: EP } = (o, f) =>
 Object.fromEntries(Reflect.ownKeys(o).map((sym: any) => f(sym, (o as any)[sym]))) as any
 
-export const create_viewer = (width: number, height: number): [HTMLCanvasElement, (desc: SceneDesc) => void, (w: number, h: number) => void] => {
+export const create_viewer = (parent: HTMLElement): (desc: SceneDesc) => void => {
 
 let spiny = 0.0
 let spinx = 0.0
@@ -173,8 +179,7 @@ let standback = 4.0
 let zoom = 2.5
 
 const canvas = html_element('canvas', function() {
-  this.width = width
-  this.height = height }, [])
+  this.style.position = 'absolute' }, [])
 
 const gl = canvas.getContext("webgl2")
 if (gl === null) {
@@ -245,8 +250,8 @@ gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, targ
 gl.bindFramebuffer(gl.FRAMEBUFFER, null)
 
 const resize = (w: number, h: number) => {
-canvas.width = w + 1
-canvas.height = h + 1
+canvas.width = w
+canvas.height = h
 
 target = gl.createTexture()
 gl.bindTexture(gl.TEXTURE_2D, target)
@@ -320,11 +325,14 @@ const tex = gl.createTexture()
 if (!tex) {
   throw new Error("Unable to create texture.") }
 gl.bindTexture(gl.TEXTURE_2D, tex)
-gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, texture.image.width, texture.image.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, texture.image)
+if ('image' in texture) {
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, texture.image.width, texture.image.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, texture.image) }
+else {
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, texture.width, texture.height, 0, gl.RGBA, gl.FLOAT, texture.data) }
 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 gl.bindTexture(gl.TEXTURE_2D, null)
 return [sym, tex] })
 
@@ -544,4 +552,15 @@ else {
   standback *= Math.exp(delta) }
 invalidate() })
 
-return [canvas, update, resize]}
+parent.appendChild(canvas)
+
+new ResizeObserver(() => {
+  const w = Math.ceil(parent.clientWidth)
+  const h = Math.ceil(parent.clientHeight)
+  canvas.style.width = `${w}px`;
+  canvas.style.height = `${h}px`;
+  resize(w * devicePixelRatio, h * devicePixelRatio) })
+.observe(parent)
+
+
+return update }
