@@ -1,5 +1,5 @@
 import { read } from './read.js';
-import { evaluate } from './evaluate.js';
+import { dhomproc, homproc } from './run.js';
 const include = (type, src) => new Promise(cb => {
     const js = document.createElement('script');
     js.src = src;
@@ -125,76 +125,101 @@ const button = (text, title, action) => create_element('div', function () {
     t(text)
 ]);
 export function create_playground(initial) {
-    const keybuf = [];
-    let keywait;
+    let f;
     async function ev() {
-        output.innerHTML = '';
         const text = editor.getValue();
         try {
-            const f = evaluate((_rec, cc, _ret) => cc(read(text)));
-            const n = evaluate((_rec, rc, _ret) => rc({ kind: "app", lhs: { kind: "app", lhs: f, rhs: { kind: "lit", val: x => x.kind === "lit" && typeof x.val === "number" ? { kind: "lit", val: x.val + 1 } : { kind: "lit", val: 0 } } }, rhs: { kind: "lit", val: 0 } }));
-            output.appendChild(t(n.kind === "lit" ? `${n.val}` : `error`));
-            output.scrollTop = output.scrollHeight;
+            f = eval(`${dhomproc(read(text).to_JS)}`);
+            update();
         }
         catch (e) {
             output.appendChild(t(e.toString()));
-            output.scrollTop = output.scrollHeight;
         }
     }
-    const eval_button = button("Evaluate", "(F4) Evaluate the program and show the result.", ev);
-    const menu = create_element('div', function () {
-        this.style.width = "100%";
-        this.style.flexShrink = "0";
-        this.style.display = "flex";
-        this.style.overflow = "hidden";
-        this.style.flexDirection = "row";
-        this.style.borderBottomStyle = "solid";
-        this.style.borderBottomColor = playground_colors.contrast;
-        this.style.borderBottomWidth = "1px";
-    }, [
-        eval_button
-    ]);
-    const entry = create_element('div', function () {
-        this.style.width = "100%";
-        this.style.height = "70%";
-        this.style.flexShrink = "0";
-    }, []);
-    const editor = monaco.editor.create(entry, church_editor_config);
-    editor.setValue(initial);
-    const output = create_element("div", function () {
-        this.tabIndex = 0;
-        this.style.width = "100%";
-        this.style.whiteSpace = "pre-wrap";
-        this.style.overflowWrap = "break-word";
-        this.style.overflowX = "hidden";
-        this.style.overflowY = "scroll";
-        this.style.wordBreak = "break-all";
-        this.style.flexShrink = "1";
-        this.style.flexGrow = "1";
-        this.style.borderTopStyle = "solid";
-        this.style.borderTopColor = playground_colors.contrast;
-        this.style.borderTopWidth = "1px";
-    }, []);
-    const playground = create_element('div', function () {
-        this.style.textAlign = "left";
-        this.style.display = "inline-flex";
-        this.style.flexDirection = "column";
-    }, [
-        menu, entry, output
-    ]);
-    playground.addEventListener('keydown', e => (e.key === "F4" ?
-        ev() :
-        void 0,
-        true));
-    output.addEventListener('keydown', e => {
-        keybuf.push(e.key);
-        if (keywait) {
-            keywait(keybuf.shift());
+    let mode = "term";
+    async function update() {
+        output.innerHTML = '';
+        try {
+            if (typeof f !== "function")
+                throw "Not a function.";
+            const ff = f;
+            homproc((call, cc, ret) => call(ff(10), x => call(x(y => y + 1))));
+            output.appendChild(t(v));
+            await new Promise(c => window.setTimeout(c, 0));
         }
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-    });
-    return [playground, editor];
+        finally { }
+    }
+    try {
+    }
+    catch (e) {
+        output.appendChild(t(e.toString()));
+    }
 }
+const entry = create_element('div', function () {
+    this.style.height = "70%";
+    this.style.flexShrink = "0";
+}, []);
+const editor = monaco.editor.create(entry, church_editor_config);
+editor.setValue(initial);
+const eval_button = button("Evaluate", "(F4) Evaluate the program and show the result.", ev);
+const menu = create_element('div', function () {
+    this.style.flexShrink = "0";
+    this.style.display = "flex";
+    this.style.overflow = "hidden";
+    this.style.flexDirection = "row";
+    this.style.borderTopStyle = "solid";
+    this.style.borderTopColor = playground_colors.contrast;
+    this.style.borderTopWidth = "1px";
+}, [
+    eval_button
+]);
+const formats = create_element("div", function () {
+    this.style.flexShrink = "0";
+    this.style.flexGrow = "0";
+    this.style.overflowX = "hidden";
+    this.style.overflowY = "scroll";
+    this.style.borderRightStyle = "solid";
+    this.style.borderRightColor = playground_colors.contrast;
+    this.style.borderRightWidth = "1px";
+}, [
+    button("Lambda Term", "Just print the term.", () => (mode = "term", update())),
+    button("Boolean", "Interpret the result as a Church boolean.", () => (mode = "bool", update())),
+    button("Church Numeral", "Interpret the result as a Church numeral.", () => (mode = "cnum", update())),
+    button("Scott Numeral", "Interpret the result as a Scott numeral.", () => (mode = "jnum", update())),
+    button("Base 2 LE", "Interpret the result as a base 2 little endian list.", () => (mode = "bnum", update())),
+    button("Base 10 LE", "Interpret the result as a base 10 little endian list.", () => (mode = "dnum", update())),
+    button("Church ASCII", "Interpret the result as an ascii string of Church numerals.", () => (mode = "cstr", update())),
+    button("Scott ASCII", "Interpret the result as an ascii string of Just numerals.", () => (mode = "jstr", update()))
+]);
+const output = create_element("div", function () {
+    this.tabIndex = 0;
+    this.style.whiteSpace = "pre-wrap";
+    this.style.overflowWrap = "break-word";
+    this.style.overflowX = "hidden";
+    this.style.overflowY = "scroll";
+    this.style.wordBreak = "break-all";
+    this.style.flexShrink = "1";
+    this.style.flexGrow = "1";
+}, []);
+const formatting = create_element("div", function () {
+    this.tabIndex = 0;
+    this.style.display = "flex";
+    this.style.flexDirection = "row";
+    this.style.overflowX = "hidden";
+    this.style.overflowY = "hidden";
+    this.style.flexShrink = "1";
+    this.style.flexGrow = "1";
+    this.style.borderTopStyle = "solid";
+    this.style.borderTopColor = playground_colors.contrast;
+    this.style.borderTopWidth = "1px";
+}, [formats, output]);
+const playground = create_element('div', function () {
+    this.style.textAlign = "left";
+    this.style.display = "inline-flex";
+    this.style.flexDirection = "column";
+}, [
+    entry, menu, formatting
+]);
+playground.addEventListener('keydown', e => e.key === "F4" ? (ev(), true) : true);
+return [playground, editor];
 //# sourceMappingURL=create_playground.js.map

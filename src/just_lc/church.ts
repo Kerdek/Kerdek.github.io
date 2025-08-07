@@ -1,31 +1,30 @@
-import { STAMStem } from '../stam.js'
+import { DHomStem } from './run.js'
 
-// syntax node types
-export type App = { kind: "app", lhs: Graph, rhs: Graph }
-export type Abs = { kind: "abs", param: string, body: Graph }
-export type Ref = { kind: "ref", id: string }
+export const fatal: (m: string) => never = m => { throw new Error(m) }
 
-// runtime node type
-export type Shr = { kind: "shr", body: Graph, value?: Graph }
-export type Lit = { kind: "lit", val: Value }
+export type Term = {
+  print: (p: boolean, r: boolean) => DHomStem<string>,
+  to_JS: DHomStem<string> }
 
-export type Graph = Ref | App | Abs | Ref | Shr | Lit
-export type Kind = Graph['kind'];
+export type Func = (e: Term) => Term
+export type Value = number | string | boolean | undefined | Func
 
-export type Func = (e: Graph) => Graph
-export type Value = number | string | boolean | Func
-export type Record = { [i: string]: Shr }
-export type Sorts = { [i in Kind]: Graph & { kind: i } }
+const parens = (c: boolean, s: string) => c ? `(${s})` : s
 
-type Visit = <K extends Kind, R>(o: { [i in K]: (e: Sorts[i]) => R }) => (e: Sorts[K]) => R
-type Assign = <K extends { [i: string]: any }>(e: { [i: string]: any }, x: K) => K
+export const abs: (param: string, body: Term) => Term = (param, body) => {
+  const e: Term = {
+  print: (_p, r) => (call, _cc, ret) => call(body.print(false, true), dx => ret(parens(!r, `λ${param}.${dx}`))),
+  to_JS: (call, _cc, ret) => call(body.to_JS, dx => ret(`(call, ret) => _${param} => ${dx}`)) }
+  return e }
 
-export const visit: Visit = o => e => o[e.kind](e)
-export const assign: Assign = (e, x) => {
-  if (x === e) {
-    return e as any }
-  for (const i in e) {
-    delete e[i] }
-  for (const i in x) {
-    e[i] = x[i] as any }
-  return e as any }
+export const app: (lhs: Term, rhs: Term) => Term = (lhs, rhs) => {
+  const e: Term = {
+  print: (p, r) => (call, _cc, ret) => call(lhs.print(false, false), dx => call(rhs.print(true, p || r), dy => ret(parens(p, `${dx} ${dy}`)))),
+  to_JS: (call, _cc, ret) => call(lhs.to_JS, dx => call(rhs.to_JS, dy => ret(`call(${dy}, (${dx})(call, ret))`))) }
+  return e }
+
+export const ref: (id: string) => Term = id => {
+  const e: Term = {
+  print: (_p, _r) => (_call, _cc, ret) => ret(id),
+  to_JS: (_call, _cc, ret) => ret(`ret(${id})`) }
+  return e }
