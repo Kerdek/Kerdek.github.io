@@ -34,6 +34,8 @@ style_rule(`@media (prefers-color-scheme: dark) {
 const [pg, ed] = create_playground(localStorage.getItem('church-playground-system') || "")
 pg.style.width = "100%"
 pg.style.height = "100%"
-ed.getModel().onDidChangeContent(() => localStorage.setItem('church-playground-system', ed.getValue()))
+const m = ed.getModel()
+if (m) {
+  m.onDidChangeContent(() => localStorage.setItem('church-playground-system', ed.getValue())) }
 
 document.body.append(pg)

@@ -1,5 +1,6 @@
 import { read } from './read.js';
-import { dhomproc, homproc } from './run.js';
+import { evaluate } from './evaluate.js';
+import { print } from './print.js';
 const include = (type, src) => new Promise(cb => {
     const js = document.createElement('script');
     js.src = src;
@@ -7,8 +8,8 @@ const include = (type, src) => new Promise(cb => {
     js.addEventListener('load', cb);
     document.head.appendChild(js);
 });
-await include('text/javascript', '../monaco/loader.js');
-require.config({ paths: { vs: '../monaco' } });
+await include('text/javascript', '../monaco/vs/loader.js');
+require.config({ paths: { vs: new URL(`${document.documentURI}/../../monaco/vs`).toString() } });
 await new Promise(cb => require(['vs/editor/editor.main'], cb));
 const church_monarch_tokens = {
     brackets: [
@@ -19,10 +20,10 @@ const church_monarch_tokens = {
     defaultToken: "invalid",
     ignoreCase: false,
     operators: [],
-    symbols: /\\|λ|\*|\.|#/,
+    symbols: /\\|λ|\./,
     tokenizer: {
         root: [
-            [/[()$]/, 'brackets'],
+            [/[()]/, 'brackets'],
             [/\\|λ|\./, 'lambda'],
             [/[^\s\\λ\.\(\)]+/, 'reference']
         ]
@@ -64,8 +65,6 @@ export const playground_colors_dark = {
     'reference': '#FFAACC',
     'lambda': '#AA2255',
     'brackets': '#5522AA',
-    'string': '#AAAAFF',
-    'numerical': '#AAFFAA',
     'comment': '#55AA55',
     "lineHighlight": '#1b040a',
     "ruler": "#002222",
@@ -77,8 +76,6 @@ export const playground_colors_light = {
     'reference': '#471127',
     'lambda': '#8f0b3c',
     'brackets': '#3c1085',
-    'string': '#151554',
-    'numerical': '#126e12',
     'comment': '#339133',
     "lineHighlight": "#e0baca",
     "ruler": "#ccffff",
@@ -93,11 +90,15 @@ const church_theme = {
         { token: 'reference', foreground: playground_colors.reference },
         { token: 'lambda', foreground: playground_colors.lambda },
         { token: 'brackets', foreground: playground_colors.brackets },
-        { token: 'string', foreground: playground_colors.string },
-        { token: 'numerical', foreground: playground_colors.numerical },
         { token: 'comment', foreground: playground_colors.comment }
     ],
     colors: {
+        "editorBracketHighlight.foreground1": "#512881",
+        "editorBracketHighlight.foreground2": "#6e1680",
+        "editorBracketHighlight.foreground3": "#892365",
+        "editorBracketHighlight.foreground4": "#a32e5b",
+        "editorBracketHighlight.foreground5": "#a13648",
+        "editorBracketHighlight.foreground6": "#a85334",
         "editor.lineHighlightBackground": playground_colors.lineHighlight,
         "editorRuler.foreground": playground_colors.ruler,
         "editorIndentGuide.background": playground_colors.guide
@@ -125,101 +126,65 @@ const button = (text, title, action) => create_element('div', function () {
     t(text)
 ]);
 export function create_playground(initial) {
-    let f;
     async function ev() {
+        output.innerHTML = '';
         const text = editor.getValue();
         try {
-            f = eval(`${dhomproc(read(text).to_JS)}`);
-            update();
+            const f = evaluate((_rec, cc, _ret) => cc(read(text)));
+            const n = evaluate((_rec, rc, _ret) => rc(f));
+            output.appendChild(t(print(n)));
+            output.scrollTop = output.scrollHeight;
         }
         catch (e) {
             output.appendChild(t(e.toString()));
+            output.scrollTop = output.scrollHeight;
         }
     }
-    let mode = "term";
-    async function update() {
-        output.innerHTML = '';
-        try {
-            if (typeof f !== "function")
-                throw "Not a function.";
-            const ff = f;
-            homproc((call, cc, ret) => call(ff(10), x => call(x(y => y + 1))));
-            output.appendChild(t(v));
-            await new Promise(c => window.setTimeout(c, 0));
-        }
-        finally { }
-    }
-    try {
-    }
-    catch (e) {
-        output.appendChild(t(e.toString()));
-    }
+    const eval_button = button("Evaluate", "(F4) Evaluate the program and show the result.", ev);
+    const menu = create_element('div', function () {
+        this.style.width = "100%";
+        this.style.flexShrink = "0";
+        this.style.display = "flex";
+        this.style.overflow = "hidden";
+        this.style.flexDirection = "row";
+        this.style.borderBottomStyle = "solid";
+        this.style.borderBottomColor = playground_colors.contrast;
+        this.style.borderBottomWidth = "1px";
+    }, [
+        eval_button
+    ]);
+    const entry = create_element('div', function () {
+        this.style.width = "100%";
+        this.style.height = "70%";
+        this.style.flexShrink = "0";
+    }, []);
+    const editor = monaco.editor.create(entry, church_editor_config);
+    editor.setValue(initial);
+    const output = create_element("div", function () {
+        this.tabIndex = 0;
+        this.style.width = "100%";
+        this.style.whiteSpace = "pre-wrap";
+        this.style.overflowWrap = "break-word";
+        this.style.overflowX = "hidden";
+        this.style.overflowY = "scroll";
+        this.style.wordBreak = "break-all";
+        this.style.flexShrink = "1";
+        this.style.flexGrow = "1";
+        this.style.borderTopStyle = "solid";
+        this.style.borderTopColor = playground_colors.contrast;
+        this.style.borderTopWidth = "1px";
+    }, []);
+    const playground = create_element('div', function () {
+        this.style.textAlign = "left";
+        this.style.display = "inline-flex";
+        this.style.flexDirection = "column";
+    }, [
+        menu, entry, output
+    ]);
+    playground.addEventListener('keydown', e => (e.key === "F4" ?
+        ev() :
+        void 0,
+        true));
+    return [playground, editor];
 }
-const entry = create_element('div', function () {
-    this.style.height = "70%";
-    this.style.flexShrink = "0";
-}, []);
-const editor = monaco.editor.create(entry, church_editor_config);
-editor.setValue(initial);
-const eval_button = button("Evaluate", "(F4) Evaluate the program and show the result.", ev);
-const menu = create_element('div', function () {
-    this.style.flexShrink = "0";
-    this.style.display = "flex";
-    this.style.overflow = "hidden";
-    this.style.flexDirection = "row";
-    this.style.borderTopStyle = "solid";
-    this.style.borderTopColor = playground_colors.contrast;
-    this.style.borderTopWidth = "1px";
-}, [
-    eval_button
-]);
-const formats = create_element("div", function () {
-    this.style.flexShrink = "0";
-    this.style.flexGrow = "0";
-    this.style.overflowX = "hidden";
-    this.style.overflowY = "scroll";
-    this.style.borderRightStyle = "solid";
-    this.style.borderRightColor = playground_colors.contrast;
-    this.style.borderRightWidth = "1px";
-}, [
-    button("Lambda Term", "Just print the term.", () => (mode = "term", update())),
-    button("Boolean", "Interpret the result as a Church boolean.", () => (mode = "bool", update())),
-    button("Church Numeral", "Interpret the result as a Church numeral.", () => (mode = "cnum", update())),
-    button("Scott Numeral", "Interpret the result as a Scott numeral.", () => (mode = "jnum", update())),
-    button("Base 2 LE", "Interpret the result as a base 2 little endian list.", () => (mode = "bnum", update())),
-    button("Base 10 LE", "Interpret the result as a base 10 little endian list.", () => (mode = "dnum", update())),
-    button("Church ASCII", "Interpret the result as an ascii string of Church numerals.", () => (mode = "cstr", update())),
-    button("Scott ASCII", "Interpret the result as an ascii string of Just numerals.", () => (mode = "jstr", update()))
-]);
-const output = create_element("div", function () {
-    this.tabIndex = 0;
-    this.style.whiteSpace = "pre-wrap";
-    this.style.overflowWrap = "break-word";
-    this.style.overflowX = "hidden";
-    this.style.overflowY = "scroll";
-    this.style.wordBreak = "break-all";
-    this.style.flexShrink = "1";
-    this.style.flexGrow = "1";
-}, []);
-const formatting = create_element("div", function () {
-    this.tabIndex = 0;
-    this.style.display = "flex";
-    this.style.flexDirection = "row";
-    this.style.overflowX = "hidden";
-    this.style.overflowY = "hidden";
-    this.style.flexShrink = "1";
-    this.style.flexGrow = "1";
-    this.style.borderTopStyle = "solid";
-    this.style.borderTopColor = playground_colors.contrast;
-    this.style.borderTopWidth = "1px";
-}, [formats, output]);
-const playground = create_element('div', function () {
-    this.style.textAlign = "left";
-    this.style.display = "inline-flex";
-    this.style.flexDirection = "column";
-}, [
-    entry, menu, formatting
-]);
-playground.addEventListener('keydown', e => e.key === "F4" ? (ev(), true) : true);
-return [playground, editor];
 //# sourceMappingURL=create_playground.js.map

@@ -1,6 +1,7 @@
 import { read } from './read.js'
-import { app, fatal, Value, Term } from './church.js'
-import { EVStem, HomStem, dhomproc, homproc } from './run.js'
+import { evaluate } from './evaluate.js'
+import { print } from './print.js'
+import { Graph } from './church.js'
 
 const include: (type: string, src: string) => Promise<Event> =
 (type, src) => new Promise(cb => {
@@ -10,11 +11,11 @@ const include: (type: string, src: string) => Promise<Event> =
   js.addEventListener('load', cb)
   document.head.appendChild(js) })
 
-await include('text/javascript', '../monaco/loader.js')
-require.config({ paths: { vs: '../monaco' } })
-await new Promise (cb => require(['vs/editor/editor.main'], cb))
+await include('text/javascript', '../monaco/vs/loader.js')
+require.config({ paths: { vs: new URL(`${document.documentURI}/../../monaco/vs`).toString() } })
+await new Promise(cb => require(['vs/editor/editor.main'], cb))
 
-const church_monarch_tokens: IMonarchLanguage = {
+const church_monarch_tokens: monaco.languages.IMonarchLanguage = {
   brackets: [
     { open: "(", close: ")", token: "brackets"} ],
   unicode: true,
@@ -22,14 +23,14 @@ const church_monarch_tokens: IMonarchLanguage = {
   defaultToken: "invalid",
   ignoreCase: false,
   operators: [],
-  symbols: /\\|λ|\*|\.|#/,
+  symbols: /\\|λ|\./,
   tokenizer: {
     root: [
-      [/[()$]/, 'brackets'],
+      [/[()]/, 'brackets'],
       [/\\|λ|\./, 'lambda'],
       [/[^\s\\λ\.\(\)]+/, 'reference']] } }
 
-const church_language_config: LanguageConfiguration = {
+const church_language_config: monaco.languages.LanguageConfiguration = {
   brackets: [
     ["(", ")"] ],
   autoClosingPairs: [
@@ -38,7 +39,7 @@ const church_language_config: LanguageConfiguration = {
     { open: "(", close: ")" } ],
   folding: { "markers": { start: /\(/, end: /\)/ } } }
 
-const church_editor_config: IStandaloneEditorConstructionOptions = {
+const church_editor_config: monaco.editor.IStandaloneEditorConstructionOptions = {
   bracketPairColorization: {
     enabled: true },
   matchBrackets: "always",
@@ -60,8 +61,6 @@ export const playground_colors_dark = {
   'reference': '#FFAACC',
   'lambda': '#AA2255',
   'brackets': '#5522AA',
-  'string': '#AAAAFF',
-  'numerical': '#AAFFAA',
   'comment': '#55AA55',
   "lineHighlight": '#1b040a',
   "ruler": "#002222",
@@ -72,8 +71,6 @@ export const playground_colors_light = {
   'reference': '#471127',
   'lambda': '#8f0b3c',
   'brackets': '#3c1085',
-  'string': '#151554',
-  'numerical': '#126e12',
   'comment': '#339133',
   "lineHighlight": "#e0baca",
   "ruler": "#ccffff",
@@ -81,7 +78,7 @@ export const playground_colors_light = {
 
 export const playground_colors = use_dark ? playground_colors_dark : playground_colors_light
 
-const church_theme: IStandaloneThemeData = {
+const church_theme: monaco.editor.IStandaloneThemeData = {
   base: use_dark ? 'hc-black' : 'vs',
   inherit: true,
   rules: [
@@ -89,10 +86,14 @@ const church_theme: IStandaloneThemeData = {
     { token: 'reference', foreground: playground_colors.reference },
     { token: 'lambda', foreground: playground_colors.lambda },
     { token: 'brackets', foreground: playground_colors.brackets },
-    { token: 'string', foreground: playground_colors.string },
-    { token: 'numerical', foreground: playground_colors.numerical },
     { token: 'comment', foreground: playground_colors.comment } ],
   colors: {
+    "editorBracketHighlight.foreground1": "#512881",
+    "editorBracketHighlight.foreground2": "#6e1680",
+    "editorBracketHighlight.foreground3": "#892365",
+    "editorBracketHighlight.foreground4": "#a32e5b",
+    "editorBracketHighlight.foreground5": "#a13648",
+    "editorBracketHighlight.foreground6": "#a85334",
     "editor.lineHighlightBackground": playground_colors.lineHighlight,
     "editorRuler.foreground": playground_colors.ruler,
     "editorIndentGuide.background": playground_colors.guide } }
@@ -124,98 +125,67 @@ const button: Button = (text, title, action) => create_element('div',
     this.addEventListener('click', action) }, [
   t(text)])
 
-export function create_playground(initial: string): [HTMLElement, IStandaloneCodeEditor] {
-
-  type Value = EVStem<string | number | boolean | (<RealWorld>(x: Value) => RealWorld)>
-  let f: Value
+export function create_playground(initial: string): [HTMLElement, monaco.editor.IStandaloneCodeEditor] {
 
   async function ev() {
+    output.innerHTML = ''
     const text = editor.getValue()
     try {
-      f = eval(`${dhomproc(read(text).to_JS)}`)
-      update() }
+      const f = evaluate((_rec, cc, _ret) => cc(read(text)))
+      const n: Graph = evaluate((_rec, rc, _ret) => rc(f))
+      output.appendChild(t(print(n)))
+      output.scrollTop = output.scrollHeight
+    }
     catch (e: any) {
-      output.appendChild(t(e.toString())) } }
+      output.appendChild(t(e.toString()))
+      output.scrollTop = output.scrollHeight }
+    }
 
-  let mode: "term" | "bool" | "cnum" | "jnum" | "bnum" | "dnum" | "cstr" | "jstr" = "term"
+const eval_button = button("Evaluate", "(F4) Evaluate the program and show the result.", ev)
 
-  async function update() {
-    output.innerHTML = ''
-    try {
-      if (typeof f !== "function") throw "Not a function."
-      const ff = f
-      homproc((call, cc, ret) => call(ff(10), x => call(x(y => y + 1), )))
-      output.appendChild(t(v))
-      await new Promise(c => window.setTimeout(c, 0)) } }
-    catch (e: any) {
-      output.appendChild(t(e.toString())) } }
+const menu = create_element('div', function () {
+  this.style.width = "100%"
+  this.style.flexShrink = "0"
+  this.style.display = "flex"
+  this.style.overflow = "hidden"
+  this.style.flexDirection = "row"
+  this.style.borderBottomStyle = "solid"
+  this.style.borderBottomColor = playground_colors.contrast
+  this.style.borderBottomWidth = "1px"  }, [
+  eval_button])
 
-  const entry = create_element('div', function () {
-    this.style.height = "70%"
-    this.style.flexShrink = "0" }, [])
+const entry = create_element('div', function () {
+  this.style.width = "100%"
+  this.style.height = "70%"
+  this.style.flexShrink = "0" }, [])
 
-  const editor = monaco.editor.create(entry, church_editor_config)
-  editor.setValue(initial)
+const editor = monaco.editor.create(entry, church_editor_config)
+editor.setValue(initial)
 
-  const eval_button = button("Evaluate", "(F4) Evaluate the program and show the result.", ev)
+const output = create_element("div", function () {
+  this.tabIndex = 0
+  this.style.width = "100%"
+  this.style.whiteSpace = "pre-wrap"
+  this.style.overflowWrap = "break-word"
+  this.style.overflowX = "hidden"
+  this.style.overflowY = "scroll"
+  this.style.wordBreak = "break-all"
+  this.style.flexShrink = "1"
+  this.style.flexGrow = "1"
+  this.style.borderTopStyle = "solid"
+  this.style.borderTopColor = playground_colors.contrast
+  this.style.borderTopWidth = "1px" }, [])
 
-  const menu = create_element('div', function () {
-    this.style.flexShrink = "0"
-    this.style.display = "flex"
-    this.style.overflow = "hidden"
-    this.style.flexDirection = "row"
-    this.style.borderTopStyle = "solid"
-    this.style.borderTopColor = playground_colors.contrast
-    this.style.borderTopWidth = "1px"  }, [
-    eval_button])
+const playground = create_element('div', function() {
+  this.style.textAlign = "left"
+  this.style.display = "inline-flex"
+  this.style.flexDirection = "column" }, [
+  menu, entry, output])
 
-  const formats = create_element("div", function () {
-    this.style.flexShrink = "0"
-    this.style.flexGrow = "0"
-    this.style.overflowX = "hidden"
-    this.style.overflowY = "scroll"
-    this.style.borderRightStyle = "solid"
-    this.style.borderRightColor = playground_colors.contrast
-    this.style.borderRightWidth = "1px" }, [
-      button("Lambda Term", "Just print the term.", () => (mode = "term", update())),
-      button("Boolean", "Interpret the result as a Church boolean.", () => (mode = "bool", update())),
-      button("Church Numeral", "Interpret the result as a Church numeral.", () => (mode = "cnum", update())),
-      button("Scott Numeral", "Interpret the result as a Scott numeral.", () => (mode = "jnum", update())),
-      button("Base 2 LE", "Interpret the result as a base 2 little endian list.", () => (mode = "bnum", update())),
-      button("Base 10 LE", "Interpret the result as a base 10 little endian list.", () => (mode = "dnum", update())),
-      button("Church ASCII", "Interpret the result as an ascii string of Church numerals.", () => (mode = "cstr", update())),
-      button("Scott ASCII", "Interpret the result as an ascii string of Just numerals.", () => (mode = "jstr", update()))])
-
-  const output = create_element("div", function () {
-    this.tabIndex = 0
-    this.style.whiteSpace = "pre-wrap"
-    this.style.overflowWrap = "break-word"
-    this.style.overflowX = "hidden"
-    this.style.overflowY = "scroll"
-    this.style.wordBreak = "break-all"
-    this.style.flexShrink = "1"
-    this.style.flexGrow = "1" }, [])
-
-  const formatting = create_element("div", function () {
-    this.tabIndex = 0
-    this.style.display = "flex"
-    this.style.flexDirection = "row"
-    this.style.overflowX = "hidden"
-    this.style.overflowY = "hidden"
-    this.style.flexShrink = "1"
-    this.style.flexGrow = "1"
-    this.style.borderTopStyle = "solid"
-    this.style.borderTopColor = playground_colors.contrast
-    this.style.borderTopWidth = "1px" },
-    [formats, output])
-
-  const playground = create_element('div', function() {
-    this.style.textAlign = "left"
-    this.style.display = "inline-flex"
-    this.style.flexDirection = "column" }, [
-    entry, menu, formatting])
-
-  playground.addEventListener('keydown', e =>
-    e.key === "F4" ? (ev(), true) : true)
+  playground.addEventListener('keydown', e => (
+    e.key === "F4" ?
+      ev() :
+    void 0,
+    true))
 
 return [playground, editor] }

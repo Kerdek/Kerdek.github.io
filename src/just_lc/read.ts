@@ -1,7 +1,7 @@
-import { homproc } from "./run.js"
-import { Term, abs, app, ref } from "./church.js"
+import { homproc } from "../run.js"
+import { Graph } from "./church.js"
 
-export const read: (x: string) => Term = x => homproc((call, cc, ret) => {
+export const read: (x: string) => Graph = x => homproc((call, _cc, ret) => {
 type Branch = ReturnType<typeof ret>
 type Take = (re: RegExp) => Token
 type Token = () => string | null
@@ -26,12 +26,12 @@ const
   lm = k(/^[\\λ]/), dt = k(/^\./),
   lp = k(/^\(/), rp = k(/^\)/),
   fatal: Fatal = m => { throw new Error(`(${w}): ${m}`) },
-  parameters: () => Branch = () => (ws(), dt() ? cc(expression) : (param => param ? call(parameters, body => ret(abs(param, body))) : fatal("Expected `.` or an identifier."))(id())),
+  parameters: () => Branch = () => (ws(), dt() ? call(expression, x => ret(x)) : (ws(), (param => param ? call(parameters, body => ret({ kind: "abs", param, body })) : fatal("Expected `.` or an identifier."))(id()))),
   primary: () => (() => Branch) | null = () => (ws(),
-    lm() ? () => cc(parameters) :
-    lp() ? () => (wp => call(expression, x => rp() ? ret(x) : fatal(`Expected \`)\` to match \`(\` at (${wp}).`)))([...w]) :
-    (r => r ? () => ret(ref(r)) : null)(id())),
-  juxt_rhs: (e: Term) => Branch = x => (u => u ? call(u, y => juxt_rhs(app(x, y))) : ret(x))(primary()),
-  juxt: () => Branch = () => (u => u ? call(u, x => juxt_rhs(x)) : fatal("Expected a term."))(primary()),
+    lm() ? () => call(parameters, x => ret(x)) :
+    lp() ? () => ( wp => call(expression, x => rp() ? ret(x) : fatal(`Expected \`)\` to match \`(\` at (${wp}).`)))([...w]) :
+    (r => r ? () => ret({ kind: "ref", id: r }) : null)(id())),
+  juxt_rhs: (e: Graph) => Branch = x => (up => up ? call(up, y => juxt_rhs({ kind: "app", lhs: x, rhs: y })) : ret(x))(primary()),
+  juxt: () => Branch = () => (up => up ? call(up, x => juxt_rhs(x)) : fatal("Expected a term."))(primary()),
   expression = juxt
-return call(expression, e => x.length !== 0 ? fatal(`Expected end of file.`) : ret(e)) })
+return () => call(expression, e => x.length !== 0 ? fatal(`Expected end of file.`) : ret(e)) })
