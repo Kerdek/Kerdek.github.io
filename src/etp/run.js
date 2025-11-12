@@ -1,30 +1,25 @@
-export function homproc(s) {
+export const run = (s) => (...a) => {
     let d;
-    const y = [];
-    let ops = 0;
-    const call = (u, v) => (e = u, y.unshift(v), true);
-    const cc = u => (e = u, true);
-    const ret = x => (d = x, false);
-    let e = () => s(call, cc, ret);
+    let f = (() => {
+        const z = [];
+        let e = s({
+            branch: u => u,
+            proc: u => (...a) => () => u(...a),
+            call: (u, v) => (e = u, z.unshift(v), true),
+            cc: u => (e = u, true),
+            ret: x => (d = x, false)
+        })(...a);
+        let push = () => e() ? push : pop(z.shift());
+        let pop = (y) => () => !y ? undefined : y(d) ? push : pop(z.shift());
+        return push;
+    })();
     for (;;) {
-        if (ops++ > 1e9) {
-            throw new Error("Too many steps.");
+        if (!f) {
+            return d;
         }
-        if (e()) {
-            continue;
-        }
-        for (;;) {
-            if (ops++ > 1e9) {
-                throw new Error("Too many steps.");
-            }
-            const f = y.shift();
-            if (!f) {
-                return d;
-            }
-            if (f(d)) {
-                break;
-            }
+        else {
+            f = f();
         }
     }
-}
+};
 //# sourceMappingURL=run.js.map

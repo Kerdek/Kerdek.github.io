@@ -1,7 +1,5 @@
-export const visit = o => e => o[e.kind](e);
-export const all = (id, body) => ({ kind: "all", id, body });
-export const exs = (id, body) => ({ kind: "exs", id, body });
-export const imp = (lhs, rhs) => ({ kind: "imp", lhs, rhs });
-export const app = (lhs, rhs) => ({ kind: "app", lhs, rhs });
-export const ref = (id) => ({ kind: "ref", id });
+export const empty_context = () => ({ sigma: [], rho: [], pi: [] });
+export const msg = (w, m, ...c) => ({ w, m, c });
+export const visit_proposition = o => (e, ...r) => o[e.k](e, ...r);
+export const visit_proof = o => (e, ...r) => o[e.k](e, ...r);
 //# sourceMappingURL=lang.js.map

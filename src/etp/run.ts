@@ -1,30 +1,36 @@
-type HomCall<Result, RealWorld> = (u: () => RealWorld, v: (x: Result) => RealWorld) => RealWorld
-type HomCC<_Result, RealWorld> = (u: () => RealWorld) => RealWorld
-type HomRet<Result, RealWorld> = (x: Result) => RealWorld
+export type Run<Result, Proc, World> = {
+branch: (u: () => World) => Proc,
+proc: <Args extends any[]>(u: (...a: Args) => World) => (...a: Args) => Proc,
+call: (u: Proc, v: (x: Result) => World) => World,
+cc: (u: Proc) => World,
+ret: (x: Result) => World}
 
-export type HomStem<Result> = <RealWorld>(
-  call: HomCall<Result, RealWorld>,
-  cc: HomCC<Result, RealWorld>,
-  ret: HomRet<Result, RealWorld>) => RealWorld
+export const run = <A extends any[], V>(s: <P, R>(f: Run<V, P, R>) => (...a: A) => P) => (...a: A): V => {
+type F = () => F | undefined
 
-export function homproc<Result>(s: HomStem<Result>) {
-let d!: Result
-const y: ((x: Result) => boolean)[] = []
-let ops: number = 0
-const call: HomCall<Result, boolean> = (u, v) => (e = u, y.unshift(v), true)
-const cc: HomCC<Result, boolean> = u => (e = u, true)
-const ret: HomRet<Result, boolean> = x => (d = x, false)
-let e = () => s(call, cc, ret)
+let d!: V
+let f: F | undefined = (() => {
+  type R = boolean
+  type P = () => R
+  type Y = (x: V) => R
+
+  const z: Y[] = []
+  let e: P = s<P, R>({
+    branch: u => u,
+    proc: u => (...a) => () => u(...a),
+    call: (u, v) => (e = u, z.unshift(v), true),
+    cc: u => (e = u, true),
+    ret: x => (d = x, false) })(...a)
+
+  let push: F = () =>
+    e() ? push : pop(z.shift())
+  let pop = (y: Y | undefined): F => () =>
+    !y ? undefined : y(d) ? push : pop(z.shift())
+
+  return push })()
+
 for (;;) {
-  if (ops++ > 1e9) {
-    throw new Error("Too many steps.") }
-  if (e()) {
-    continue }
-  for (;;) {
-    if (ops++ > 1e9) {
-      throw new Error("Too many steps.") }
-    const f = y.shift()
-    if (!f) {
-      return d }
-    if (f(d)) {
-      break } } } }
+  if (!f) {
+    return d }
+  else {
+    f = f() } } }
