@@ -5,13 +5,17 @@
     <title>Lambda Calculus as a Proof System</title>
     <style>
 
-body {
+html {
   display: flex;
+  margin: 0;
+  overflow: scroll;
   justify-content: safe center; }
 
-.doc {
-  flex-shrink: 0;
-  width: 400pt;
+body {
+  flex: 0 0 440pt;
+  padding-left: 8pt;
+  padding-right: 8pt;
+  overflow: hidden;
   font-size: 13pt;
   font-family: math; }
 
@@ -23,6 +27,14 @@ body {
   padding: 10pt;
   width: 50%;
   vertical-align: top; }
+
+.rule {
+  display: flex;
+  justify-content: center; }
+
+.rulebox {
+  padding: 8px;
+  border: #bbbbbb 1px solid; }
 
 hr {
   border-bottom: none;
@@ -89,18 +101,22 @@ code {
   position: relative;
   left: -1.0pt;
   font-style: italic; }
-</style></head><body style="background: white;"><div class="doc">
+</style>
+
+</head>
+
+<body style="background: white;">
 
 <h1>Lambda Calculus as a Proof System</h1>
 
 <h2>Overview</h2>
 <p>The Curry-Howard correspondence relates logical proofs and lambda terms: <strong>propositions are types, proofs are programs</strong>. We obtain a proof system by encoding proofs as typed lambda calculus terms.</p>
 
-<h2>Core Principle</h2>
+<h2>Principle</h2>
 
 <p>Each logical construct maps to a computational one:</p>
 
-<p></p><div style="display:flex;justify-content:center;"><table class="principle"><thead><tr><th>Logic</th><th>Lambda Calculus</th></tr></thead><tbody>
+<p></p><div class="rule"><table class="principle"><thead><tr><th>Logic</th><th>Lambda Calculus</th></tr></thead><tbody>
 
 <tr><td>Proposition <span class="i m v">P</span></td><td>Type <code><span class="i m v">P</span></code></td></tr>
 
@@ -126,9 +142,9 @@ code {
 
 <p><strong>Judgment rule</strong>:</p>
 
-<p><code>&lt;<span class="i m v">i</span>&gt;</code> must not be bound in <span class="i m v">Γ</span>, <code><span class="i m v">P</span></code> must be closed in <span class="i m v">Γ</span>, and <code><span class="i m v">E</span></code> must prove <code><span class="i m v">Q</span></code> in Γ, <code>&lt;<span class="i m v">i</span>&gt;</code> <span class="q">:</span> <code><span class="i m"><span class="v">P</span></span></code>.</p>
+<p><code>&lt;<span class="i m v">i</span>&gt;</code> must not be bound in <span class="i m">Γ</span>, <code><span class="i m v">P</span></code> must be closed in <span class="i m">Γ</span>, and <code><span class="i m v">E</span></code> must prove <code><span class="i m v">Q</span></code> in <span class="i m">Γ</span>, <code>&lt;<span class="i m v">i</span>&gt;</code> <span class="q">:</span> <code><span class="i m"><span class="v">P</span></span></code>.</p>
 
-<p></p><div style="display:flex;justify-content:center"><div class="m">
+<p></p><div class="rule"><div class="rulebox m">
 
 <p><code>&lt;<span class="i m v">i</span>&gt;</code> ∉ Γ</p>
 
@@ -168,9 +184,9 @@ premise &lt;ab&gt; : a -&gt; b.
 
 <p><strong>Judgment rule</strong>:</p>
 
-<code><span class="i m v">F</span></code> must prove <code><span class="i m v">P</span></code>, and <code><span class="i m v">E</span></code> must prove <code><span class="i m v">P</span> -&gt; <span class="i m v">Q</span></code> in <span class="i m v">Γ</span>.</p>
+<code><span class="i m v">F</span></code> must prove <code><span class="i m v">P</span></code>, and <code><span class="i m v">E</span></code> must prove <code><span class="i m v">P</span> -&gt; <span class="i m v">Q</span></code> in <span class="i m">Γ</span>.</p>
 
-<p></p><div style="display:flex;justify-content:center;"><div class="m">
+<p></p><div class="rule"><div class="rulebox m">
 
 <p>Γ <span class="q">⊢</span> <code><span class="i m v">F</span></code> <span class="q">:</span> <code><span class="i m v">P</span></code></p>
 
@@ -200,9 +216,9 @@ premise &lt;ab&gt; : a -&gt; b.
 
 <p><strong>Judgment rule</strong>:</p>
 
-<p><code><span class="i m v">i</span></code> must not be bound in <span class="i m v">Γ</span>, and <code><span class="i m v">E</span></code> must prove <code><span class="i m"><span class="v">P</span><span class="lb">[</span><span class="v">j</span> := <span class="v">i</span><span class="rb">]</span></span></code> in <span class="i m">Γ, <code><span class="i m v">i</span></code></span>.</p>
+<p><code><span class="i m v">i</span></code> must not be bound in <span class="i m">Γ</span>, and <code><span class="i m v">E</span></code> must prove <code><span class="i m"><span class="v">P</span><span class="lb">[</span><span class="v">j</span> := <span class="v">i</span><span class="rb">]</span></span></code> in <span class="i m">Γ, <code><span class="i m v">i</span></code></span>.</p>
 
-<p></p><div style="display:flex;justify-content:center;"><div class="m">
+<p></p><div class="rule"><div class="rulebox m">
 
 <p><code><span class="i m v">i</span></code> ∉ Γ</p>
 
@@ -239,9 +255,9 @@ premise &lt;a&gt; : a.
 
 <p><strong>Judgment rule</strong>:</p>
 
-<p><code><span class="i m v">Q</span></code> must be closed in <span class="i m v">Γ</span>, and <code><span class="i m v">E</span></code> must prove <code>\/<span class="i m v">i</span>.<span class="i m v">P</span></code> in <span class="i m v">Γ</span>.</p>
+<p><code><span class="i m v">Q</span></code> must be closed in <span class="i m">Γ</span>, and <code><span class="i m v">E</span></code> must prove <code>\/<span class="i m v">i</span>.<span class="i m v">P</span></code> in <span class="i m">Γ</span>.</p>
 
-<p></p><div style="display:flex;justify-content:center;"><div class="m">
+<p></p><div class="rule"><div class="rulebox m">
 
 <p>Γ <span class="q">⊢</span> <code><span class="i m v">Q</span></code></p>
 
@@ -303,5 +319,4 @@ given c a b.
 
 <p>This calculus makes proof judgment semi-decidable: writing a proof is writing a well-typed program. Type soundness guarantees logical soundness. If a term type-checks, it represents a valid proof of its type-as-proposition.</p>
 
-</div>
 </body></html>
