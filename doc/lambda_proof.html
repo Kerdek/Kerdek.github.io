@@ -3,7 +3,14 @@
   <head>
     <meta charset="utf-8">
     <title>Lambda Calculus as a Proof System</title>
-    <style>.doc {
+    <style>
+
+body {
+  display: flex;
+  justify-content: center; }
+
+.doc {
+  width: 400pt;
   font-size: 13pt;
   font-family: math; }
 
@@ -106,10 +113,6 @@ code {
 
 <h2>Four Rules of Inference</h2>
 
-<table class="rules" style="width:100%;">
-
-<tbody><tr><td>
-
 <h3>Conditional Proof (→ Introduction)</h3>
 
 <p><strong>Logical form</strong>: Assuming premise <span class="i m v">P</span>, <span class="i m v">Q</span>. So, <span class="i m"><span class="v">P</span> → <span class="v">Q</span></span>.</p>
@@ -152,13 +155,11 @@ premise &lt;ab&gt; : a -&gt; b.
 
 <p>The body <code>&lt;ab&gt; &lt;a&gt;</code> proves <code>b</code> for arbitrary propositions <code>a</code> and <code>b</code> and premises <span class="i m"><code>&lt;a&gt;</code> <span class="q">:</span> <code>a</code></span> and <span class="i m"><code>&lt;ab&gt;</code> <span class="q">:</span> <code>a -&gt; b</code></span>.</p>
 
-</td><td>
-
 <h3>Modus Ponens (→ Elimination)</h3>
 
 <p><strong>Logical form</strong>: <span class="i m"><span class="i m v">P</span> → <span class="i m v">Q</span></span> and <span class="i m v">P</span>. So, <span class="i m v">Q</span>.</p>
 
-<p><strong>Proof term</strong>: Function application which proves <code><span class="i m v">Q</span></code>.</p>
+<p><strong>Proof term</strong>: Function application which proves <code><span class="i m v">Q</span></code>:</p>
 
 <p style="text-align:center;width:100%;"><code><span class="i m v">E</span> <span class="i m v">F</span></code></p>
 
@@ -186,13 +187,11 @@ premise &lt;ab&gt; : a -&gt; b.
 
 (see previous)
 
-</td></tr><tr><td>
-
 <h3>Generalization (<span class="i m">∀</span> Introduction)</h3>
 
 <p><strong>Logical form</strong>: Given arbitrary <span class="i m v">i</span>, <span class="i m v">P</span>. So, <span class="i m">∀<span class="v">i</span>.<span class="v">P</span></span>.</p>
 
-<p><strong>Proof term</strong>: Type abstraction which proves <code>\/<span class="i m v">i</span>.<span class="i m v">P</span></code> :</p>
+<p><strong>Proof term</strong>: Type abstraction which proves <code>\/<span class="i m v">i</span>.<span class="i m v">P</span></code>:</p>
 
 <p style="text-align:center;width:100%;"><code>given <span class="i m v">i</span>.<span class="i m v">E</span></code></p>
 
@@ -226,8 +225,6 @@ premise &lt;a&gt; : a.
 &lt;a&gt;.</code></p>
 
 <p>The body <code>premise &lt;a&gt; : a.&lt;a&gt;</code> proves <code>a -&gt; a</code> for arbitrary <code>a</code>.</p>
-
-</td><td>
 
 <h3>Specialization (<span class="i m">∀</span> Elimination)</h3>
 
@@ -265,10 +262,6 @@ false -&gt; false :=
 &lt;implication reflexive&gt; false
 </code></p>
 
-</td></tr>
-
-</tbody></table>
-
 <h2>Interaction Between Rules</h2>
 
 <p>The power emerges from composing these rules.</p>
@@ -276,9 +269,9 @@ false -&gt; false :=
 <p><code class="a">theorem &lt;congruent argument&gt; :
 \/c a b.eq a b -&gt; eq (c a) (c b) :=
 
-given c a b.                          -- Generalization (3 times)
-&lt;congruent&gt; (\b. eq (c a) (c b)) \.   -- Specialization + Application
-&lt;equality reflexive&gt; (c a).           -- Specialization
+given c a b.
+&lt;congruent&gt; (\b. eq (c a) (c b)) \.
+&lt;equality reflexive&gt; (c a).
 </code></p>
 
 <p><strong>Analysis</strong>:
@@ -292,14 +285,17 @@ given c a b.                          -- Generalization (3 times)
 
 <h2>Contexts</h2>
 
-<p>Each <code>given</code> and <code>premise</code> extends the typing context. Proof-checking maintains a stack:</p>
+<p>Each <code>given</code> and <code>premise</code> extends the typing context. Proof judgment maintains a stack:</p>
 
 <p><code class="a">theorem &lt;congruent argument&gt; :
 \/c a b.eq a b -&gt; eq (c a) (c b) :=
 
-given c a b.                          -- <span class="i m">Γ <span class="q">⊢</span> </span>\/c a b.eq a b -&gt; eq (c a) (c b)
-&lt;congruent&gt; (\b. eq (c a) (c b)) \.   -- <span class="i m">Γ, </span>c<span class="i m">, </span>a<span class="i m">, </span>b<span class="i m"> <span class="q">⊢</span> </span>eq a b -&gt; eq (c a) (c b)
-&lt;equality reflexive&gt; (c a).           -- <span class="i m">Γ, </span>c<span class="i m">, </span>a<span class="i m">, </span>b<span class="i m"> <span class="q">⊢</span> </span>eq (c a) (c a)
+-- <span class="i m">Γ <span class="q">⊢</span> </span>\/c a b.eq a b -&gt; eq (c a) (c b)
+given c a b.
+-- <span class="i m">Γ, </span>c<span class="i m">, </span>a<span class="i m">, </span>b<span class="i m"> <span class="q">⊢</span> </span>eq a b -&gt; eq (c a) (c b)
+&lt;congruent&gt; (\b. eq (c a) (c b)) \.
+-- <span class="i m">Γ, </span>c<span class="i m">, </span>a<span class="i m">, </span>b<span class="i m"> <span class="q">⊢</span> </span>eq (c a) (c a)
+&lt;equality reflexive&gt; (c a).
 </code></p>
 
 <h2>Summary</h2>
