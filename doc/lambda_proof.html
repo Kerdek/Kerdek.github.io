@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Lambda Calculus as a Proof System</title>
+    <style>.doc {
+  font-size: 13pt;
+  font-family: math; }
+
+.principle td {
+  padding-left: 20pt;
+  padding-right: 20pt; }
+
+.rules td {
+  padding: 10pt;
+  width: 50%;
+  vertical-align: top; }
+
+hr {
+  border-bottom: none;
+  border-top: 1px black solid;
+  background: black;
+  margin-top: 9pt;
+  margin-bottom: 9pt; }
+
+p {
+  margin-top: 0pt;
+  margin-bottom: 8pt;
+}
+
+code {
+  display: inline-block;
+  color: #aa0055;
+  background: #eeeeee;
+  padding-left: 3pt;
+  padding-right: 3pt;
+  padding-top: 0.5pt;
+  border: #bbbbbb 1px solid;
+  font-family: serif;
+  font-style: normal;
+  font-size: 13pt; }
+
+.a {
+  padding: 8pt;
+  display: block;
+  white-space: pre; }
+
+.i {
+  position: relative;
+  top: 0.7pt;
+  display: inline-block;
+  padding-left: 1pt;
+  padding-right: 1pt;
+  padding-bottom: 1.5pt; }
+
+.q {
+  padding-left: 1pt;
+  padding-right: 1pt; }
+
+.qd {
+  padding-left: 10pt; }
+
+.lb {
+  position: relative;
+  top: -0.7pt;
+  padding-left: 2pt;
+  padding-right: 3pt; }
+
+.rb {
+  position: relative;
+  top: -0.7pt;
+  padding-left: 2pt;
+  padding-right: 1pt; }
+
+.m {
+  font-size: 15pt;
+  color: black;
+  font-family: math; }
+
+.v {
+  position: relative;
+  left: -1.0pt;
+  font-style: italic; }
+</style></head><body style="background: white;"><div class="doc">
+
+<h1>Lambda Calculus as a Proof System</h1>
+
+<h2>Overview</h2>
+<p>The Curry-Howard correspondence relates logical proofs and lambda terms: <strong>propositions are types, proofs are programs</strong>. We obtain a proof system by encoding proofs as typed lambda calculus terms.</p>
+
+<h2>Core Principle</h2>
+
+<p>Each logical construct maps to a computational one:</p>
+
+<p></p><div style="display:flex;justify-content:center;"><table class="principle"><thead><tr><th>Logic</th><th>Lambda Calculus</th></tr></thead><tbody>
+
+<tr><td>Proposition <span class="i m v">P</span></td><td>Type <code><span class="i m v">P</span></code></td></tr>
+
+<tr><td>Proof <span class="i m v">E</span> of <span class="i m v">P</span></td><td>Term <code><span class="i m v">E</span></code> of type <code><span class="i m v">P</span></code></td></tr>
+
+<tr><td>Implication <span class="i m"><span class="v">P</span> → <span class="v">Q</span></span></td><td>Function type <code><span class="i m v">P</span> → <span class="i m v">Q</span></code></td></tr>
+
+<tr><td>Universal Quantifier <span class="i m">∀<span class="v">i</span>.<span class="v">P</span></span></td><td>Polymorphic type <code>\/<span class="i m v">i</span>.<span class="i m v">P</span></code></td></tr><tr><td>Rule of Inference</td><td>Term Derivation</td></tr>
+
+</tbody></table></div><p></p>
+
+<h2>Four Rules of Inference</h2>
+
+<table class="rules" style="width:100%;">
+
+<tbody><tr><td>
+
+<h3>Conditional Proof (→ Introduction)</h3>
+
+<p><strong>Logical form</strong>: Assuming premise <span class="i m v">P</span>, <span class="i m v">Q</span>. So, <span class="i m"><span class="v">P</span> → <span class="v">Q</span></span>.</p>
+
+<p><strong>Proof term</strong>: Lambda abstraction which proves <code><span class="i m v">P</span> -&gt; <span class="i m v">Q</span></code>:</p>
+
+<p style="text-align:center;width:100%;"><code>premise &lt;<span class="i m v">i</span>&gt; : <span class="i m v">P</span>.<span class="i m v">E</span></code></p>
+
+<p>This is a <strong>conditional proof</strong> on premise <span class="i m"><code>&lt;<span class="i m v">i</span>&gt;</code> <span class="q">:</span> <code><span class="i m v">P</span></code></span> of proof <span class="i m"><code><span class="i m v">E</span></code> <span class="q">:</span> <code><span class="i m v">Q</span></code></span>.</p>
+
+<p><strong>Judgment rule</strong>:</p>
+
+<p><code>&lt;<span class="i m v">i</span>&gt;</code> must not be bound in <span class="i m v">Γ</span>, <code><span class="i m v">P</span></code> must be closed in <span class="i m v">Γ</span>, and <code><span class="i m v">E</span></code> must prove <code><span class="i m v">Q</span></code> in Γ, <code>&lt;<span class="i m v">i</span>&gt;</code> <span class="q">:</span> <code><span class="i m"><span class="v">P</span></span></code>.</p>
+
+<p></p><div style="display:flex;justify-content:center"><div class="m">
+
+<p><code>&lt;<span class="i m v">i</span>&gt;</code> ∉ Γ</p>
+
+<p>Γ <span class="q">⊢</span> <code><span class="i m v">P</span></code></p>
+
+<p>Γ, <code>&lt;<span class="i m v">i</span>&gt;</code> <span class="q">:</span> <code><span class="i m"><span class="v">P</span></span></code> <span class="q">⊢</span> <code><span class="i m v">E</span></code> <span class="q">:</span> <code><span class="i m"><span class="v">Q</span></span></code></p>
+
+<hr>
+
+Γ <span class="q">⊢</span> <code>premise &lt;<span class="i m v">i</span>&gt; : <span class="i m v">P</span>.<span class="i m v">E</span></code> <span class="q">:</span> <code><span class="i m"><span class="v">P</span></span> -&gt; <span class="i m v">Q</span></code>
+
+</div></div><p></p>
+
+<p><strong>Mechanics</strong>: <code>premise &lt;a&gt; : t.</code> discharges the antecedent <code><span class="i m"></span>t<span class="i m"></span> -&gt;</code> in the goal and introduces a premise <span class="i m"><code>&lt;a&gt;</code> <span class="q">:</span> <code><span class="i m"></span>t<span class="i m"></span></code></span> in the context. The body uses these like function parameters.</p>
+
+<p><strong>Example</strong>:</p>
+
+<p><code class="a">theorem &lt;syllogism&gt; :
+\/a b.a -&gt; (a -&gt; b) -&gt; b :=
+
+given a b.
+premise &lt;a&gt; : a.
+premise &lt;ab&gt; : a -&gt; b.
+&lt;ab&gt; &lt;a&gt;.</code></p>
+
+<p>The body <code>&lt;ab&gt; &lt;a&gt;</code> proves <code>b</code> for arbitrary propositions <code>a</code> and <code>b</code> and premises <span class="i m"><code>&lt;a&gt;</code> <span class="q">:</span> <code>a</code></span> and <span class="i m"><code>&lt;ab&gt;</code> <span class="q">:</span> <code>a -&gt; b</code></span>.</p>
+
+</td><td>
+
+<h3>Modus Ponens (→ Elimination)</h3>
+
+<p><strong>Logical form</strong>: <span class="i m"><span class="i m v">P</span> → <span class="i m v">Q</span></span> and <span class="i m v">P</span>. So, <span class="i m v">Q</span>.</p>
+
+<p><strong>Proof term</strong>: Function application which proves <code><span class="i m v">Q</span></code>.</p>
+
+<p style="text-align:center;width:100%;"><code><span class="i m v">E</span> <span class="i m v">F</span></code></p>
+
+<p>This is a <strong>modus ponens</strong> through proof <span class="i m"><code><span class="i m v">E</span></code> <span class="q">:</span> <code><span class="i m v">P</span> -&gt; <span class="i m v">Q</span></code></span> from proof <span class="i m"><code><span class="i m v">F</span></code> <span class="q">:</span> <code><span class="i m v">P</span></code></span>.</p>
+
+<p><strong>Judgment rule</strong>:</p>
+
+<p><code><span class="i m v">Q</span></code> must be closed in <span class="i m v">Γ</span>, and <code><span class="i m v">E</span></code> must prove <code>\/<span class="i m v">i</span>.<span class="i m v">P</span></code> in <span class="i m v">Γ</span>.</p>
+
+<p></p><div style="display:flex;justify-content:center;"><div class="m">
+
+<p>Γ <span class="q">⊢</span> <code><span class="i m v">F</span></code> <span class="q">:</span> <code><span class="i m v">P</span></code></p>
+
+<p>Γ <span class="q">⊢</span> <code><span class="i m v">E</span></code> <span class="q">:</span> <code><span class="i m v">P</span> -&gt; <span class="i m v">Q</span></code></p>
+
+<hr>
+
+Γ <span class="q">⊢</span> <code><span class="i m v">E</span> <span class="i m v">F</span></code> <span class="q">:</span> <code><span class="i m"><span class="v">Q</span></span></code>
+
+</div></div><p></p>
+
+<p><strong>Mechanics</strong>: When <span><code>&lt;ab&gt;</code> <span class="q">:</span> <code>a -&gt; b</code> and <span><code>&lt;a&gt;</code> <span class="q">:</span> <code>a</code>, <code>&lt;ab&gt; &lt;a&gt;</code> proves <code>b</code>. This applies the proof to specific premises.</span></span></p>
+
+<p><strong>Example</strong>:</p>
+
+(see previous)
+
+</td></tr><tr><td>
+
+<h3>Generalization (<span class="i m">∀</span> Introduction)</h3>
+
+<p><strong>Logical form</strong>: Given arbitrary <span class="i m v">i</span>, <span class="i m v">P</span>. So, <span class="i m">∀<span class="v">i</span>.<span class="v">P</span></span>.</p>
+
+<p><strong>Proof term</strong>: Type abstraction which proves <code>\/<span class="i m v">i</span>.<span class="i m v">P</span></code> :</p>
+
+<p style="text-align:center;width:100%;"><code>given <span class="i m v">i</span>.<span class="i m v">E</span></code></p>
+
+<p>This is a <strong>generalization</strong> over given <code><span class="i m v">i</span></code> of proof <span class="i m"><code><span class="i m v">E</span></code> <span class="q">:</span> <code><span class="i m v">P</span></code></span>.</p>
+
+<p><strong>Judgment rule</strong>:</p>
+
+<p><code><span class="i m v">i</span></code> must not be bound in <span class="i m v">Γ</span>, and <code><span class="i m v">E</span></code> must prove <code><span class="i m"><span class="v">P</span><span class="lb">[</span><span class="v">j</span> := <span class="v">i</span><span class="rb">]</span></span></code> in <span class="i m">Γ, <code><span class="i m v">i</span></code></span>.</p>
+
+<p></p><div style="display:flex;justify-content:center;"><div class="m">
+
+<p><code><span class="i m v">i</span></code> ∉ Γ</p>
+
+<p>Γ, <code><span class="i m v">i</span></code> <span class="q">⊢</span> <code><span class="i m v">E</span></code> <span class="q">:</span> <code><span class="i m"><span class="v">P</span><span class="lb">[</span><span class="v">j</span> := <span class="v">i</span><span class="rb">]</span></span></code></p>
+
+<hr>
+
+Γ <span class="q">⊢</span> <code>given <span class="i m v">i</span>.<span class="i m v">E</span></code> <span class="q">:</span> <code>\/<span class="i m v">j</span>.<span class="i m v">P</span></code>
+
+</div></div><p></p>
+
+<p><strong>Mechanics</strong>: <code>given a.</code> discharges the universal quantifier <code>\/a.</code> in the goal and introduces an arbitrary <code>a</code> in the context. The body uses these like type parameters.</p>
+
+<p><strong>Example</strong>:</p>
+
+<p><code class="a">theorem &lt;implication reflexive&gt; :
+\/a.a -&gt; a :=
+
+given a.
+premise &lt;a&gt; : a.
+&lt;a&gt;.</code></p>
+
+<p>The body <code>premise &lt;a&gt; : a.&lt;a&gt;</code> proves <code>a -&gt; a</code> for arbitrary <code>a</code>.</p>
+
+</td><td>
+
+<h3>Specialization (<span class="i m">∀</span> Elimination)</h3>
+
+<p><strong>Logical form</strong>: <span class="i m">∀<span class="v">i</span>.<span class="v">P</span></span>. So, <span class="i m"><span class="v">P</span><span class="lb">[</span><span class="v">i</span> := <span class="v">T</span><span class="rb">]</span></span> for arbitrary <span class="i m v">T</span>.</p>
+
+<p><strong>Proof term</strong>: Type application which proves <code><span class="i m"><span class="v">P</span><span class="lb">[</span><span class="v">i</span> := <span class="v">T</span><span class="rb">]</span></span></code>.</p>
+
+<p style="text-align:center;width:100%;"><code><span class="i m v">E</span> <span class="i m v">Q</span></code></p>
+
+<p>This is a <strong>specialization</strong> of proof <span class="i m"><code><span class="i m v">E</span></code> <span class="q">:</span> <code><span class="i m v">P</span></code></span> for proposition <code><span class="i m v">Q</span></code>.</p>
+
+<p><strong>Judgment rule</strong>:</p>
+
+<p><code><span class="i m v">Q</span></code> must be closed in <span class="i m v">Γ</span>, and <code><span class="i m v">E</span></code> must prove <code>\/<span class="i m v">i</span>.<span class="i m v">P</span></code> in <span class="i m v">Γ</span>.</p>
+
+<p></p><div style="display:flex;justify-content:center;"><div class="m">
+
+<p>Γ <span class="q">⊢</span> <code><span class="i m v">Q</span></code></p>
+
+<p>Γ <span class="q">⊢</span> <code><span class="i m v">E</span></code> <span class="q">:</span> <code>\/<span class="i m v">i</span>.<span class="i m v">P</span></code></p>
+
+<hr>
+
+Γ <span class="q">⊢</span> <code><span class="i m v">E</span> <span class="i m v">Q</span></code> <span class="q">:</span> <code><span class="i m"><span class="v">P</span><span class="lb">[</span><span class="v">i</span> := <span class="v">Q</span><span class="rb">]</span></span></code>
+
+</div></div><p></p>
+
+<p><strong>Mechanics</strong>: When <span><code>&lt;a&gt;</code> <span class="q">:</span> <code>\/i.a -&gt; i</code>, <code>&lt;a&gt; t</code> proves <code>a -&gt; t</code>. This instantiates the proof for specific propositions.</span></p>
+
+<p><strong>Examples</strong>:</p>
+
+<p><code class="a">theorem &lt;false of false&gt; :
+false -&gt; false :=
+
+&lt;implication reflexive&gt; false
+</code></p>
+
+</td></tr>
+
+</tbody></table>
+
+<h2>Interaction Between Rules</h2>
+
+<p>The power emerges from composing these rules.</p>
+
+<p><code class="a">theorem &lt;congruent argument&gt; :
+\/c a b.eq a b -&gt; eq (c a) (c b) :=
+
+given c a b.                          -- Generalization (3 times)
+&lt;congruent&gt; (\b. eq (c a) (c b)) \.   -- Specialization + Application
+&lt;equality reflexive&gt; (c a).           -- Specialization
+</code></p>
+
+<p><strong>Analysis</strong>:
+
+</p><ul>
+<li><code>given c a b.</code> abstracts over three type variables</li>
+<li><code>&lt;congruent&gt;</code> is a universal proof, specialized for <code>\b. eq (c a) (c b)</code></li>
+<li>The <code>\.</code> operator applies this specialized proof to <code>&lt;equality reflexive&gt; (c a)</code></li>
+<li>Normalization at the type level constructs the desired equality</li>
+</ul><p></p>
+
+<h2>Contexts</h2>
+
+<p>Each <code>given</code> and <code>premise</code> extends the typing context. Proof-checking maintains a stack:</p>
+
+<p><code class="a">theorem &lt;congruent argument&gt; :
+\/c a b.eq a b -&gt; eq (c a) (c b) :=
+
+given c a b.                          -- <span class="i m">Γ <span class="q">⊢</span> </span>\/c a b.eq a b -&gt; eq (c a) (c b)
+&lt;congruent&gt; (\b. eq (c a) (c b)) \.   -- <span class="i m">Γ, </span>c<span class="i m">, </span>a<span class="i m">, </span>b<span class="i m"> <span class="q">⊢</span> </span>eq a b -&gt; eq (c a) (c b)
+&lt;equality reflexive&gt; (c a).           -- <span class="i m">Γ, </span>c<span class="i m">, </span>a<span class="i m">, </span>b<span class="i m"> <span class="q">⊢</span> </span>eq (c a) (c a)
+</code></p>
+
+<h2>Summary</h2>
+
+<p>This calculus makes proof judgment semi-decidable: writing a proof is writing a well-typed program. Type soundness guarantees logical soundness. If a term type-checks, it represents a valid proof of its type-as-proposition.</p>
+
+</div>
+</body></html>
