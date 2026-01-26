@@ -130,15 +130,9 @@ code {
 
 <p>Consider a simple program in the untyped lambda calculus:</p>
 
-<p><code class="a">compose = λf g x.f (g x)</code></p>
+<p><code class="a">square = \x.mul x x</code></p>
 
-<p>This composes two functions. We might claim "<code class="c">compose</code> is associative". This is a property of our program, stated in natural language, living outside the formal system.</p>
-
-<p>Now consider another program:</p>
-
-<p><code class="a">square = λx.mul x x</code></p>
-
-<p>This is the square of a number. In the untyped world, we can apply <code class="c">square</code> to anything: numbers, functions, even <code class="c">square</code> itself. The calculus doesn't stop us. We might informally claim "<code class="c">square a</code> is <code class="c">non_negative</code> for all <code class="c">a</code> which are <code class="c">real</code>," but this remains an informal assertion.</p>
+<p>This is the square of a number. In the untyped world, we can apply <code class="c">square</code> to anything: numbers, functions, even <code class="c">square</code> itself. The calculus doesn't stop us. We might informally claim "<code class="c">square a</code> is <code class="c">non_negative</code> for all <code class="c">a</code> which are <code class="c">real</code>," but this remains an informal assertion. This is a property of our program, stated in natural language, living outside the formal system.</p>
 
 <p>The question is: can we bring these claims inside the formal system? Can we can manipulate them with the same rigor as our programs?</p>
 
@@ -221,12 +215,12 @@ These are the four possible ways to construct proofs. Each of them uses the cont
 <p><code class="a">theorem syllogism :
 \/a b.a -&gt; (a -&gt; b) -&gt; b :=
 
-/\ a b.
+/\a b.
 \pa : a.
 \pab : a -&gt; b.
 pab pa.</code></p>
 
-<p>The body <code class="c">pab pa</code> proves <code class="c">b</code> for arbitrary propositions <code class="c">a</code> and <code class="c">b</code> and premises <span class="i m"><code class="c">pa</code> <span class="q">:</span> <code class="c">a</code></span> and <span class="i m"><code class="c">pb</code> <span class="q">:</span> <code class="c">a -&gt; b</code></span>.</p>
+<p>The body <code class="c">pab pa</code> proves <code class="c">b</code> for arbitrary propositions <code class="c">a</code> and <code class="c">b</code> and premises <span class="i m"><code class="c">pa</code> <span class="q">:</span> <code class="c">a</code></span> and <span class="i m"><code class="c">pab</code> <span class="q">:</span> <code class="c">a -&gt; b</code></span>.</p>
 
 <h3>Modus Ponens (<code class="c">-&gt;</code> Elimination)</h3>
 
@@ -282,11 +276,11 @@ pab pa.</code></p>
 
 <hr>
 
-Γ <span class="q">⊢</span> <code class="c">/\ <span class="i m v">i</span>.<span class="i m v">E</span></code> <span class="q">:</span> <code class="c">\/<span class="i m v">j</span>.<span class="i m v">P</span></code>
+Γ <span class="q">⊢</span> <code class="c">/\<span class="i m v">i</span>.<span class="i m v">E</span></code> <span class="q">:</span> <code class="c">\/<span class="i m v">j</span>.<span class="i m v">P</span></code>
 
 </div></div><p></p>
 
-<p><strong>Mechanics</strong>: <code class="c">/\ a.</code> discharges the universal quantifier <code class="c">\/a.</code> in the goal and introduces an arbitrary <code class="c">a</code> in the context. The body uses these like type parameters.</p>
+<p><strong>Mechanics</strong>: <code class="c">/\a.</code> discharges the universal quantifier <code class="c">\/a.</code> in the goal and introduces an arbitrary <code class="c">a</code> in the context. The body uses these like type parameters.</p>
 
 <p><strong>Example</strong>:</p>
 
