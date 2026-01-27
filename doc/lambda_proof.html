@@ -168,13 +168,13 @@ provide a well-typed term. Logical implication
 --><span class="v">P</span> → <span class="v">Q</span><!--
 -->)</span>
 is a function type
-<span class="nw"><code class="c">P -&gt; Q</code>.</span>
+<span class="nw"><code class="c">P → Q</code>.</span>
 Universal quantification
 <span class="i m">(<!--
 -->∀<span class="v">i</span>.<span class="v">P</span><!--
 -->)</span>
 is a polymorphic type
-<span class="nw"><code class="c">\/i.P</code>.</span>
+<span class="nw"><code class="c">∀i.P</code>.</span>
 Rules of logical inference are typing rules. A type checker
 is a proof checker. Type soundness is logical soundness.</p>
 
@@ -199,7 +199,7 @@ but you can never test all real numbers.</p>
 mechanically-checked mathematical objects. The
 property is expressed as a proposition.</p>
 
-<p><code class="a">\/x.real x -&gt; non_negative (square x)</code></p>
+<p><code class="a">∀x.real x → non_negative (square x)</code></p>
 
 <p>You can construct a term of that type, and it is a proof.
 This proof accepts proof that <code class="c">x</code>
@@ -214,10 +214,10 @@ the type checker ensures it is valid.</p>
 
 <h2>Why Lambda Calculus?</h2>
 
-<p>We focus on the untyped lambda calculus because
+<p>We begin from the untyped lambda calculus because
 it is a simple model of computation. In this system, your programs
 are unconstrained. You can write <span class="i m"><!--
---><code class="c">square</code> = <code class="c">\x.mul x x</code></span>
+--><code class="c">square</code> = <code class="c">λx.mul x x</code></span>
 without any type annotations. We won't constrain the program with types.
 We will restrict what counts as proof about those programs. That is,
 the program will be part of the proposition. The proposition does not
@@ -233,13 +233,13 @@ A program that returns a proposition is a <em>predicate</em>.
 We augment the syntax with:</p>
 
 <p><ul>
-<li><strong>Arrows</strong> <code class="c">-&gt;</code>:
-Implication. <code class="c">P -&gt; Q</code>
+<li><strong>Arrows</strong> <code class="c">→</code>:
+Implication. <code class="c">P → Q</code>
 says "<code class="c">P</code>
 implies <span class="nw"><code class="c">Q</code>.</span>"</li>
 
-<li><strong>Quantifiers</strong> <code class="c">\/</code>:
-For all. <code class="c">\/x.P</code>
+<li><strong>Quantifiers</strong> <code class="c">∀</code>:
+For all. <code class="c">∀x.P</code>
 says "For all <code class="c">x</code>,
 <span class="nw"><code class="c">P</code>.</span>"</li>
 </ul></p>
@@ -248,7 +248,7 @@ says "For all <code class="c">x</code>,
 Our programs remain untyped, but they occur in propositions,
 and those say things about them.</p>
 
-<p><code class="c">\/x.real x -&gt; non_negative (square x)</code>
+<p><code class="c">∀x.real x → non_negative (square x)</code>
 is a proposition. The program <code class="c">square</code> is part of it.
 Read this as: "For all <span class="i m v">x</span>, if
 <span class="i m v">x</span> is a real number, then
@@ -256,8 +256,8 @@ Read this as: "For all <span class="i m v">x</span>, if
 is non-negative."</p>
 
 <code class="c">real</code> and <code class="c">non_negative</code>
-are predicates. The arrow <code class="c">-&gt;</code> connects the
-antecedent to the consequent. The quantifier <code class="c">\/x.</code>
+are predicates. The arrow <code class="c">→</code> connects the
+antecedent to the consequent. The quantifier <code class="c">∀x.</code>
 ranges over all possible inputs.</p>
 
 <h2>Proofs as Terms</h2>
@@ -267,17 +267,17 @@ inhabits <code class="c">Int</code>). A proposition is a type which
 is proved by its inhabitants—proofs.</p>
 
 <p>To prove
-<code class="c">\/x.real x -&gt; non_negative (square x)</code>,
+<code class="c">∀x.real x → non_negative (square x)</code>,
 we need a term of this type. This term would look like:</p>
 
-<p><code class="a">/\x.
-\P : real x.
+<p><code class="a">Λx.
+λP : real x.
 MulNonNegative x x P P
   (Refl (sign x))</code></p>
 
-<p>The type abstraction <code class="c">/\x</code> introduces the type
+<p>The type abstraction <code class="c">Λx</code> introduces the type
 variable <span class="nw"><code class="c">x</code>.</span> The abstraction
-<code class="c">\P : real x</code> introduces a proof of type
+<code class="c">λP : real x</code> introduces a proof of type
 <code class="c">real x</code>—we're assuming
 the antecedent. The body proves <span class="nw"><!--
 --><code class="c">non_negative (square x)</code>.</span></p>
@@ -287,14 +287,15 @@ is <code class="c">non_negative</code> when the coefficients have equal
 <span class="nw"><code class="c">sign</code>.</span>
 Its proposition is:</p>
 
-<p><code class="a">\/a b.real a -&gt; real b -&gt;
-eq (sign a) (sign b) -&gt;
+<p><code class="a">∀a b.
+real a → real b →
+eq (sign a) (sign b) →
 non_negative (mul a b)</code></p>
 
 <p><code class="c">Refl</code> takes care of
 <span class="nw"><code class="c">eq (sign x) (sign x)</code>:</span></p>
 
-<p><code class="a">\/a.eq a a</code></p>
+<p><code class="a">∀a.eq a a</code></p>
 
 <p>The proof has computational meaning. It takes proof that
 <code class="c">real x</code>, applies reasoning about multiplication,
@@ -316,7 +317,7 @@ program; you're typing your argument about the program.</p>
 These are the four possible ways to construct proofs.
 Each of them uses the context <span class="i m">Γ</span> to track types.
 
-<h3>Generalization (<code class="c">\/</code> Introduction)</h3>
+<h3>Generalization (<code class="c">∀</code> Introduction)</h3>
 
 <p><strong>Logical form</strong>: Given arbitrary
 <span class="i m v">i</span>, <span class="i m v">P</span>. So,
@@ -324,11 +325,11 @@ Each of them uses the context <span class="i m">Γ</span> to track types.
 -->.<span class="v">P</span></span>.</p>
 
 <p><strong>Proof term</strong>: Type abstraction which proves
-<code class="c">\/<span class="i m v">i</span><!--
+<code class="c">∀<span class="i m v">i</span><!--
 -->.<span class="i m v">P</span></code>:</p>
 
 <p style="text-align:center;width:100%;"><code class="c"><!--
--->/\<span class="i m v">i</span>.<span class="i m v">E</span></code></p>
+-->Λ<span class="i m v">i</span>.<span class="i m v">E</span></code></p>
 
 <p>This is a <em>generalization</em> over given
 <code class="c"><span class="i m v">i</span></code> of proof
@@ -363,30 +364,30 @@ appended to <span class="i m">Γ</span>).</p>
 
 <hr>
 
-<!-- Γ ⊢ /\i.E : \/j.P -->
-Γ <span class="q">⊢</span> <code class="c">/\<span class="i m v">i</span>.<span class="i m v">E</span></code> <span class="q">:</span> <code class="c">\/<span class="i m v">j</span>.<span class="i m v">P</span></code>
+<!-- Γ ⊢ Λi.E : ∀j.P -->
+Γ <span class="q">⊢</span> <code class="c">Λ<span class="i m v">i</span>.<span class="i m v">E</span></code> <span class="q">:</span> <code class="c">∀<span class="i m v">j</span>.<span class="i m v">P</span></code>
 
 </div></div><p></p>
 
-<p><strong>Mechanics</strong>: <code class="c">/\a.</code>
-discharges the universal quantifier <code class="c">\/a.</code>
+<p><strong>Mechanics</strong>: <code class="c">Λa.</code>
+discharges the universal quantifier <code class="c">∀a.</code>
 in the goal and introduces an arbitrary <code class="c">a</code>
 in the context. The body uses these like type parameters.</p>
 
 <p><strong>Example</strong>:</p>
 
 <p><code class="a">theorem ImpRefl :
-\/a.a -&gt; a :=
+∀a.a → a :=
 
-/\a.
-\Pa : a.
+Λa.
+λPa : a.
 Pa.</code></p>
 
-<p>The body <code class="c">\Pa : a.Pa</code> proves
-<code class="c">a -&gt; a</code> for arbitrary
+<p>The body <code class="c">λPa : a.Pa</code> proves
+<code class="c">a → a</code> for arbitrary
 <span class="nw"><code class="c">a</code>.</span></p>
 
-<h3>Specialization (<code class="c">\/</code> Elimination)</h3>
+<h3>Specialization (<code class="c">∀</code> Elimination)</h3>
 
 <p><strong>Logical form</strong>:
 <span class="i m">∀<span class="v">i</span><!--
@@ -416,7 +417,7 @@ for proposition <span class="nw"><code class="c"><span class="i m v">Q</span></c
 <code class="c"><span class="i m v">Q</span></code>
 must be closed in <span class="i m">Γ</span>,
 and <code class="c"><span class="i m v">E</span></code>
-must prove <code class="c">\/<span class="i m v">i</span><!--
+must prove <code class="c">∀<span class="i m v">i</span><!--
 -->.<span class="i m v">P</span></code>
 in <span class="i m">Γ</span>.</p>
 
@@ -426,11 +427,11 @@ in <span class="i m">Γ</span>.</p>
 <p>Γ <span class="q">⊢</span>
 <code class="c"><span class="i m v">Q</span></code></p>
 
-<!-- Γ ⊢ E : \/i.P -->
+<!-- Γ ⊢ E : ∀i.P -->
 <p>Γ <span class="q">⊢</span>
 <code class="c"><span class="i m v">E</span></code>
 <span class="q">:</span>
-<code class="c">\/<span class="i m v">i</span><!--
+<code class="c">∀<span class="i m v">i</span><!--
 -->.<span class="i m v">P</span></code></p>
 
 <hr>
@@ -440,20 +441,20 @@ in <span class="i m">Γ</span>.</p>
 
 </div></div><p></p>
 
-<p><strong>Mechanics</strong>: When <span><code class="c">a</code>
-<span class="q">:</span> <code class="c">\/i.a -&gt; i</code>,
-<span class="nw"><code class="c">a t</code> proves <code class="c">a -&gt; t</code>.</span>
+<p><strong>Mechanics</strong>: When <span><code class="c">Pa</code>
+<span class="q">:</span> <code class="c">∀i.a → i</code>,
+<span class="nw"><code class="c">Pa (real x)</code> proves <code class="c">a → real x</code>.</span>
 This instantiates the proof for specific propositions.</span></p>
 
 <p><strong>Examples</strong>:</p>
 
 <p><code class="a">theorem FalseOfFalse :
-false -&gt; false :=
+false → false :=
 
 ImpRefl false
 </code></p>
 
-<h3>Conditional Proof (<code class="c">-&gt;</code> Introduction)</h3>
+<h3>Conditional Proof (<code class="c">→</code> Introduction)</h3>
 
 <p><strong>Logical form</strong>: Assuming premise
 <span class="i m v">P</span>, <span class="i m v">Q</span>. So,
@@ -462,11 +463,11 @@ ImpRefl false
 <span class="v">Q</span></span></span>.</p>
 
 <p><strong>Proof term</strong>: Lambda abstraction which proves
-<code class="c"><span class="i m v">P</span> -&gt; <!--
+<code class="c"><span class="i m v">P</span> → <!--
 --><span class="i m v">Q</span></code>:</p>
 
 <p style="text-align:center;width:100%;"><!--
---><code class="c">\<span class="i m v">i</span> : <!--
+--><code class="c">λ<span class="i m v">i</span> : <!--
 --><span class="i m v">P</span>.<span class="i m v">E</span></code></p>
 
 <p>This is a <em>conditional proof</em> on premise
@@ -508,19 +509,19 @@ must prove <code class="c"><span class="i m v">Q</span></code> in
 
 <hr>
 
-<!-- Γ ⊢ \i : P.E : P -> Q -->
+<!-- Γ ⊢ λi : P.E : P -> Q -->
 Γ <span class="q">⊢</span>
-<code class="c">\<span class="i m v">i</span><!--
+<code class="c">λ<span class="i m v">i</span><!--
 --> : <span class="i m v">P</span>.<span class="i m v">E</span></code><!--
 --> <span class="q">:</span> <code class="c"><span class="i m"><!--
 --><span class="v">P</span></span><!--
---> -&gt; <span class="i m v">Q</span></code>
+--> → <span class="i m v">Q</span></code>
 
 </div></div></p>
 
-<p><strong>Mechanics</strong>: <code class="c">\Pa : t.</code>
+<p><strong>Mechanics</strong>: <code class="c">λPa : t.</code>
 discharges the antecedent
-<code class="c">t -&gt;</code>
+<code class="c">t →</code>
 in the goal and introduces a premise
 <span class="i m"><code class="c">Pa</code>
 <span class="q">:</span> <code class="c">t</code></span>
@@ -529,11 +530,11 @@ in the context. The body uses these like function parameters.</p>
 <p><strong>Example</strong>:</p>
 
 <p><code class="a">theorem Syllogism :
-\/a b.a -&gt; (a -&gt; b) -&gt; b :=
+∀a b.a → (a → b) → b :=
 
-/\a b.
-\Pa : a.
-\Pab : a -&gt; b.
+Λa b.
+λPa : a.
+λPab : a → b.
 Pab Pa.</code></p>
 
 <p>The body <code class="c">Pab Pa</code> proves
@@ -542,9 +543,9 @@ Pab Pa.</code></p>
 <span class="i m"><code class="c">Pa</code> <span class="q">:</span>
 <code class="c">a</code></span> and
 <span class="i m"><code class="c">Pab</code>
-<span class="q">:</span> <code class="c">a -&gt; b</code></span>.</p>
+<span class="q">:</span> <code class="c">a → b</code></span>.</p>
 
-<h3>Modus Ponens (<code class="c">-&gt;</code> Elimination)</h3>
+<h3>Modus Ponens (<code class="c">→</code> Elimination)</h3>
 
 <p><strong>Logical form</strong>:
 <span class="i m"><span class="i m v">P</span> →
@@ -562,7 +563,7 @@ So, <span class="nw"><span class="i m v">Q</span>.</span></p>
 <p>This is a <em>modus ponens</em> through proof
 <span class="i m"><code class="c"><span class="i m v">E</span></code>
 <span class="q">:</span>
-<code class="c"><span class="i m v">P</span> -&gt;
+<code class="c"><span class="i m v">P</span> →
 <span class="i m v">Q</span></code></span> from proof <span class="nw">
 <span class="i m"><code class="c"><span class="i m v">F</span></code>
 <span class="q">:</span>
@@ -573,7 +574,7 @@ So, <span class="nw"><span class="i m v">Q</span>.</span></p>
 <code class="c"><span class="i m v">P</span></code>,
 and <code class="c"><span class="i m v">E</span></code>
 must prove <code class="c"><span class="i m v">P</span><!--
---> -&gt; <span class="i m v">Q</span></code> in
+--> → <span class="i m v">Q</span></code> in
 <span class="i m">Γ</span>.</p>
 
 <p></p><div class="rule"><div class="rulebox m">
@@ -589,7 +590,7 @@ must prove <code class="c"><span class="i m v">P</span><!--
 <code class="c"><span class="i m v">E</span></code>
 <span class="q">:</span>
 <code class="c"><span class="i m v">P</span><!--
---> -&gt; <span class="i m v">Q</span></code></p>
+--> → <span class="i m v">Q</span></code></p>
 
 <hr>
 
@@ -604,7 +605,7 @@ must prove <code class="c"><span class="i m v">P</span><!--
 
 <p><strong>Mechanics</strong>: When
 <span><code class="c">Pab</code> <span class="q">:</span>
-<code class="c">a -&gt; b</code> and
+<code class="c">a → b</code> and
 <span><code class="c">Pa</code> <span class="q">:</span>
 <code class="c">a</code>, <code class="c">Pab Pa</code> proves
 <span class="nw"><code class="c">b</code>.</span>
