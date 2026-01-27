@@ -235,11 +235,13 @@ We augment the syntax with:</p>
 <p><ul>
 <li><strong>Arrows</strong> <code class="c">-&gt;</code>:
 Implication. <code class="c">P -&gt; Q</code>
-says "<code class="c">P</code> implies <span class="nw"><code class="c">Q</code>.</span>"</li>
+says "<code class="c">P</code>
+implies <span class="nw"><code class="c">Q</code>.</span>"</li>
 
 <li><strong>Quantifiers</strong> <code class="c">\/</code>:
 For all. <code class="c">\/x.P</code>
-says "For all <code class="c">x</code>, <span class="nw"><code class="c">P</code>.</span>"</li>
+says "For all <code class="c">x</code>,
+<span class="nw"><code class="c">P</code>.</span>"</li>
 </ul></p>
 
 <p>These are features of propositions which state properties.
@@ -264,7 +266,8 @@ ranges over all possible inputs.</p>
 inhabits <code class="c">Int</code>). A proposition is a type which
 is proved by its inhabitants—proofs.</p>
 
-<p>To prove <code class="c">\/x.real x -&gt; non_negative (square x)</code>,
+<p>To prove
+<code class="c">\/x.real x -&gt; non_negative (square x)</code>,
 we need a term of this type. This term would look like:</p>
 
 <p><code class="a">/\x.
@@ -275,12 +278,14 @@ MulNonNegative x x P P
 <p>The type abstraction <code class="c">/\x</code> introduces the type
 variable <span class="nw"><code class="c">x</code>.</span> The abstraction
 <code class="c">\P : real x</code> introduces a proof of type
-<code class="c">real x</code>—we're assuming the antecedent.
-The body proves <span class="nw"><code class="c">non_negative (square x)</code>.</span></p>
+<code class="c">real x</code>—we're assuming
+the antecedent. The body proves <span class="nw"><!--
+--><code class="c">non_negative (square x)</code>.</span></p>
 
 <p><code class="c">MulNonNegative</code> is a proof that a real product
 is <code class="c">non_negative</code> when the coefficients have equal
-<span class="nw"><code class="c">sign</code>.</span> Its proposition is:</p>
+<span class="nw"><code class="c">sign</code>.</span>
+Its proposition is:</p>
 
 <p><code class="a">\/a b.real a -&gt; real b -&gt;
 eq (sign a) (sign b) -&gt;
@@ -331,7 +336,9 @@ and <code class="c"><span class="i m v">E</span></code> must prove
 --><span class="lb">[</span><span class="v">j</span> := <!--
 --><span class="v">i</span><span class="rb">]</span></span></code>
 in <span class="i m">Γ,
-<code class="c"><span class="i m v">i</span></code></span>.</p>
+<code class="c"><span class="i m v">i</span></code></span> (proposition
+<code class="c"><span class="i m v">i</span></code>
+appended to <span class="i m">Γ</span>).</p>
 
 <p></p><div class="rule"><div class="rulebox m">
 
@@ -472,10 +479,7 @@ must prove <code class="c"><span class="i m v">Q</span></code> in
 <span class="i m">Γ</span>,
 <code class="c"><span class="i m v">i</span></code>
 <span class="q">:</span> <code class="c"><span class="i m"><!--
---><span class="v">P</span></span></code> (proof
-<code class="c"><span class="i m v">i</span></code> of
-<code class="c"><span class="i m"><span class="v">P</span></span></code>
-appended to <span class="i m">Γ</span>).</p>
+--><span class="v">P</span></span></code>.</p>
 
 <p><div class="rule"><div class="rulebox m">
 
