@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8">
     <title>Lambda Calculus for Formal Proof</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
 
 @font-face {
@@ -18,13 +19,14 @@ html {
   margin: 0;
   overflow: scroll;
   justify-content: safe center;
-  font-size: 15pt;
   font-family: lm; }
 
 body {
   flex: 0 0 70ch;
   padding-left: 1.6ch;
   padding-right: 1.6ch;
+  font-size: 15pt;
+  text-size-adjust: none;
   overflow: hidden; }
 
 .principle td {
@@ -201,6 +203,11 @@ property is expressed as a proposition.</p>
 
 <p><code class="a">∀x.real x → non_negative (square x)</code></p>
 
+<p>"For all <span class="i m v">x</span>, if
+<span class="i m v">x</span> is a real number, then
+<span class="i m"><span class="v">x</span><sup>2</sup></span>
+is non-negative."</p>
+
 <p>You can construct a term of that type, and it is a proof.
 This proof accepts proof that <code class="c">x</code>
 is <code class="c">real</code> and returns proof that
@@ -249,11 +256,8 @@ Our programs remain untyped, but they occur in propositions,
 and those say things about them.</p>
 
 <p><code class="c">∀x.real x → non_negative (square x)</code>
-is a proposition. The program <code class="c">square</code> is part of it.
-Read this as: "For all <span class="i m v">x</span>, if
-<span class="i m v">x</span> is a real number, then
-<span class="i m"><span class="v">x</span><sup>2</sup></span>
-is non-negative."</p>
+is a proposition. The program <code class="c">square</code>
+is part of it.</p>
 
 <code class="c">real</code> and <code class="c">non_negative</code>
 are predicates. The arrow <code class="c">→</code> connects the
@@ -271,13 +275,13 @@ is proved by its inhabitants—proofs.</p>
 we need a term of this type. This term would look like:</p>
 
 <p><code class="a">Λx.
-λP : real x.
-MulNonNegative x x P P
+λPrx : real x.
+MulNonNegative x x Prx Prx
   (Refl (sign x))</code></p>
 
-<p>The type abstraction <code class="c">Λx</code> introduces the type
+<p>The type abstraction <code class="c">Λx.</code> introduces the type
 variable <span class="nw"><code class="c">x</code>.</span> The abstraction
-<code class="c">λP : real x</code> introduces a proof of type
+<code class="c">λPrx : real x.</code> introduces a proof of type
 <code class="c">real x</code>—we're assuming
 the antecedent. The body proves <span class="nw"><!--
 --><code class="c">non_negative (square x)</code>.</span></p>
@@ -299,14 +303,14 @@ non_negative (mul a b)</code></p>
 
 <p>The proof has computational meaning. It takes proof that
 <code class="c">real x</code>, applies reasoning about multiplication,
-and produces proof that the result is
-<span class="nw"><code class="c">non_negative</code>.</span></p>
+and produces proof that
+<span class="nw"><code class="c">non_negative (square x)</code>.</span></p>
 
 <p>The system is untyped only with respect to the programs
 being discussed, but it is very much typed with respect to proofs.
-The propositions form a typing system that lets you make universal
-claims about those untyped programs, and the proof terms are just
-lambda terms whose typing rules mirror logic. That's the
+The propositions form a typing system makes universal
+claims about those untyped programs, and the typing rules of
+proof terms mirror logic. That's the
 move that closes the verification gap: you're not typing your
 program; you're typing your argument about the program.</p>
 
@@ -442,8 +446,9 @@ in <span class="i m">Γ</span>.</p>
 </div></div><p></p>
 
 <p><strong>Mechanics</strong>: When <span><code class="c">Pa</code>
-<span class="q">:</span> <code class="c">∀i.a → i</code>,
-<span class="nw"><code class="c">Pa (real x)</code> proves <code class="c">a → real x</code>.</span>
+<span class="q">:</span> <code class="c">∀i.i → a</code>,
+<span class="nw"><code class="c">Pa (real x)</code> proves
+<code class="c">real x → a</code>.</span>
 This instantiates the proof for specific propositions.</span></p>
 
 <p><strong>Examples</strong>:</p>
