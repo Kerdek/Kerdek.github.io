@@ -301,6 +301,14 @@ non_negative (mul a b)</code></p>
 and produces proof that the result is
 <span class="nw"><code class="c">non_negative</code>.</span></p>
 
+<p>The system is untyped only with respect to the programs
+being discussed, but it is very much typed with respect to proofs.
+The propositions form a typing system that lets you make universal
+claims about those untyped programs, and the proof terms are just
+lambda terms whose typing rules mirror logic. That's the
+move that closes the verification gap: you're not typing your
+program; you're typing your argument about the program.</p>
+
 </tbody></table></div><p></p>
 
 <h2>Rules of Inference</h2>
