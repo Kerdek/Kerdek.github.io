@@ -180,12 +180,16 @@ is a polymorphic type
 Rules of logical inference are typing rules. A type checker
 is a proof checker. Type soundness is logical soundness.</p>
 
-<h2>From Testing to Proving</h2>
+<h2>Why Lambda Calculus?</h2>
 
-<p>Consider how we reason about programs. You write a function
-<code class="c">square</code> that multiplies a number by itself.
-You might informally claim "<code class="c">square</code> always returns
-a non-negative result for real number inputs." How do you gain
+<p>We begin from the untyped lambda calculus because
+it is a simple model of computation. In this system, your programs
+are unconstrained. You can write <span class="i m"><!--
+--><code class="c">square</code> = <code class="c">λx.mul x x</code></span>
+without any type annotations. </p>
+
+<p>You might claim <code class="c">square</code> always returns
+a non-negative result for real number inputs. How do you gain
 confidence in this claim? You might test:
 <code class="c">non_negative (square 2)</code>,
 <code class="c">non_negative (square -3)</code>,
@@ -196,9 +200,17 @@ numbers of the same sign never gives a negative result,
 and squaring uses the same number twice...".
 This reasoning is sound, but it is prose.</p>
 
-<p>Our approach changes this informal reasoning into formal,
-mechanically-checked mathematical objects. The
-property is expressed as a proposition.</p>
+<h2>From Testing to Proving</h2>
+
+<p>Testing can show the presence of bugs.
+Proof, by contrast, establishes a universal property for all inputs.
+It closes the gap between specification and implementation:
+the specification is a type, the correctness is a term, and
+type judgment ensures it is valid.</p>
+
+<p>We won't constrain the program with types. We will restrict
+what counts as proof about those programs. That is, the program
+will be part of a proposition:</p>
 
 <p><code class="a">∀x.real x → non_negative (square x)</code></p>
 
@@ -207,27 +219,9 @@ property is expressed as a proposition.</p>
 <span class="i m"><span class="v">x</span><sup>2</sup></span>
 is non-negative."</p>
 
-<p>You can construct a term of that type, and it is a proof.
-This proof accepts proof that <code class="c">x</code>
-is <code class="c">real</code> and returns proof that
-<code class="c">square x</code> is
-<span class="nw"><code class="c">non_negative</code>.</span>
-Testing can show the presence of bugs, but never their absence.
-This proof, by contrast, establishes a universal property for all inputs.
-You close the gap between specification and implementation:
-the specification is a type, the correctness is a term, and
-the type checker ensures it is valid.</p>
-
-<h2>Why Lambda Calculus?</h2>
-
-<p>We begin from the untyped lambda calculus because
-it is a simple model of computation. In this system, your programs
-are unconstrained. You can write <span class="i m"><!--
---><code class="c">square</code> = <code class="c">λx.mul x x</code></span>
-without any type annotations. We won't constrain the program with types.
-We will restrict what counts as proof about those programs. That is,
-the program will be part of the proposition. The proposition does not
-add typing to the program, it is a type that expresses the property.
+<p>The proposition does not add typing to the program.
+It is a type that expresses the property.
+You can construct a term of that type, which is a proof.
 We write programs, we make propositions about those programs,
 and we construct proofs for those propositions.</p>
 
@@ -283,6 +277,11 @@ variable <span class="nw"><code class="c">x</code>.</span> The abstraction
 <code class="c">λPrx : real x.</code> introduces a proof of type
 <code class="c">real x</code>,the antecedent. The body proves <span class="nw"><!--
 --><code class="c">non_negative (square x)</code>,</span> the consequent.</p>
+
+<p>This proof accepts proof that <code class="c">x</code>
+is <code class="c">real</code> and returns proof that
+<code class="c">square x</code> is
+<span class="nw"><code class="c">non_negative</code>.</span></p>
 
 <p><code class="c">MulNonNegative</code> is a proof that
 <code class="c">mul a b</code> is
