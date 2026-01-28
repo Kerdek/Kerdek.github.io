@@ -182,11 +182,11 @@ is a proof checker. Type soundness is logical soundness.</p>
 
 <h2>Why Lambda Calculus?</h2>
 
-<p>We begin from the untyped lambda calculus because
-it is a simple model of computation. In this system, your programs
-are unconstrained. You can write <span class="i m"><!--
---><code class="c">square</code> = <code class="c">λx.mul x x</code></span>
-without any type annotations. </p>
+<p>Church's untyped lambda calculus is a simple model
+of computation. In this system, programs are unconstrained.
+<span class="i m"><code class="c">square</code><!--
+--> = <code class="c">λx.mul x x</code></span>
+has no type annotations. </p>
 
 <p>You might claim <code class="c">square</code> always returns
 a non-negative result for real number inputs. How do you gain
@@ -208,8 +208,8 @@ It closes the gap between specification and implementation:
 the specification is a type, the correctness is a term, and
 type judgment ensures it is valid.</p>
 
-<p>We won't constrain the program with types. We will restrict
-what counts as proof about those programs. That is, the program
+<p>We won't constrain the program with types. We will constrain
+what counts as proof about a program. That is, the program
 will be part of a proposition:</p>
 
 <p><code class="a">∀x.real x → non_negative (square x)</code></p>
