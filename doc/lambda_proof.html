@@ -7,25 +7,40 @@
     <style>
 
 @font-face {
-  font-family: lm;
-  src: url("../font/latinmodern-math.otf"); }
+  font-family: "tt";
+  src: url("../font/firam.ttf"); }
 
 @font-face {
-  font-family: tt;
-  src: url("../font/firam.ttf"); }
+  font-family: 'rm';
+  src: url('../font/lmroman12-regular.otf') format('opentype');
+  font-style: normal; }
+
+@font-face {
+  font-family: 'rm';
+  src: url('../font/lmroman12-bold.otf') format('opentype');
+  font-weight: bold; }
+
+@font-face {
+  font-family: 'rm';
+  src: url('../font/lmroman12-italic.otf') format('opentype');
+  font-style: italic; }
+
+@font-face {
+  font-family: 'mm';
+  src: url('../font/latinmodern-math.otf') format('opentype'); }
 
 html {
   display: flex;
   margin: 0;
   overflow: scroll;
   justify-content: safe center;
-  font-family: lm; }
+  font-family: rm; }
 
 body {
   flex: 0 0 60ch;
   padding-left: 1.6ch;
   padding-right: 1.6ch;
-  font-size: 15pt;
+  font-size: 12pt;
   text-size-adjust: none;
   overflow: hidden; }
 
@@ -53,13 +68,26 @@ p {
   margin-bottom: 1ch; }
 
 code {
-  color: #aa0055;
   background: #eeeeee;
   border: #bbbbbb 1px solid;
   font-family: tt;
   font-style: normal;
-  font-size: 11pt;
+  font-size: 8.5pt;
   white-space: pre; }
+
+/* proposition: '#ffb3aa';
+  propositionsymbol: '#fc5e4c';
+  proof: '#b0c7ff';
+  proofsymbol: '#2e6aff'; */
+
+.pi {
+  color: #ff1900; }
+.ps {
+  color: #97190b; }
+.fi {
+  color: #0048ff; }
+.fs {
+  color: #092d8a; }
 
 .a {
   margin-left: 5ch;
@@ -98,10 +126,10 @@ code {
   padding-right: 0.12ch; }
 
 .m {
-  font-size: 14pt;
+  font-size: 12pt;
   color: black;
   white-space: normal;
-  font-family: lm; }
+  font-family: rm, mm; }
 
 .v {
   position: relative;
@@ -169,14 +197,17 @@ provide a well-typed term. Logical implication
 <span class="i m">(<!--
 --><span class="v">P</span> → <span class="v">Q</span><!--
 -->)</span>
-is a function type
-<span class="nw"><code class="c">P → Q</code>.</span>
+is a function type <span class="nw"><code class="c"><!--
+--><span class="pi">P</span> <span class="ps">→</span><!--
+--> <span class="pi">Q</span></code>.</span>
 Universal quantification
 <span class="i m">(<!--
 -->∀<span class="v">i</span>.<span class="v">P</span><!--
 -->)</span>
-is a polymorphic type
-<span class="nw"><code class="c">∀i.P</code>.</span>
+is a polymorphic type <span class="nw"><code class="c"><!--
+--><span class="ps">∀</span><span class="pi">i</span><!--
+--><span class="ps">.</span><span class="pi">P</span><!--
+--></code>.</span>
 Rules of logical inference are typing rules. A type checker
 is a proof checker. Type soundness is logical soundness.</p>
 
@@ -184,16 +215,25 @@ is a proof checker. Type soundness is logical soundness.</p>
 
 <p>Church's untyped lambda calculus is a simple model
 of computation. In this system, programs are unconstrained.
-<span class="i m"><code class="c">square</code><!--
---> = <code class="c">λx.mul x x</code></span>
+<span class="i m"><code class="c"><span class="pi">square</span></code><!--
+--> = <code class="c"><span class="ps">λ</span><!--
+--><span class="pi">x</span><span class="ps">.</span><!--
+--><span class="pi">mul</span> <span class="pi">x</span><!--
+--> <span class="pi">x</span></code></span>
 has no type annotations. </p>
 
-<p>You might claim <code class="c">square</code> always returns
+<p>You might claim <code class="c"><span class="pi">square</span></code> always returns
 a non-negative result for real number inputs. How do you gain
 confidence in this claim? You might test:
-<code class="c">non_negative (square 2)</code>,
-<code class="c">non_negative (square -3)</code>,
-<span class="nw"><code class="c">non_negative (square 0)</code>.</span>
+<code class="c"><span class="pi">non_negative</span><!--
+--> <span class="ps">(</span><span class="pi">square</span><!--
+--> <span class="pi">2</span><span class="ps">)</span></code>,
+<code class="c"><span class="pi">non_negative</span><!--
+--> <span class="ps">(</span><span class="pi">square</span><!--
+--> <span class="pi">-3</span><span class="ps">)</span></code>,
+<span class="nw"><code class="c"><span class="pi">non_negative</span><!--
+--> <span class="ps">(</span><span class="pi">square</span><!--
+--> <span class="pi">0</span><span class="ps">)</span></code>.</span>
 Each test increases your confidence, but you can never
 test all real numbers. You might reason informally: "Multiplying two
 numbers of the same sign never gives a negative result,
@@ -212,7 +252,12 @@ type judgment ensures it is valid.</p>
 what counts as proof about a program. That is, the program
 will be part of a proposition:</p>
 
-<p><code class="a">∀x.real x → non_negative (square x)</code></p>
+<p><code class="a"><span class="ps">∀</span><span class="pi">x</span><!--
+--><span class="ps">.</span><span class="pi">real</span><!--
+--> <span class="pi">x</span> <span class="ps">→</span><!--
+--> <span class="pi">non_negative</span> <span class="ps">(</span><!--
+--><span class="pi">square</span> <span class="pi">x</span><!--
+--><span class="ps">)</span></code></p>
 
 <p>"For all <span class="i m v">x</span>, if
 <span class="i m v">x</span> is a real number, then
@@ -221,98 +266,162 @@ is non-negative."</p>
 
 <p>The proposition does not add typing to the program.
 It is a type that expresses the property.
-You can construct a term of that type, which is a proof.
-We write programs, we make propositions about those programs,
-and we construct proofs for those propositions.</p>
+There is a term of that type, which is a proof.
+We write programs, make propositions about those programs,
+and construct proofs for those propositions.</p>
 
 <h2>Propositions about Programs</h2>
 
 <p><em>Propositions</em> are a richer language built from arrows,
-quantifiers, and parts of programs. We can put a program in a proposition.
-A program that returns a proposition is a <em>predicate</em>.
-We augment the syntax with:</p>
+quantifiers, and parts of programs. We can put a program in a
+proposition. A program that returns a proposition is a
+<em>predicate</em>. We augment the syntax with:</p>
 
 <p><ul>
-<li><strong>Arrows</strong> <code class="c">→</code>:
-Implication. <code class="c">P → Q</code>
-says "<code class="c">P</code>
-implies <span class="nw"><code class="c">Q</code>.</span>"</li>
+<li><strong>Arrows</strong>
+<code class="c"><span class="ps">→</span></code>:
+Implication. <code class="c"><span class="pi">P</span><!--
+--> <span class="ps">→</span> <span class="pi">Q</span></code>
+says "<code class="c"><span class="pi">P</span></code> implies
+<span class="nw"><code class="c"><span class="pi">Q</span><!--
+--></code>.</span>"</li>
 
-<li><strong>Quantifiers</strong> <code class="c">∀</code>:
-For all. <code class="c">∀x.P</code>
-says "For all <code class="c">x</code>,
-<span class="nw"><code class="c">P</code>.</span>"</li>
+<li><strong>Quantifiers</strong> <code class="c"><!--
+--><span class="ps">∀</span></code>:
+For all. <code class="c"><span class="ps">∀</span><!--
+--><span class="pi">x</span><span class="ps">.</span><!--
+--><span class="pi">P</span></code> says "For all
+<code class="c"><span class="pi">x</span></code>, <span class="nw"><!--
+--><code class="c"><span class="pi">P</span></code>.</span>"</li>
 </ul></p>
 
 <p>These are features of propositions which state properties.
 Our programs remain untyped, but they occur in propositions,
 and those say things about them.</p>
 
-<p><code class="c">∀x.real x → non_negative (square x)</code>
-is a proposition. The program <code class="c">square</code>
+<p><code class="c"><span class="ps">∀</span><span class="pi">x</span><!--
+--><span class="ps">.</span><span class="pi">real</span><!--
+--> <span class="pi">x</span> <span class="ps">→</span><!--
+--> <span class="pi">non_negative</span> <span class="ps">(</span><!--
+--><span class="pi">square</span> <span class="pi">x</span><!--
+--><span class="ps">)</span></code> is a proposition. The program
+<code class="c"><span class="pi">square</span></code>
 is part of it.</p>
 
-<code class="c">real</code> and <code class="c">non_negative</code>
-are predicates. The arrow <code class="c">→</code> connects the
-antecedent to the consequent. The quantifier <code class="c">∀x.</code>
+<code class="c"><span class="pi">real</span></code> and
+<code class="c"><span class="pi">non_negative</span></code>
+are predicates. The arrow <code class="c"><span class="ps">→</span></code> connects the
+antecedent to the consequent. The quantifier
+<code class="c"><span class="ps">∀</span><span class="pi">x</span><!--
+--><span class="ps">.</span></code>
 ranges over all possible inputs.</p>
 
 <h2>Proofs as Terms</h2>
 
-<p>A type might be inhabited by a term (e.g. <code class="c">2</code>
-inhabits <code class="c">Int</code>). A proposition is a type which
+<p>A type might be inhabited by a term (e.g.
+<code class="c"><span class="pi">2</span></code>
+inhabits <code class="c"><span class="pi">Int</span></code>). A proposition is a type which
 is proved by its inhabitants—proofs.</p>
 
 <p>To prove
-<code class="c">∀x.real x → non_negative (square x)</code>,
+<code class="c"><span class="ps">∀</span><span class="pi">x</span><!--
+--><span class="ps">.</span><span class="pi">real</span><!--
+--> <span class="pi">x</span> <span class="ps">→</span><!--
+--> <span class="pi">non_negative</span> <span class="ps">(</span><!--
+--><span class="pi">square</span> <span class="pi">x</span><!--
+--><span class="ps">)</span></code>,
 we need a term of this type. This term would look like:</p>
 
-<p><code class="a">Λx.
-λPrx : real x.
-MulNonNegative x x Prx Prx
-  (Refl (sign x))</code></p>
+<p><code class="a"><span class="fs">Λ</span><!--
+--><span class="pi">x</span><span class="fs">.</span>
+<span class="fs">λ</span><span class="fi">Prx</span><!--
+--> <span class="fs">:</span> <span class="pi">real</span><!--
+--> <span class="pi">x</span><span class="fs">.</span>
+<span class="fi">MulNonNegative</span> <span class="pi">x</span><!--
+--> <span class="pi">x</span> <span class="fi">Prx</span><!--
+--> <span class="fi">Prx</span>
+  <span class="fs">[</span><span class="fi">Refl</span><!--
+--> <span class="ps">(</span><span class="pi">sign</span><!--
+--> <span class="pi">x</span><span class="ps">)</span><!--
+--><span class="fs">]</span></code></p>
 
-<p>The type abstraction <code class="c">Λx.</code> introduces the type
-variable <span class="nw"><code class="c">x</code>.</span> The abstraction
-<code class="c">λPrx : real x.</code> introduces a proof of type
-<code class="c">real x</code>,the antecedent. The body proves <span class="nw"><!--
---><code class="c">non_negative (square x)</code>,</span> the consequent.</p>
+<p>The type abstraction <code class="c"><span class="fs">Λ</span><!--
+--><span class="pi">x</span><span class="fs">.</span></code>
+introduces the type variable <span class="nw"><!--
+--><code class="c"><span class="pi">x</span></code>.</span>
+The abstraction <code class="c"><span class="fs">λ</span><!--
+--><span class="fi">Prx</span> <span class="fs">:</span><!--
+--> <span class="pi">real</span> <span class="pi">x</span><!--
+--><span class="fs">.</span></code> introduces proof
+<code class="c"><span class="fi">Prx</span></code> of
+<code class="c"><span class="pi">real</span><!--
+--> <span class="pi">x</span></code>, the antecedent.
+The body proves <span class="nw"><code class="c"><!--
+--><span class="pi">non_negative</span> <span class="ps">(</span><!--
+--><span class="pi">square</span> <span class="pi">x</span><!--
+--><span class="ps">)</span></code>,</span> the consequent.</p>
 
-<p>This proof accepts proof that <code class="c">x</code>
-is <code class="c">real</code> and returns proof that
-<code class="c">square x</code> is
-<span class="nw"><code class="c">non_negative</code>.</span></p>
+<p>This proof accepts proof that <code class="c"><!--
+--><span class="pi">x</span></code> is <code class="c"><!--
+--><span class="pi">real</span></code>
+and returns proof that <code class="c"><!--
+--><span class="pi">square</span> <span class="pi">x</span></code>
+is <span class="nw"><code class="c"><!--
+--><span class="pi">non_negative</span></code>.</span></p>
 
-<p><code class="c">MulNonNegative</code> is a proof that
-<code class="c">mul a b</code> is
-<code class="c">non_negative</code> when
-<code class="c">a</code> and <code class="c">b</code>
-are <code class="c">real</code> and have equal
-<span class="nw"><code class="c">sign</code>.</span>
-Its proposition is:</p>
+<p><code class="c"><span class="fi">MulNonNegative</span></code>
+is a proof that <code class="c"><span class="pi">mul</span><!--
+--> <span class="pi">a</span> <span class="pi">b</span></code> is
+<code class="c"><span class="pi">non_negative</span></code> when
+<code class="c"><span class="pi">a</span></code> and
+<code class="c"><span class="pi">b</span></code>
+are <code class="c"><span class="pi">real</span></code> and have equal
+<span class="nw"><code class="c"><span class="pi">sign</span><!--
+--></code>.</span> Its proposition is:</p>
 
-<p><code class="a">∀a b.
-real a → real b →
-eq (sign a) (sign b) →
-non_negative (mul a b)</code></p>
+<p><code class="a"><span class="ps">∀</span><!--
+--><span class="pi">a</span> <span class="pi">b</span><!--
+--><span class="ps">.</span>
+<span class="pi">real</span><!--
+--> <span class="pi">a</span> <span class="ps">→</span><!--
+--> <span class="pi">real</span> <span class="pi">b</span><!--
+--> <span class="ps">→</span>
+<span class="pi">eq</span> <span class="ps">(</span><!--
+--><span class="pi">sign</span> <span class="pi">a</span><!--
+--><span class="ps">)</span> <span class="ps">(</span><!--
+--><span class="pi">sign</span> <span class="pi">b</span><!--
+--><span class="ps">)</span> <span class="ps">→</span>
+<span class="pi">non_negative</span> <span class="ps">(</span><!--
+--><span class="pi">mul</span> <span class="pi">a</span><!--
+--> <span class="pi">b</span><span class="ps">)</span></code></p>
 
-<p><code class="c">Refl</code> takes care of
-<span class="nw"><code class="c">eq (sign x) (sign x)</code>:</span></p>
+<p><code class="c"><span class="fi">Refl</span></code> takes care of
+<span class="nw"><code class="c"><span class="pi">eq</span><!--
+--> <span class="ps">(</span><span class="pi">sign</span><!--
+--> <span class="pi">x</span><span class="ps">)</span><!--
+--> <span class="ps">(</span><span class="pi">sign</span><!--
+--> <span class="pi">x</span><span class="ps">)</span></code>:</span></p>
 
-<p><code class="a">∀a.eq a a</code></p>
+<p><code class="a"><span class="ps">∀</span><!--
+--><span class="pi">a<span class="ps">.</span><!--
+--><span class="pi">eq</span> <span class="pi">a</span><!--
+--> <span class="pi">a</span></code></p>
 
-<p>The proof has computational meaning. It takes proof that
-<code class="c">real x</code>, applies reasoning about multiplication,
-and produces proof that
-<span class="nw"><code class="c">non_negative (square x)</code>.</span></p>
+<p>The proof has computational meaning. It takes proof of
+<code class="c"><span class="pi">real</span><!--
+--> <span class="pi">x</span></code>, applies reasoning
+about multiplication, and produces proof of <span class="nw"><!--
+--><code class="c"><span class="pi">non_negative</span><!--
+--> <span class="ps">(</span><span class="pi">square</span><!--
+--> <span class="pi">x</span><span class="ps">)</span></code>.</span></p>
 
 <p>The system is untyped only with respect to the programs
 being discussed, but it is very much typed with respect to proofs.
-The propositions form a typing system makes universal
+The propositions form a typing system which makes universal
 claims about those untyped programs, and the typing rules of
-proof terms mirror logic. That's the
-move that closes the verification gap: you're not typing your
-program; you're typing your argument about the program.</p>
+proof terms mirror logic. That's the move that closes the
+verification gap: you're not typing your program; you're typing
+your argument about the program.</p>
 
 </tbody></table></div><p></p>
 
@@ -335,14 +444,9 @@ be meaningless because it leads these inference rules to contradiction.</p>
 Some examples include propositions which, by some reductions or judgments:</p>
 
 <p><ul>
-<li>possess a:
-  <ul>
-    <li>normal form</li>
-    <li>head normal form</li>
-    <li>weak head normal form</li>
-  </ul></li>
-<li>are sets</li>
-<li>are well-typed</li>
+<li>Possess a normal form</li>
+<li>Are sets</li>
+<li>Are well-typed</li>
 </ul></p>
 
 <h2>Rules of Inference</h2>
