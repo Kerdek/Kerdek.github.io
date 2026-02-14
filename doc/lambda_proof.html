@@ -222,9 +222,9 @@ of computation. In this system, programs are unconstrained.
 --> <span class="pi">x</span></code></span>
 has no type annotations. </p>
 
-<p>You might claim <code class="c"><span class="pi">square</span></code> always returns
-a non-negative result for real number inputs. How do you gain
-confidence in this claim? You might test:
+<p>You might claim <code class="c"><span class="pi">square</span></code>
+always returns a non-negative result for real number inputs.
+How do you gain confidence in this claim? You might test:
 <code class="c"><span class="pi">non_negative</span><!--
 --> <span class="ps">(</span><span class="pi">square</span><!--
 --> <span class="pi">2</span><span class="ps">)</span></code>,
@@ -310,8 +310,8 @@ is part of it.</p>
 
 <code class="c"><span class="pi">real</span></code> and
 <code class="c"><span class="pi">non_negative</span></code>
-are predicates. The arrow <code class="c"><span class="ps">→</span></code> connects the
-antecedent to the consequent. The quantifier
+are predicates. The arrow <code class="c"><span class="ps">→</span></code>
+connects the antecedent to the consequent. The quantifier
 <code class="c"><span class="ps">∀</span><span class="pi">x</span><!--
 --><span class="ps">.</span></code>
 ranges over all possible inputs.</p>
@@ -320,8 +320,8 @@ ranges over all possible inputs.</p>
 
 <p>A type might be inhabited by a term (e.g.
 <code class="c"><span class="pi">2</span></code>
-inhabits <code class="c"><span class="pi">Int</span></code>). A proposition is a type which
-is proved by its inhabitants—proofs.</p>
+inhabits <code class="c"><span class="pi">Int</span></code>).
+A proposition is a type which is proved by its inhabitants—proofs.</p>
 
 <p>To prove
 <code class="c"><span class="ps">∀</span><span class="pi">x</span><!--
@@ -434,19 +434,39 @@ If a proof type-checks, it is a valid proof of its proposition.</p>
 
 <h1>Appendices</h1>
 
-<h2>Meaningful Propositions</h2>
+<h2>Meaningful Judgmental Equalities</h2>
 
-<p>Some propositions are meaningless (the others are meaningful).
-We hold Russell's classic paradox, <code class="c">Y not</code>, to
-be meaningless because it leads these inference rules to contradiction.</p>
+<p>Propositions may be related by judgmental equalities. Certain judgmental
+equalities are meaningless becaues they lead these inference rules to
+contradiction. For example, in the theory of unintepreted functions, Russell's
+classic paradox, <code class="c">Y not</code> shows the contradiction.</p>
 
-<p>There are several accounts of meaningful propositions in literature.
-Some examples include propositions which, by some reductions or judgments:</p>
+<p><code class="a">-- statement of contradiction
+def false := ∀x.x.
+
+-- `not x` means `x` implies `false`
+def not := λx.x → false.
+
+-- fixed point combinator
+def Y := λf.(λx.f (x x)) (λx.f (x x)).
+
+-- Russell's theorem
+theorem Russell : Y not :=
+λA : Y not.
+A A.
+
+-- inconsistency
+theorem Contradiction : false :=
+Russell Russell.
+</code></p>
+
+<p>There are numerous accounts of meaningful judgmental equalities.
+Some examples include:</p>
 
 <p><ul>
-<li>Possess a normal form</li>
-<li>Are sets</li>
-<li>Are well-typed</li>
+<li>Normalizing Systems</li>
+<li>Set Theories</li>
+<li>Type Theories</li>
 </ul></p>
 
 <h2>Rules of Inference</h2>
@@ -502,7 +522,10 @@ appended to <span class="i m">Γ</span>).</p>
 <hr>
 
 <!-- Γ ⊢ Λi.E : ∀j.P -->
-Γ <span class="q">⊢</span> <code class="c">Λ<span class="i m v">i</span>.<span class="i m v">E</span></code> <span class="q">:</span> <code class="c">∀<span class="i m v">j</span>.<span class="i m v">P</span></code>
+Γ <span class="q">⊢</span> <code class="c">Λ<!--
+--><span class="i m v">i</span>.<span class="i m v">E</span></code>
+<span class="q">:</span> <code class="c">∀<!--
+--><span class="i m v">j</span>.<span class="i m v">P</span></code>
 
 </div></div><p></p>
 
@@ -548,7 +571,8 @@ for some <span class="i m v">T</span>.</p>
 <span class="i m"><code class="c"><span class="i m v">E</span></code>
 <span class="q">:</span>
 <code class="c"><span class="i m v">P</span></code></span>
-for proposition <span class="nw"><code class="c"><span class="i m v">Q</span></code>.</span></p>
+for proposition <span class="nw"><code class="c"><!--
+--><span class="i m v">Q</span></code>.</span></p>
 
 <p><strong>Judgment rule</strong>:
 <code class="c"><span class="i m v">Q</span></code>
@@ -574,7 +598,12 @@ in <span class="i m">Γ</span>.</p>
 <hr>
 
 <!-- Γ ⊢ E Q : P[i := Q] -->
-Γ <span class="q">⊢</span> <code class="c"><span class="i m v">E</span> <span class="i m v">Q</span></code> <span class="q">:</span> <code class="c"><span class="i m"><span class="v">P</span><span class="lb">[</span><span class="v">i</span> := <span class="v">Q</span><span class="rb">]</span></span></code>
+Γ <span class="q">⊢</span> <code class="c"><!--
+--><span class="i m v">E</span> <span class="i m v">Q</span></code>
+<span class="q">:</span> <code class="c"><span class="i m"><!--
+--><span class="v">P</span><span class="lb">[</span><!--
+--><span class="v">i</span> := <span class="v">Q</span><!--
+--><span class="rb">]</span></span></code>
 
 </div></div><p></p>
 
