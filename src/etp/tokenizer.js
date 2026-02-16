@@ -1,4 +1,4 @@
-import { di } from "./di.js";
+import { di } from "../common/util/di.js";
 import { scanner } from "./scanner.js";
 const reg = (r, k) => (t) => di(t.match(r), m => !m ? null : [m[0], k]), regf = (r, k, f) => (t) => di(t.match(r), m => !m || f.some(e => e == m[0]) ? null : [m[0], k]), sym = (r) => (t, k) => di(t.match(r), m => !m ? null : [m[0], k === 'top' ? 'symbol' : k === 'proposition' ? 'propositionsymbol' : 'proofsymbol']), 
 // symf = <K extends 'top' | 'proposition' | 'proof'>(r: RegExp, f: string[]) =>
@@ -6,13 +6,12 @@ const reg = (r, k) => (t) => di(t.match(r), m => !m ? null : [m[0], k]), regf = 
 //   di(t.match(r), m =>
 //   !m || f.some(e => e == m[0]) ? null : [m[0], k === 'top' ? 'symbol' : k === 'proposition' ? 'propositionsymbol' : 'proofsymbol']),
 reg_skip = (r, k) => (t) => di(t.match(r), m => !m ? null :
-    [m[0].substring(0, m[0].length - (m[1] || '').length), k]), keys = ['define', 'theorem', 'let', 'lemma', 'premise', 'given', 'print'], name = (r, k) => (t) => di(t.match(r), m => m && (keys.some(i => i === m[0]) ? null :
+    [m[0].substring(0, m[0].length - (m[1] || '').length), k]), keys = ['import', 'export', 'define', 'theorem', 'let', 'lemma', 'premise', 'given', 'print'], name = (r, k) => (t) => di(t.match(r), m => m && (keys.some(i => i === m[0]) ? null :
     [m[0], k]));
 export const tokenizer = scanner({
-    sfl: reg(/^[^\n]*\n?/, 'comment'),
     dt: sym(/^\./),
     pp: name(/^[\w']+/, 'proposition'),
-    pf: name(/^([\w']|[^\n\S])+/, 'proof'),
+    pf: name(/^[\w']+/, 'proof'),
     // ws: reg(/^(\s|--[\s\S]*?(\n|$)|\(\*[\s\S]*?(\*\)|$))*/, 'comment'),
     nl: reg(/^\n/, 'invalid'),
     wl: reg(/^[^\n\S]+/, 'invalid'),
@@ -22,20 +21,32 @@ export const tokenizer = scanner({
     op: regf(/^[->:=]+/, 'propositionsymbol', [":", ":="]),
     ce: sym(/^:=/),
     cn: sym(/^:/),
+    al: sym(/^\\\//),
     lm: sym(/^\\/),
     lp: reg(/^\(/, 'propositionsymbol'),
     rp: reg(/^\)/, 'propositionsymbol'),
     lb: sym(/^\[/),
     rb: sym(/^\]/),
-    la: sym(/^\</),
-    ra: sym(/^\>/),
-    dv: reg_skip(/^[\s\S]*?(\b(define|print|theorem)\b|\n|$)/, 'invalid'),
+    dv: reg_skip(/^[\s\S]*?(\b(import|export|define|print|theorem)\b|\n|$)/, 'invalid'),
     df: reg(/^\bdefine\b/, 'symbol'),
     pt: sym(/^\bprint\b/),
+    ip: reg(/^\bimport\b/, 'symbol'),
+    ep: reg(/^\bexport\b/, 'symbol'),
     cp: reg(/^\bpremise\b/, 'proofsymbol'),
     le: reg(/^\blemma\b/, 'proofsymbol'),
     ui: reg(/^\bgiven\b/, 'proofsymbol'),
     ll: reg(/^\blet\b/, 'proofsymbol'),
-    th: reg(/^\btheorem\b/, 'symbol')
+    th: reg(/^\btheorem\b/, 'symbol'),
+    li: reg(/^"(?:[^"\\]|\\[nt"\\])*"?/, 'proofsymbol')
 });
+export const token_kinds = [
+    'invalid',
+    'foreground',
+    'proposition',
+    'propositionsymbol',
+    'proof',
+    'proofsymbol',
+    'symbol',
+    'comment'
+];
 //# sourceMappingURL=tokenizer.js.map

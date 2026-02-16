@@ -3,7 +3,7 @@ branch: (u: () => World) => Proc,
 proc: <Args extends any[]>(u: (...a: Args) => World) => (...a: Args) => Proc,
 call: (u: Proc, v: (x: Result) => World) => World,
 cc: (u: Proc) => World,
-ret: (x: Result) => World}
+ret: (x: Result) => World }
 
 export const run = <A extends any[], V>(s: <P, R>(f: Run<V, P, R>) => (...a: A) => P) => (...a: A): V => {
 type F = () => F | undefined

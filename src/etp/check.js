@@ -1,438 +1,369 @@
-import { run } from "./run.js";
-import { di } from "./di.js";
-import { visit_proposition, visit_proof, msg, empty_context } from "./lang.js";
-const proposition_bound = (i, { rho, pi }) => rho.some(({ i: ip }) => ip === i) ||
-    pi.some(ip => ip === i), 
-// proposition_defined = (i: Identifier, rho: Rho) =>
-//   rho.some(({ i: ip }) => ip === i),
-proof_bound = (i, sigma) => sigma.some(({ i: ip }) => ip === i), lookup_definition = (i, rho) => rho.findLast(({ i: ip }) => ip === i), lookup_proof = (i, sigma) => sigma.findLast(({ i: ip }) => ip === i), free_from = run(({ proc, call, cc, ret }) => {
+import { run } from './run.js';
+import { di, uniques } from '../common/util/di.js';
+import { msg } from './context.js';
+import { visit_proof, visit_proposition, visit_statement } from './abstract.js';
+const cascade = (f, a, b) => f(a) || f(b), proposition_bound0 = (i, pfx) => pfx.includes(i), proposition_bound = (i, ctx, pfx) => cascade(pi => pi.includes(i), ctx, pfx), proof_bound0 = (i, pfx) => pfx.some(({ i: ip }) => ip === i), proof_bound = (i, ctx, pfx) => cascade(ctx => ctx.some(({ i: ip }) => ip === i), ctx, pfx), look_up_proposition = (i, ctx) => ctx.findLast(({ i: ip }) => ip === i), look_up_proof = (i, ctx, pfx) => cascade(ctx => ctx.findLast(({ i: ip }) => ip === i), ctx, pfx), undefine = (i, rho) => rho.filter(({ i: ip }) => ip !== i), safe = (i, bound) => {
+    while (bound.some(ipp => ipp === i)) {
+        i = `${i}'`;
+    }
+    return i;
+}, reference_occurs_free = run(({ proc, call, cc, ret }) => {
     const save = (iota) => {
-        const main = proc(visit_proposition({
-            lam: ({ i, b }) => i === iota ? ret(true) :
-                cc(main(b)),
-            imp: ({ l, r }) => call(main(l), dl => dl ? cc(main(r)) :
-                ret(false)),
-            app: ({ l, r }) => call(main(l), dl => dl ? cc(main(r)) :
-                ret(false)),
-            ref: ({ i }) => ret(i !== iota),
-            var: ({ d }) => d[0] ? cc(main(d[0])) :
-                ret(true),
-            err: ({}) => ret(true)
-        }));
-        return main;
-    };
-    return (tau, iota) => save(iota)(tau);
-}), occurs = run(({ proc, call, cc, ret }) => {
-    const save = (v, s) => {
-        const main = proc(visit_proposition({
-            lam: ({ b }) => cc(main(b)),
-            imp: ({ l, r }) => call(main(l), dl => dl ? ret(true) :
-                cc(main(r))),
-            app: ({ l, r }) => call(main(l), dl => dl ? ret(true) :
-                cc(main(r))),
-            ref: ({}) => ret(false),
-            var: ({ d }) => d[0] ? cc(main(d[0])) :
-                d === v ? ret(true) :
-                    di(s.get(d), r => !r ? ret(false) :
-                        cc(main(r))),
+        const quantifier = ({ i, b }) => i === iota ? ret(false) : cc(main(b)), binary = ({ l, r }) => call(main(l), dl => dl ? ret(true) : cc(main(r))), main = proc(visit_proposition({
+            uni: quantifier, lam: quantifier,
+            imp: binary, app: binary,
+            ref: ({ i }) => ret(i === iota),
+            var: ({}) => ret(false),
             err: ({}) => ret(false)
         }));
         return main;
     };
-    return (tau, iota, s) => save(iota, s)(tau);
-}), free_variables = run(({ proc, call, ret }) => {
-    const main = proc(visit_proposition({
-        lam: ({ i, b }) => call(main(b), b => ret(b.filter(ip => ip !== i))),
-        imp: ({ l, r }) => call(main(l), l => call(main(r), r => ret([...new Set([...l, ...r])]))),
-        app: ({ l, r }) => call(main(l), l => call(main(r), r => ret([...new Set([...l, ...r])]))),
-        ref: ({ i }) => ret([i]),
-        var: ({}) => ret([]),
-        err: ({}) => ret([])
-    }));
-    return main;
-}), 
-// defined_variables = run(<P, R>({ proc, call, cc, ret }: Run<Pi, P, R>) => {
-//   const save = (rho: Rho) => {
-//   const main: (tau: Proposition) => P = proc(visit_proposition({
-//     lam: ({ i, b }) =>
-//       call(main(b), b =>
-//       ret(b.filter(ip => ip !== i))),
-//     imp: ({ l, r }) =>
-//       call(main(l), l =>
-//       call(main(r), r =>
-//       ret([...new Set([...l, ...r])]))),
-//     app: ({ l, r }) =>
-//       call(main(l), l =>
-//       call(main(r), r =>
-//       ret([...new Set([...l, ...r])]))),
-//     ref: ({ i }) =>
-//       ret(proposition_defined(i, rho) ? [i] : []),
-//     top: ({ d }) =>
-//       d[0] ? cc(main(d[0])) :
-//       ret([]),
-//     bot: ({ d }) =>
-//       d[0] ? cc(main(d[0])) :
-//       ret([]),
-//     err: ({ }) =>
-//       ret([]) }))
-//   return main }
-//   return (tau: Proposition, rho: Rho) => save(rho)(tau) }),
-closed = run(({ proc, call, cc, ret }) => {
-    const main = proc(visit_proposition({
-        lam: ({ i, b }, { rho, pi }) => cc(main(b, { rho, pi: [...pi, i] })),
-        imp: ({ l, r }, delta) => call(main(l, delta), dx => !dx ? ret(false) :
-            cc(main(r, delta))),
-        app: ({ l, r }, delta) => call(main(l, delta), dx => !dx ? ret(false) :
-            cc(main(r, delta))),
-        ref: ({ i }, delta) => ret(proposition_bound(i, delta)),
-        var: ({}, {}) => ret(true),
-        err: ({}, {}) => ret(true)
-    }));
-    return main;
-}), prime = (i) => `${i}'`, alpha_rename = run(({ proc, call, cc, ret }) => {
-    const save = (iota, ip) => {
-        const rename = proc(({ i, b, ...z }, ip, fv) => !fv.some(ipp => ipp === ip) ?
-            call(save(i, ip)(b), b => call(main(b), b => ret({ i: ip, b, ...z }))) :
-            cc(rename({ i, b, ...z }, prime(ip), fv)));
-        const main = proc(visit_proposition({
-            lam: ({ i, b, ...z }) => i === iota ? ret({ i, b, ...z }) :
-                i !== ip ?
-                    call(main(b), b => ret({ i, b, ...z })) :
-                    cc(rename({ i, b, ...z }, prime(i), [...new Set([...free_variables({ i, b, ...z }), ip])])),
-            imp: ({ l, r, ...z }) => call(main(l), l => call(main(r), r => ret({ l, r, ...z }))),
-            app: ({ l, r, ...z }) => call(main(l), l => call(main(r), r => ret({ l, r, ...z }))),
-            ref: ({ i, ...z }) => ret({ i: i === iota ? ip : i, ...z }),
-            var: ret,
-            err: ret
+    return (tau, iota) => save(iota)(tau);
+}), variable_occurs = run(({ proc, call, cc, ret }) => {
+    const save = (v) => {
+        const quantifier = ({ b }) => cc(main(b)), binary = ({ l, r }) => call(main(l), dl => dl ? ret(true) : cc(main(r))), def = () => ret(false), main = proc(visit_proposition({
+            uni: quantifier, lam: quantifier,
+            imp: binary, app: binary,
+            ref: def, err: def,
+            var: ({ d }) => ret(d === v)
         }));
         return main;
     };
-    return (tau, iota, ip) => save(iota, ip)(tau);
-}), apply = run(({ proc, call, cc, ret }) => {
-    const save0 = (s) => {
-        const save1 = (rho) => {
-            const rename = proc(({ i, b, ...z }, ip, fv, rho) => !fv.some(ipp => ipp === ip) ?
-                di(alpha_rename(b, i, ip), b => call(save1(rho.filter(({ i: ip }) => ip !== i))(b), b => ret({ i: ip, b, ...z }))) :
-                cc(rename({ i, b, ...z }, prime(ip), fv, rho)));
-            const main = proc(visit_proposition({
-                lam: ({ i, b, ...z }) => [...s].every(([, tau]) => free_from(tau, i)) ?
-                    call(save1(rho.filter(({ i: ip }) => ip !== i))(b), b => ret({ i, b, ...z })) :
-                    cc(rename({ i, b, ...z }, prime(i), [...new Set([...free_variables({ i, b, ...z }), ...[...s].map(([, tau]) => free_variables(tau)).flat(1)])], rho)),
-                imp: ({ l, r, ...z }) => call(main(l), l => call(main(r), r => ret({ l, r, ...z }))),
-                app: ({ l, r, ...z }) => call(main(l), l => call(main(r), r => di(plain(l), lp => lp.k === "lam" ? ret(substitute(lp.b, lp.i, r, rho)) :
-                    ret({ l, r, ...z })))),
-                ref: ret,
-                var: ({ d, ...z }) => d[0] ?
-                    call(main(d[0]), dr => (d[0] = dr,
-                        ret(dr))) :
-                    di(s.get(d), r => !r ? ret({ d, ...z }) :
-                        call(main(r), dr => (d[0] = dr,
-                            ret(dr)))),
-                err: ret
-            }));
-            return main;
-        };
-        return save1;
-    };
-    return (tau, s, rho) => save0(s)(rho)(tau);
-}), plain = run(({ proc, cc, ret }) => {
-    const main = proc(visit_proposition({
-        lam: ret,
-        imp: ret,
-        app: ret,
-        ref: ret,
-        var: ({ d, ...z }) => d[0] ? cc(main(d[0])) :
-            ret({ d, ...z }),
-        err: ret
-    }));
-    return main;
-}), substitute = run(({ proc, call, cc, ret }) => {
-    const save0 = (iota, tau) => {
-        const save1 = (rho) => {
-            const rename = proc(({ i, b, ...z }, ip, fv, rho) => !fv.some(ipp => ipp === ip) ?
-                di(alpha_rename(b, i, ip), b => call(save1(rho.filter(({ i: ip }) => ip !== i))(b), b => ret({ i: ip, b, ...z }))) :
-                cc(rename({ i, b, ...z }, prime(ip), fv, rho)));
-            const main = proc(visit_proposition({
-                lam: ({ i, b, ...z }) => i === iota ? ret({ i, b, ...z }) :
-                    free_from(tau, i) ?
-                        call(save1(rho.filter(({ i: ip }) => ip !== i))(b), b => ret({ i, b, ...z })) :
-                        cc(rename({ i, b, ...z }, prime(i), [...new Set([...free_variables({ i, b, ...z }), ...free_variables(tau)])], rho)),
-                imp: ({ l, r, ...z }) => call(main(l), l => call(main(r), r => ret({ l, r, ...z }))),
-                app: ({ l, r, ...z }) => call(main(l), l => call(main(r), r => di(plain(l), lp => lp.k === "lam" ? cc(save0(lp.i, r)(rho)(lp.b)) :
-                    ret({ l, r, ...z })))),
-                ref: ({ i, ...z }) => ret(i === iota ? tau : { i, ...z }),
-                var: ret,
-                err: ret
-            }));
-            return main;
-        };
-        return save1;
-    };
-    return (taup, iota, tau, rho) => save0(iota, tau)(rho)(taup);
-}), 
-// eliminate = run(<P, R>({ proc, call, cc, ret }: Run<Proposition, P, R>) => {
-//   const main: (tau: Proposition, rho: Rho) => P = proc(visit_proposition({
-//     lam: ({ i, b, ...z }, rho) =>
-//       call(main(b, rho.filter(({ i: ip }) => ip !== i)), b =>
-//       ret({ i, b, ...z })),
-//     imp: ({ l, r, ...z }, rho) =>
-//       call(main(l, rho), l =>
-//       call(main(r, rho), r =>
-//       ret({ l, r, ...z }))),
-//     app: ({ l, r, ...z }, rho) =>
-//     call(main(l, rho), l =>
-//     call(main(r, rho), r =>
-//       ret(l.k === "lam" ? substitute(l.b, l.i, r, rho) : { l, r, ...z }))),
-//     ref: (u, _rho) =>
-//       ret(u),
-//     top: ({ d, ...z }, rho) =>
-//       d[0] ? cc(main(d[0], rho)) :
-//       ret({ d, ...z }),
-//     bot: ({ d, ...z }, rho) =>
-//       d[0] ? cc(main(d[0], rho)) :
-//       ret({ d, ...z }),
-//     err: ret }))
-//   return main }),
-// expand = run(<P, R>({ proc, call, cc, ret }: Run<Proposition, P, R>) => {
-//   const main: (tau: Proposition, rho: Rho) => P = proc(visit_proposition({
-//     lam: ({ i, b, ...z }, rho) =>
-//       call(main(b, rho.filter(({ i: ip }) => ip !== i)), b =>
-//       ret({ i, b, ...z })),
-//     imp: ({ l, r, ...z }, rho) =>
-//       call(main(l, rho), l =>
-//       call(main(r, rho), r =>
-//       ret({ l, r, ...z }))),
-//     app: ({ l, r, ...z }, rho) =>
-//     call(main(l, rho), l =>
-//     call(main(r, rho), r =>
-//       ret(l.k === "lam" ? substitute(l.b, l.i, r, rho) : { l, r, ...z }))),
-//     ref: ({ i, ...z }, rho) =>
-//       di(lookup_definition(i, rho), u =>
-//       !u ? ret({ i, ...z }) :
-//       cc(main(u.d, rho))),
-//     var: ({ d, ...z }, rho) =>
-//       d[0] ? cc(main(d[0], rho)) :
-//       ret({ d, ...z }),
-//     err: ret }))
-//   return main }),
-beta_equivalent = run(({ proc, call, cc, ret }) => {
-    const save = (rho) => {
-        const conjoint = proc((x, y, s, spec) => x === y ? ret(s) :
-            // x.k === "err" || y.k === "err" ||
-            x.k === "lam" && y.k === "imp" ?
-                ret(false) :
-                x.k === "var" ?
-                    y.k === 'var' && x.d === y.d ? ret(s) :
-                        x.d[0] ? cc(main(x.d[0], y, s, spec)) :
-                            di(s.get(x.d), d => d ?
-                                cc(main(d, y, s, spec)) :
-                                occurs(y, x.d, s) ? ret(null) :
-                                    ret(new Map([...s, [x.d, y]]))) :
-                    y.k === "var" ?
-                        y.d[0] ? cc(main(x, y.d[0], s, spec)) :
-                            di(s.get(y.d), d => d ?
-                                cc(main(x, d, s, spec)) :
-                                occurs(x, y.d, s) ? ret(null) :
-                                    ret(new Map([...s, [y.d, x]]))) :
-                        x.k === "ref" && y.k === "ref" ?
-                            ret(x.i === y.i ? s : null) :
-                            y.k === "lam" ?
-                                spec ?
-                                    di(query(x, rho), x => x.k === "lam" ?
-                                        di({ k: 'var', w: y.w, d: [{ k: 'err', w: y.w }] }, (v) => di(substitute(x.b, x.i, v, rho), xp => di(substitute(y.b, y.i, v, rho), yp => call(main(xp, yp, s, false), r => r ? ret(r) :
-                                            di(substitute(y.b, y.i, { k: 'var', w: y.w, d: [] }, rho), yp => cc(main(x, yp, s, true))))))) :
-                                        di(substitute(y.b, y.i, { k: 'var', w: y.w, d: [] }, rho), yp => cc(main(x, yp, s, true)))) :
-                                    di(query(x, rho), x => x.k === "lam" ?
-                                        di({ k: 'var', w: y.w, d: [{ k: 'err', w: y.w }] }, (v) => di(substitute(x.b, x.i, v, rho), x => di(substitute(y.b, y.i, v, rho), y => cc(main(x, y, s, false))))) :
-                                        ret(false)) :
-                                y.k === "imp" ?
-                                    di(query(x, rho), x => x.k === "imp" ?
-                                        call(main(x.l, y.l, s, false), l => l ? cc(main(x.r, y.r, l, false)) :
-                                            ret(l)) :
-                                        ret(false)) :
-                                    x.k === "app" && y.k === "app" ?
-                                        call(main(x.l, y.l, s, false), l => l ? call(main(x.r, y.r, l, false), r => ret(r || null)) :
-                                            ret(l || null)) :
-                                        ret(null));
-        const main = proc((x, y, s, spec) => call(conjoint(x, y, s, spec), r => r !== null ? ret(r) :
-            di(query(x, rho), x => di(query(y, rho), y => cc(conjoint(x, y, s, spec))))));
+    return (tau, iota) => save(iota)(tau);
+}), free_references = run(({ proc, call, cc, ret }) => {
+    const save = (pi) => {
+        const quantifier = ({ i, b }) => cc(save([...pi, i])(b)), binary = ({ l, r }) => call(main(l), l => call(main(r), r => ret([...l, ...r]))), def = () => ret([]), main = proc(visit_proposition({
+            uni: quantifier, lam: quantifier,
+            imp: binary, app: binary,
+            var: def, err: def,
+            ref: ({ i }) => ret(pi.includes(i) ? [] : [i])
+        }));
         return main;
     };
-    return (x, y, rho) => save(rho)(x, y, new Map(), true);
-}), check_proof = run(({ proc, call, cc, ret }) => {
+    return (tau) => save([])(tau);
+}), closed = run(({ proc, call, cc, ret }) => {
+    const save = (ctx) => {
+        const quantifier = ({ i, b }) => cc(save([...ctx, i])(b)), binary = ({ l, r }) => call(main(l), dx => !dx ? ret(false) : cc(main(r))), def = () => ret(true), main = proc(visit_proposition({
+            uni: quantifier, lam: quantifier,
+            imp: binary, app: binary,
+            var: def, err: def,
+            ref: ({ i }) => ret(proposition_bound0(i, ctx))
+        }));
+        return main;
+    };
+    return (tau, ctx) => save(ctx)(tau);
+}), rename = run(({ proc, call, ret }) => {
+    const save = (iq, ip) => {
+        const quantifier = ({ i, b, ...z }) => i === iq ? ret({ i, b, ...z }) :
+            i !== ip ?
+                call(main(b), b => ret({ i, b, ...z })) :
+                di(safe(i, uniques([...free_references({ i, b, ...z }), ip])), ip => call(save(i, ip)(b), b => call(main(b), b => ret({ i: ip, b, ...z })))), binary = ({ l, r, ...z }) => call(main(l), l => call(main(r), r => ret({ l, r, ...z }))), main = proc(visit_proposition({
+            ref: ({ i, ...z }) => ret({ i: i === iq ? ip : i, ...z }),
+            uni: quantifier, lam: quantifier,
+            imp: binary, app: binary,
+            var: ret, err: ret
+        }));
+        return main;
+    };
+    return (t, iq, ip) => save(iq, ip)(t);
+}), substitute = run(({ proc, call, cc, ret }) => {
+    const save = (iota, tau) => {
+        const quantifier = ({ i, b, ...z }) => i === iota ? ret({ i, b, ...z }) :
+            !reference_occurs_free(tau, i) ?
+                call(main(b), b => ret({ i, b, ...z })) :
+                di(safe(i, uniques([...free_references(b), ...free_references(tau)])), ip => di(rename(b, i, ip), b => call(main(b), b => ret({ i: ip, b, ...z })))), main = proc(visit_proposition({
+            imp: ({ l, r, ...z }) => call(main(l), l => call(main(r), r => ret({ l, r, ...z }))),
+            app: ({ l, r, ...z }) => call(main(l), l => call(main(r), r => l.k === 'lam' ? cc(save(l.i, r)(l.b)) :
+                ret({ l, r, ...z }))),
+            ref: ({ i, ...z }) => ret(i === iota ? tau : { i, ...z }),
+            uni: quantifier, lam: quantifier,
+            var: ret, err: ret
+        }));
+        return main;
+    };
+    return (taup, iota, tau) => save(iota, tau)(taup);
+}), aka = run(({ proc, call, cc, ret }) => {
+    const save = (rho) => {
+        const quantifier = (e) => call(save(undefine(e.i, rho))(e.b), b => ret({ ...e, b })), main = proc(visit_proposition({
+            app: e => call(main(e.l), l => l.k === 'lam' ?
+                call(main(substitute(l.b, l.i, e.r)), d => ret({ ...d })) :
+                ret(e)),
+            ref: e => di(look_up_proposition(e.i, rho), u => !u ? ret(e) :
+                call(main(u.d), d => ret({ ...d }))),
+            var: e => e.d[0] ? cc(main(e.d[0])) :
+                ret(e),
+            uni: quantifier, lam: quantifier,
+            imp: ret, err: ret
+        }));
+        return main;
+    };
+    return (tau, ctx) => save(ctx)(tau);
+}), query = run(({ proc, call, cc, ret }) => {
+    const save = (rho) => {
+        const quantifier = (e) => call(save(undefine(e.i, rho))(e.b), b => ret({ ...e, b, o: e })), main = proc(visit_proposition({
+            app: e => call(main(e.l), l => l.k === 'lam' ?
+                call(main(substitute(l.b, l.i, e.r)), d => ret({ ...d, o: e })) :
+                ret(e)),
+            ref: e => di(look_up_proposition(e.i, rho), u => !u ? ret(e) :
+                call(main(u.d), d => ret({ ...d, o: e }))),
+            var: e => e.d[0] ? cc(main(e.d[0])) :
+                ret(e),
+            uni: quantifier, lam: quantifier,
+            imp: ret, err: ret
+        }));
+        return main;
+    };
+    return (tau, ctx) => save(ctx)(tau);
+}), reduce = run(({ proc, call, ret }) => {
+    const quantifier = ({ i, b, ...z }) => call(main(b), b => ret({ i, b, ...z })), main = proc(visit_proposition({
+        imp: ({ l, r, ...z }) => call(main(l), l => call(main(r), r => ret({ l, r, ...z }))),
+        app: ({ l, r, ...z }) => call(main(l), l => call(main(r), r => di(l, lp => lp.k === 'lam' ? ret(substitute(lp.b, lp.i, r)) :
+            ret({ l, r, ...z })))),
+        uni: quantifier, lam: quantifier,
+        ref: ret, var: ret, err: ret
+    }));
+    return main;
+}), tidy = (t) => { while (t.o) {
+    t = t.o;
+} return t; }, beta_equivalent = run(({ proc, call, cc, ret }) => {
+    const save = (rho, pi) => {
+        const main = proc((xp, yp, spec) => {
+            const x = query(xp, rho), y = query(yp, rho);
+            return x.k === 'err' || y.k === 'err' ?
+                ret(false) :
+                x.k === 'var' ?
+                    y.k === 'var' && x.d === y.d ? ret(true) :
+                        variable_occurs(y, x.d) ? ret(false) : (x.d[0] = tidy(y),
+                            ret(true)) :
+                    y.k === 'var' ?
+                        variable_occurs(x, y.d) ? ret(false) : (y.d[0] = tidy(x),
+                            ret(true)) :
+                        x.k === 'ref' && y.k === 'ref' ?
+                            ret(x.i === y.i) :
+                            y.k === 'uni' ?
+                                spec ?
+                                    x.k === 'uni' ?
+                                        di(safe(x.i, pi), i => cc(save(rho, [...pi, i])(rename(x.b, x.i, i), y, spec))) :
+                                        cc(main(x, substitute(y.b, y.i, { k: 'var', w: y.w, d: [] }), spec)) :
+                                    x.k === 'uni' ?
+                                        di(safe(y.i, pi), i => cc(save(rho, [...pi, i])(rename(x.b, x.i, i), rename(y.b, y.i, i), spec))) :
+                                        ret(false) :
+                                y.k === 'lam' ?
+                                    x.k === 'lam' ?
+                                        di(safe(y.i, pi), i => cc(save(rho, [...pi, i])(rename(x.b, x.i, i), rename(y.b, y.i, i), false))) :
+                                        ret(false) :
+                                    y.k === 'imp' ?
+                                        x.k === 'imp' ?
+                                            call(main(x.l, y.l, false), l => !l ? ret(false) :
+                                                cc(main(x.r, y.r, false))) :
+                                            ret(false) :
+                                        y.k === 'app' ?
+                                            x.k === 'app' ?
+                                                call(main(x.l, y.l, false), l => !l ? ret(false) :
+                                                    cc(main(x.r, y.r, false))) :
+                                                ret(false) :
+                                            ret(false);
+        });
+        return main;
+    };
+    return (x, y, rho, pi) => save(rho, pi)(x, y, true);
+}), specialize = (pfx, g) => {
+    for (;;) {
+        const t = aka(g.tau, [...pfx.rho, ...g.rho]);
+        if (t.k === 'uni') {
+            const i = safe(t.i, [...pfx.pi, ...g.pi, ...g.hi]), tp = rename(t.b, t.i, i);
+            g = { ...g, tau: tp, hi: [...g.hi, i] };
+            continue;
+        }
+        break;
+    }
+    return g;
+}, check_proof = run(({ proc, call, cc, ret }) => {
     const save = (pfx) => {
-        const proposition_bound_pfx = (i, delta) => proposition_bound(i, delta) || proposition_bound(i, pfx);
-        const proof_bound_pfx = (i, { sigma }) => proof_bound(i, sigma) || proof_bound(i, pfx.sigma);
-        const closed_pfx = (tau, { rho, pi }) => closed(tau, { rho: [...pfx.rho, ...rho], pi: [...pfx.pi, ...pi] });
-        const lookup_proof_pfx = (i, sigma) => lookup_proof(i, sigma) || lookup_proof(i, pfx.sigma);
-        const reduce_pfx = (tau, rho) => reduce(tau, [...pfx.rho, ...rho]);
-        const query_pfx = (tau, rho) => query(tau, [...pfx.rho, ...rho]);
-        const check = proc((w, g, [tau, m], e, c) => e.length !== 0 ? ret([g.tau, [...m, msg(w, "Judgment Error", g, ...e, ...c)]]) :
-            di(beta_equivalent(g.tau, tau, [...pfx.rho, ...g.rho]), r => r ?
-                ret([apply(g.tau, r, [...pfx.rho, ...g.rho]), [...m, ...c.length === 0 ? [] : [msg(w, "Judgment Error", g, ...c)]]]) :
-                ret([g.tau, [...m,
-                        msg(w, "Judgment Error", g, "This proof does not show the goal.", tau, ...c)]])));
-        const main = proc(visit_proof({
-            uni: ({ w, i, b }, g) => di(query_pfx(g.tau, g.rho), tp => (tp.k === 'var' && (tp.d[0] = { k: 'lam', w, i, b: { k: 'var', w, d: [] } }, tp = tp.d[0]),
-                call(main(b, { ...g,
-                    tau: tp.k === 'lam' ? alpha_rename(tp.b, tp.i, i) :
-                        { k: 'var', w, d: [] },
-                    pi: [...g.pi, i] }), ([b, bm]) => cc(check(w, g, [{ k: 'lam', w, i, b }, bm], [
-                    ...tp.k === 'lam' ? [] : [
-                        `The goal of this introduction is not a lambda.`
-                    ]
-                ], [
-                    ...!proposition_bound_pfx(i, g) ? [] : [
-                        `The proposition name of this introduction is bound in the context.`
-                    ]
-                ]))))),
-            cdp: ({ w, i, t, b }, g) => di(!proof_bound_pfx(i, g), pb => di(!t || closed_pfx(t, g), pc => di(t && reduce_pfx(t, g.rho), tn => di(query_pfx(g.tau, g.rho), tp => (tp.k === 'var' && (tp.d[0] = { k: 'imp', w, l: { k: 'var', w, d: [] }, r: { k: 'var', w, d: [] } }, tp = tp.d[0]),
-                di(tn || (tp.k === 'imp' ? tp.l : { k: 'var', w, d: [] }), (l) => call(main(b, { ...g,
+        const check = proc((e, g, tau, [s, m]) => ret(!tau || beta_equivalent(g.tau, tau, [...pfx.rho, ...g.rho], [...pfx.pi, ...g.pi]) ?
+            [[...s, [e, g]], m] :
+            [[...s, [e, { ...g, found: tau }]], [...m,
+                    msg(e.w, 'Judgment Error', `The goal of this proof,`, g.tau, `is not its proposition,`, tau)]])), main = proc(visit_proof({
+            uni: (e, g) => {
+                const { w, i, b } = e, tpp = aka(g.tau, [...pfx.rho, ...g.rho]), tp = tpp.k === 'uni' ? rename(tpp.b, tpp.i, i) :
+                    { k: 'var', w, d: [] };
+                return call(main(b, { ...g,
+                    tau: tp,
+                    pi: [...g.pi, i] }), ([bf, bm]) => cc(check(e, g, { k: 'uni', w, i, b: tp }, [bf, [
+                        ...tpp.k === 'uni' || tpp.k === 'var' ? [] : [
+                            msg(w, `Judgment Error`, `The goal of this generalization is not quantified.`)
+                        ],
+                        ...!proposition_bound(i, g.pi, pfx.pi) ? [] : [
+                            msg(w, `Name Error`, `This proposition name is already bound in the context.`)
+                        ],
+                        ...bm
+                    ]])));
+            },
+            cdp: (e, g) => {
+                g = specialize(pfx, g);
+                const { w, i, t, b } = e, pb = !proof_bound(i, g.sigma, pfx.sigma), pc = !t || closed(t, [...pfx.pi, ...g.pi]), tn = t ? reduce(t) : null, tpp = aka(g.tau, [...pfx.rho, ...g.rho]), tp = tpp.k === 'var' ? (tpp.d[0] = { k: 'imp', w, l: { k: 'var', w, d: [] }, r: { k: 'var', w, d: [] } }, tpp.d[0]) : tpp, l = tn || (tp.k === 'imp' ? tp.l : { k: 'var', w, d: [] }), r = tpp.k === 'imp' ? tpp.r : { k: 'var', w, d: [] };
+                return call(main(b, { ...g,
                     ...pb && pc ? {
-                        tau: tp.k === 'imp' ? tp.r : { k: 'var', w, d: [] },
+                        tau: r,
                         sigma: [...g.sigma, { i, t: l }]
-                    } : {} }), ([r, rm]) => cc(check(w, g, [{ k: 'imp', w, l, r }, rm], [
-                    ...tp.k === 'imp' ? [] : [
-                        `The goal of this conditional proof is not an arrow.`
-                    ]
-                ], [
-                    ...pb ? [] : [
-                        `The proof name of this conditional proof is bound in the context.`
-                    ],
-                    ...pc ? [] : [
-                        `The proposition of this conditional proof is not closed.`
-                    ]
-                ]))))))))),
-            def: ({ w, i, d, b }, g) => di(reduce_pfx(d, g.rho), dn => di(!proposition_bound_pfx(i, g), pb => di(closed_pfx(d, g), pc => call(main(b, { ...g,
-                ...pb && pc ? { rho: [...g.rho, { i, d: dn }] } : {} }), ([u, um]) => cc(check(w, g, [substitute(u, i, dn, g.rho), um], [], [
-                ...pb ? [] : [
-                    `The proposition name of this definition is bound in the context.`
-                ],
-                ...pc ? [] : [
-                    `The proposition of this definition is not closed.`
-                ]
-            ])))))),
-            lem: ({ w, i, t, d, b }, g) => di(t && reduce_pfx(t, g.rho), tn => call(main(d, { ...g,
-                tau: tn || { k: 'var', w, d: [] } }), ([d, dm]) => call(main(b, { ...g,
-                sigma: [...g.sigma, { i, t: tn || d }] }), ([b, bm]) => cc(check(w, g, [b, [...dm, ...bm]], [], [
-                ...!proof_bound_pfx(i, g) ? [] : [
-                    `The proof name of this lemma is bound in the context.`
-                ],
-                ...!t || closed_pfx(t, g) ? [] : [
-                    `The proposition of this lemma is not closed.`
-                ]
-            ]))))),
-            spe: ({ w, l, r }, g) => call(main(l, { ...g,
-                tau: { k: 'var', w, d: [] } }), ([l, lm]) => cc(check(w, g, [reduce_pfx({ k: 'app', w, l, r }, g.rho), lm], [], [
-                ...closed_pfx(r, g) ? [] : [
-                    `The right side of this specialization is not closed.`
-                ]
-            ]))),
-            mop: ({ w, l, r }, g) => di({ k: 'var', w, d: [] }, (v) => call(main(l, { ...g,
-                tau: { k: 'imp', w, l: v, r: g.tau } }), ([_l, lm]) => call(main(r, { ...g,
-                tau: v }), ([_r, rm]) => ret([g.tau, [...lm, ...rm]])))),
-            coe: ({ w, l, r }, g) => di(closed_pfx(r, g), rc => call(main(l, { ...g,
-                tau: reduce_pfx(r, g.rho) }), ([l, lm]) => cc(check(w, g, [l, lm], [], [
-                ...rc ? [] : [
-                    `The proposition of this coercion is not closed.`
-                ]
-            ])))),
-            ref: ({ w, i }, g) => di(lookup_proof_pfx(i, g.sigma), u => cc(check(w, g, [u ? u.t : { k: 'err', w }, []], [
-                ...u ? [] : [
-                    `The proof name of this reference is not bound in the context.`
-                ]
-            ], []))),
-            prt: ({ w, d, b }, g) => call(main(b, g), ([b, bm]) => di(query_pfx(reduce_pfx(d, g.rho), g.rho), dp => cc(check(w, g, [b, [
-                    msg(w, "Query", dp), ...bm
-                ]], [], [])))),
-            err: ({ w }, g) => ret([g.tau, [
-                    msg(w, "Goal", g)
-                ]])
+                    } : {} }), ([bf, bm]) => cc(check(e, g, { k: 'imp', w, l, r }, [bf, [
+                        ...tpp.k === 'imp' ? [] : [
+                            msg(w, `Judgment Error`, `The goal of this conditional proof is not an arrow.`)
+                        ],
+                        ...pb ? [] : [
+                            msg(w, `Name Error`, `The proof name of this conditional proof is bound in the context.`)
+                        ],
+                        ...!t || pc ? [] : [
+                            msg(t.w, `Name Error`, `This proposition is not closed.`)
+                        ],
+                        ...bm
+                    ]])));
+            },
+            def: (e, g) => {
+                const { w, i, d, b } = e, dn = reduce(d), pb = !proposition_bound(i, g.pi, pfx.pi), pc = closed(d, [...pfx.pi, ...g.pi]);
+                return call(main(b, { ...g,
+                    ...pb && pc ? { pi: [...g.pi, i], rho: [...g.rho, { i, d: dn }] } : {} }), ([bf, bm]) => cc(check(e, g, null, [bf, [...bm,
+                        ...pb ? [] : [
+                            msg(w, `Name Error`, `This proposition name is already bound in the context.`)
+                        ],
+                        ...pc ? [] : [
+                            msg(d.w, `Name Error`, `This proposition is not closed.`)
+                        ]]])));
+            },
+            lem: (e, g) => {
+                const { w, i, t, d, b } = e, tn = t ? reduce(t) : { k: 'var', w, d: [] };
+                return call(main(d, { ...g,
+                    tau: tn }), ([df, dm]) => call(main(b, { ...g,
+                    sigma: [...g.sigma, { i, t: tn }] }), ([bf, bm]) => cc(check(e, g, null, [[...df, ...bf], [...dm, ...bm,
+                        ...!proof_bound(i, g.sigma, pfx.sigma) ? [] : [
+                            msg(w, `Name Error`, `This proof name is already bound in the context.`)
+                        ],
+                        ...!t || closed(t, [...pfx.pi, ...g.pi]) ? [] : [
+                            msg(t.w, `Name Error`, `This proposition is not closed.`)
+                        ]]]))));
+            },
+            spe: (e, g) => {
+                g = specialize(pfx, g);
+                const { w, l, r } = e, pc = closed(r, [...pfx.pi, ...g.pi]), tl = { k: 'var', w, d: [] };
+                return call(main(l, { ...g, tau: tl }), ([lf, lm]) => {
+                    const lpp = aka(tl, [...pfx.rho, ...g.rho]), pu = lpp.k === 'uni', lp = pc && pu ? substitute(lpp.b, lpp.i, reduce(r)) : null;
+                    return cc(check(e, g, lp, [lf, [...lm,
+                            ...pu ? [] : [
+                                msg(l.w, `Judgment Error`, `This proof is specialized, but its proposition is not quantified.`)
+                            ],
+                            ...pc ? [] : [
+                                msg(r.w, `Name Error`, `This proposition is not closed.`)
+                            ]]]));
+                });
+            },
+            mop: (e, g) => {
+                g = specialize(pfx, g);
+                const { w, l, r } = e, v = { k: 'var', w, d: [] };
+                return call(main(l, { ...g,
+                    tau: { k: 'imp', w, l: v, r: g.tau } }), ([lf, lm]) => call(main(r, { ...g,
+                    tau: v }), ([rf, rm]) => cc(check(e, g, null, [[...lf, ...rf], [...lm, ...rm]]))));
+            },
+            ref: (e, g) => {
+                g = specialize(pfx, g);
+                const { w, i } = e, u = look_up_proof(i, g.sigma, pfx.sigma);
+                return cc(check(e, g, u ? u.t : null, [[], [
+                        ...u ? [] : [
+                            msg(w, `Name Error`, `This proof name is not bound in the context.`)
+                        ]
+                    ]]));
+            },
+            prt: (e, g) => {
+                const { w, d, b } = e;
+                return call(main(b, g), ([bf, bm]) => {
+                    const dp = aka(reduce(d), [...pfx.rho, ...g.rho]);
+                    return cc(check(e, g, null, [bf, [
+                            msg(w, 'Query', dp), ...bm
+                        ]]));
+                });
+            },
+            err: (e, g) => {
+                const { w } = e;
+                return cc(check(e, g, null, [[], [
+                        msg(w, 'Goal', g)
+                    ]]));
+            }
         }));
         return main;
     };
     return (eps, pfx, g) => save(pfx)(eps, g);
 });
-export const query = run(({ proc, call, cc, ret }) => {
-    const save = (rho, semi) => {
-        const main = proc(visit_proposition({
-            lam: ret,
-            imp: ret,
-            app: ({ l, r, ...z }) => call(save(rho, false)(l), l => l.k === "lam" ? cc(main(substitute(l.b, l.i, r, rho))) :
-                ret({ l, r, ...z })),
-            ref: ({ i, ...z }) => semi ? ret({ i, ...z }) :
-                di(lookup_definition(i, rho), u => !u ? ret({ i, ...z }) :
-                    cc(main(u.d))),
-            var: ({ d, ...z }) => d[0] ? cc(main(d[0])) :
-                ret({ d, ...z }),
-            err: ret
-        }));
+export const scan_article = (a, get_import) => {
+    const exp = run(({ proc, cc, ret }) => {
+        const inner = proc(visit_statement({
+            imp: ({ a, i }, ctx, exp) => {
+                const data = get_import(i);
+                return cc(main(a, !data ? ctx : { ...ctx,
+                    sigma: [...ctx.sigma, ...data.sigma],
+                    pi: [...ctx.pi, ...data.pi] }, exp));
+            },
+            exf: ({ a, i }, ctx, exp) => {
+                const u = ctx.sigma.find(({ i: ip }) => i === ip);
+                return cc(main(a, ctx, !u ? exp :
+                    { ...exp, sigma: [...exp.sigma, u] }));
+            },
+            prt: ({ a }, ctx, exp) => cc(main(a, ctx, exp)),
+            def: ({ a, i, d }, ctx, exp) => cc(main(a, proposition_bound0(i, ctx.pi) || !closed(d, ctx.pi) ? ctx : { ...ctx,
+                pi: [...ctx.pi, i],
+                rho: [...ctx.rho, { i, d }] }, exp)),
+            thm: ({ a, i, t }, ctx, exp) => cc(main(a, proof_bound(i, [], ctx.sigma) || t && !closed(t, ctx.pi) ? ctx : { ...ctx,
+                sigma: [...ctx.sigma, { i, t }] }, exp))
+        })), main = proc((e, pfx, exp) => e ? cc(inner(e, pfx, exp)) : ret(exp));
         return main;
-    };
-    return (tau, rho) => save(rho, false)(tau);
-}), reduce = run(({ proc, call, ret }) => {
-    const save = (rho) => {
-        const main = proc(visit_proposition({
-            lam: ({ i, b, ...z }) => call(save(rho.filter(({ i: ip }) => ip !== i))(b), b => ret({ i, b, ...z })),
-            imp: ({ l, r, ...z }) => call(main(l), l => call(main(r), r => ret({ l, r, ...z }))),
-            app: ({ l, r, ...z }) => call(main(l), l => call(main(r), r => di(plain(l), lp => lp.k === "lam" ? ret(substitute(lp.b, lp.i, r, rho)) :
-                ret({ l, r, ...z })))),
-            ref: ret,
-            var: ({ d, ...z }) => d[0] ?
-                call(main(d[0]), dr => (d[0] = dr,
-                    ret(dr))) :
-                ret({ d, ...z }),
-            err: ret
-        }));
-        return main;
-    };
-    return (tau, rho) => save(rho)(tau);
-}), check_article = (a, pfx) => {
-    const m = [];
-    const ctx = empty_context();
-    for (const e of a) {
-        if (e.k === 'def') {
-            const { w, i, d } = e;
+    })(a, { sigma: [], rho: [], pi: [] }, { sigma: [], pi: [] });
+    exp.pi.push(...uniques(exp.sigma.map(({ t }) => free_references(t)).flat(1)));
+    return exp;
+}, check_article = (a, get_import) => run(({ proc, cc, ret }) => {
+    const inner = proc(visit_statement({
+        imp: ({ a, w, i }, ctx, [f, m]) => {
+            const data = get_import(i);
+            return cc(main(a, !data ? ctx : { ...ctx,
+                sigma: [...ctx.sigma, ...data.sigma],
+                pi: [...ctx.pi, ...data.pi] }, [f, [...m,
+                    ...data ? [] : [msg(w, 'Import Error', 'No such file.')]]]));
+        },
+        exf: ({ a, w, i }, ctx, [f, m]) => {
+            return cc(main(a, ctx, [f, [...m,
+                    ...ctx.sigma.some(({ i: ip }) => i === ip) ? [] : [
+                        msg(w, 'Name Error', `This proof name is not bound in the context.`)
+                    ]]]));
+        },
+        prt: ({ a, w, d }, ctx, [f, m]) => {
+            const dp = aka(reduce(d), ctx.rho);
+            return cc(main(a, ctx, [f, [...m, msg(w, 'Query', dp)]]));
+        },
+        def: ({ a, w, i, d }, ctx, [f, m]) => {
             const c = [];
-            if (proposition_bound(i, pfx)) {
-                c.push(`The proposition name of this definition is bound in the context.`);
+            if (proposition_bound0(i, ctx.pi)) {
+                c.push(msg(w, `Name Error`, `The proposition name of this definition is bound in the context.`));
             }
-            if (!closed(d, pfx)) {
-                c.push(`The proposition of this definition is not closed.`);
+            if (!closed(d, ctx.pi)) {
+                c.push(msg(d.w, `Name Error`, `This proposition is not closed.`));
+            }
+            return cc(main(a, c.length !== 0 ? ctx : { ...ctx,
+                pi: [...ctx.pi, i],
+                rho: [...ctx.rho, { i, d }] }, [f, [...m, ...c]]));
+        },
+        thm: ({ a, w, i, t, d }, ctx, [f, m]) => {
+            const c = [];
+            if (proof_bound0(i, ctx.sigma)) {
+                c.push(msg(w, `Name Error`, `The proof name of this theorem is bound in the context.`));
+            }
+            if (t && !closed(t, ctx.pi)) {
+                c.push(msg(t.w, `Name Error`, `This proposition is not closed.`));
             }
             if (c.length !== 0) {
-                m.push(msg(w, "Judgment Error", ...c));
+                return cc(main(a, ctx, [f, [...m, ...c]]));
             }
-            else {
-                pfx.rho.unshift({ i, d });
-                ctx.rho.unshift({ i, d });
-            }
+            t = reduce(t);
+            let [_tp, mp] = check_proof(d, ctx, { tau: t, sigma: [], rho: [], pi: [], hi: [] });
+            return cc(main(a, { ...ctx, sigma: [...ctx.sigma, { i, t }] }, [f, [...m, ...c, ...mp]]));
         }
-        else if (e.k === 'prt') {
-            const { w, d } = e;
-            const dp = query(reduce(d, pfx.rho), pfx.rho);
-            m.push(msg(w, "Query", dp));
-        }
-        else /*e.kind === 'thm'*/ {
-            let { w, i, t, d } = e;
-            const c = [];
-            if (proof_bound(i, pfx.sigma)) {
-                c.push(`The proof name of this theorem is bound in the context.`);
-            }
-            if (t && !closed(t, pfx)) {
-                c.push(`The proposition of this theorem is not closed.`);
-            }
-            t = reduce(t, pfx.rho);
-            let [_tp, g] = check_proof(d, pfx, { ...empty_context(),
-                tau: t });
-            if (c.length !== 0) {
-                m.push(msg(w, "Judgment Error", ...c));
-            }
-            pfx.sigma.unshift({ i, t });
-            ctx.sigma.unshift({ i, t });
-            m.push(...g);
-        }
-    }
-    return [ctx, m];
-};
+    })), main = proc((e, pfx, f) => e ? cc(inner(e, pfx, f)) : ret(f));
+    return main;
+})(a, { sigma: [], rho: [], pi: [] }, [[], []]);
 //# sourceMappingURL=check.js.map

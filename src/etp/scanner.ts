@@ -1,6 +1,34 @@
 export type TextPosition = { line: number, col: number }
 export type TextRange = { begin: TextPosition, end: TextPosition }
 
+export const empty_range = (w: TextPosition) => ({
+begin: w,
+end: w })
+
+export const position_less = (a: TextPosition, b: TextPosition) =>
+a.line < b.line ||
+a.line === b.line &&
+a.col < b.col
+
+export const position_less_equal = (a: TextPosition, b: TextPosition) =>
+a.line < b.line ||
+a.line === b.line &&
+a.col <= b.col
+
+export const range_contains = (w: TextRange, wp: TextRange) =>
+position_less_equal(w.begin, wp.begin) &&
+position_less_equal(wp.end, w.end)
+
+export const range_includes = (w: TextRange, wp: TextPosition) =>
+position_less_equal(w.begin, wp) &&
+position_less(wp, w.end)
+
+export const range_includes_inclusive = (w: TextRange, wp: TextPosition) =>
+position_less_equal(w.begin, wp) &&
+position_less_equal(wp, w.end)
+
+export const fspan = (a: { w: TextRange }, b: { w: TextRange }) => ({ begin: a.w.begin, end: b.w.end })
+
 export type TokenT<TokenKind> = {
   w: TextRange,
   text: string
