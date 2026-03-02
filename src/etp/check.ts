@@ -550,7 +550,7 @@ def: (e, pfx, [sf, f, m]) => {
   return cc(main(a, pb || pc.length !== 0 ? pfx : { ...pfx,
     pi: [...pfx.pi, i],
     rho: [...pfx.rho, { i, d }] }, [[...sf, [e, pfx]], f, [...m,
-      ...pb ? [] : [
+      ...!pb ? [] : [
         msg(w, `Name Error`, `The proposition name of this definition is bound in the context.`)],
       ...pc]])) },
 thm: (e, pfx, [sf, f, m]) => {

@@ -363,7 +363,7 @@ export const look_up_proposition = (i, ctx) => ctx.findLast(({ i: ip }) => ip ==
             return cc(main(a, pb || pc.length !== 0 ? pfx : { ...pfx,
                 pi: [...pfx.pi, i],
                 rho: [...pfx.rho, { i, d }] }, [[...sf, [e, pfx]], f, [...m,
-                    ...pb ? [] : [
+                    ...!pb ? [] : [
                         msg(w, `Name Error`, `The proposition name of this definition is bound in the context.`)
                     ],
                     ...pc]]));
