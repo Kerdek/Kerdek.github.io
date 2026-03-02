@@ -93,9 +93,22 @@ const update = () => {
       ...Object.keys(files).sort().map(item)) })
   content.innerHTML = ''
   content.appendChild(list) }
-const content = elm('div')
+const content = mod(elm('div'), e =>
+  assign(e.style, {
+    position: 'absolute',
+    inset: '0',
+    overflowY: 'scroll' }))
 const all = mod(elm('div'), e => {
-  e.append(menu, content) })
+  assign(e.style, {
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%' })
+  e.append(menu,
+    mod(elm('div'), e => {
+      assign(e.style, {
+        flex: '1 1 0',
+        position: 'relative' })
+      e.append(content) })) })
 update()
 const pane = create_pane(all)
 pane.set_title('File List')

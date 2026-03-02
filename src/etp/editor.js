@@ -25,7 +25,7 @@ editor.defineTheme('semity', {
 editor.setTheme('semity');
 const config = {
     language: 'semity',
-    fontSize: 16,
+    fontSize: 13,
     fontFamily: 'CMU Typewriter Text',
     tabSize: 2,
     rulers: [20, 40],

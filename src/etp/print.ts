@@ -9,10 +9,10 @@ import {
   MessageContent,
   Messages } from './context.js'
 import {
-  Identifier,
   Propositions,
   Proposition,
   visit_proposition } from './abstract.js'
+import { reduce } from './check.js'
 
 const { assign } = Object
 
@@ -84,62 +84,57 @@ typ: x => x }
 export const
 
 print_proposition = <T>(f: Format<T>) => run(
-  <P, R>({ proc, call, cc, ret }: Run<T[], P, R>) => {
-  const
-    { pp, pps, txt } = f,
-  universal = proc(({ b }: Propositions['uni']): R =>
-    b.k === 'uni' ?
-      call(universal(b), db =>
-      ret([txt(` `), pp(b.i), ...db])) :
-    call(main(b, { p: 0, t: 0 }), dx =>
-    ret([pps(`.`), ...dx]))),
-  lambda = proc(({ b }: Propositions['lam']): R =>
-    b.k === 'lam' ?
-      call(lambda(b), db =>
-      ret([txt(` `), pp(b.i), ...db])) :
-    call(main(b, { p: 0, t: 0 }), dx =>
-    ret([pps(`.`), ...dx]))),
-  main: (tau: Proposition, ctx: PropositionSyntaxContext) => P = proc(visit_proposition({
-    uni: ({ i, ...r }, { t }) =>
-      di(t > 0, s =>
-      call(universal({ i, ...r }), du =>
-      ret(hparens(f, s, [
-        pps(`\\/`), pp(i), ...du])))),
-    lam: ({ i, ...r }, { t }) =>
-      di(t > 0, s =>
-      call(lambda({ i, ...r }), du =>
-      ret(hparens(f, s, [
-        pps(`\\`), pp(i), ...du])))),
-    imp: ({ l, r }, { p, t }) =>
-      di(p > 0, s =>
-      call(main(l, { p: 1, t: 1 }), dl =>
-      call(main(r, { p: 0, t: s ? 0 : t }), dr =>
-      ret(hparens(f, s, [
-        ...dl, txt(` `), pps(`->`), txt(` `), ...dr]))))),
-    app: ({ l, r }, { p, t }) =>
-      di(p > 1, s =>
-      call(main(l, { p: 1, t: 2 }), dl =>
-      call(main(r, { p: 2, t: s ? 0 : t }), dr =>
-      ret(hparens(f, s, [
-        ...dl, txt(` `), ...dr]))))),
-    ref: ({ i }, {}) =>
-      ret([pp(i)]),
-    var: ({ d }, ctx) =>
-      d[0] ? cc(main(d[0], ctx)) :
-      ret([pps(`()`)]),
-    err: ({ }, {}) =>
-      ret([pps(`()`)]) }))
+<P, R>({ proc, call, cc, ret }: Run<T[], P, R>) => {
+const
+  { pp, pps, txt } = f,
+universal = proc(({ b }: Propositions['uni']): R =>
+  b.k === 'uni' ?
+    call(universal(b), db =>
+    ret([txt(` `), pp(b.i), ...db])) :
+  call(main(b, { p: 0, t: 0 }), dx =>
+  ret([pps(`.`), ...dx]))),
+lambda = proc(({ b }: Propositions['lam']): R =>
+  b.k === 'lam' ?
+    call(lambda(b), db =>
+    ret([txt(` `), pp(b.i), ...db])) :
+  call(main(b, { p: 0, t: 0 }), dx =>
+  ret([pps(`.`), ...dx]))),
+main: (tau: Proposition, ctx: PropositionSyntaxContext) => P = proc(visit_proposition({
+  uni: ({ i, ...r }, { t }) =>
+    di(t > 0, s =>
+    call(universal({ i, ...r }), du =>
+    ret(hparens(f, s, [
+      pps(`\\/`), pp(i), ...du])))),
+  lam: ({ i, ...r }, { t }) =>
+    di(t > 0, s =>
+    call(lambda({ i, ...r }), du =>
+    ret(hparens(f, s, [
+      pps(`\\`), pp(i), ...du])))),
+  imp: ({ l, r }, { p, t }) =>
+    di(p > 0, s =>
+    call(main(l, { p: 1, t: 1 }), dl =>
+    call(main(r, { p: 0, t: s ? 0 : t }), dr =>
+    ret(hparens(f, s, [
+      ...dl, txt(` `), pps(`->`), txt(` `), ...dr]))))),
+  app: ({ l, r }, { p, t }) =>
+    di(p > 1, s =>
+    call(main(l, { p: 1, t: 2 }), dl =>
+    call(main(r, { p: 2, t: s ? 0 : t }), dr =>
+    ret(hparens(f, s, [
+      ...dl, txt(` `), ...dr]))))),
+  ref: ({ i }, {}) =>
+    ret([pp(i)]),
+  var: ({ d }, ctx) =>
+    d[0] ? cc(main(d[0], ctx)) :
+    ret([pps(`()`)]),
+  err: ({ }, {}) =>
+    ret([pps(`()`)]) }))
 
-  return (tau: Proposition) => main(tau, { p: 0, t: 0 }) }),
-
-print_proof_name = <T>(f: Format<T>, c: Identifier): T[] => [
-  f.pfs(`<`),
-  f.pf(c),
-  f.pfs(`>`)],
+return (tau: Proposition) => main(reduce(tau), { p: 0, t: 0 }) }),
 
 print_goal = <T>(f: Format<T>) => ({ tau, sigma, rho, pi, hi }: Goal): T[] => {
   const
-    { pp, pfs, par, txt } = f,
+    { pp, pf, pfs, par, txt } = f,
     ppf = print_proposition(f)
   return [
   ...hi.length === 0 ? [] : [
@@ -149,7 +144,7 @@ print_goal = <T>(f: Format<T>) => ({ tau, sigma, rho, pi, hi }: Goal): T[] => {
   ...rho.map(({ i, d }) =>
     par(pp(i), txt(` `), pfs(`:=`), txt(` `), ...ppf(d))),
   ...sigma.map(({ i, t }) =>
-    par(...print_proof_name(f, i), txt(` `), pfs(`:`), txt(` `), ...ppf(t))),
+    par(pf(i), txt(` `), pfs(`:`), txt(` `), ...ppf(t))),
   par(pfs(`⊢`), txt(` `), ...ppf(tau))] },
 
 print_message_contents = <T>(f: Format<T>) => {

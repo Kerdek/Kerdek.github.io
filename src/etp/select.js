@@ -6,7 +6,7 @@ export const select_proposition = (wp, n, e) => walk_proposition_conditional(t =
     app: ({ l, r }) => l || r,
     imp: ({ l, r }) => l || r,
     ref: () => null,
-    var: () => null,
+    var: ({ d }) => d,
     err: () => null
 }), select_proof = (wp, inclusive, n) => walk_proof_conditional(inclusive ? e => range_includes_inclusive(e.w, wp) : e => range_includes(e.w, wp), e => ({ k: 'proof', n, e }), {
     uni: ({ b }) => b,
@@ -24,16 +24,12 @@ export const select_proposition = (wp, n, e) => walk_proposition_conditional(t =
     mop: ({ l, r }) => l || r,
     spe: ({ l }, e) => l || select_proposition(wp, n, e)(e.r),
     ref: () => null,
-    lem: ({ b }, _e) => 
-    // s.reduce<SelectResult | null>((p, [{ d: dp }, { w, i, t, d }]) =>
-    //   p ||
-    //   t && select_proposition(wp, e)(t) ||
-    //   dp ||
-    //   range_includes(w, wp) && { k: 'binding', w, i, e: d } ||
-    //   null, null) ||
-    b,
+    lem: ({ d, b }, _e) => d || b,
     def: ({ b }, e) => select_proposition(wp, n, e)(e.d) || b,
     prt: ({ b }, e) => select_proposition(wp, n, e)(e.d) || b,
     err: () => null
-}), select_statement = (wp) => walk_statement_conditional(t => range_includes(t.w, wp), n => ({ k: 'statement', n }));
+}), select_statement = (wp, inclusive) => walk_statement_conditional(inclusive ? n => range_includes_inclusive(n.w, wp) : n => range_includes(n.w, wp), n => n.k === 'def' && select_proposition(wp, n, null)(n.d) ||
+    n.k === 'thm' && (select_proposition(wp, n, null)(n.t) ||
+        select_proof(wp, inclusive, n)(n.d)) ||
+    { k: 'statement', n });
 //# sourceMappingURL=select.js.map

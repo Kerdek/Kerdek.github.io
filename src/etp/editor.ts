@@ -26,7 +26,7 @@ editor.setTheme('semity')
 
 const config: monaco.editor.IStandaloneEditorConstructionOptions = {
 language: 'semity',
-fontSize: 16,
+fontSize: 13,
 fontFamily: 'CMU Typewriter Text',
 tabSize: 2,
 rulers: [20, 40],

@@ -8,8 +8,8 @@ export type Sigma = Judgment[]
 export type Rho = Binding[]
 export type Pi = Identifier[]
 
-export type PropositionContext = { rho: Rho, pi: Pi }
-export type Context = { sigma: Sigma, rho: Rho, pi: Pi }
+export type PropositionContext = { rho: Rho, pi: Pi, hi: Pi }
+export type Context = { sigma: Sigma, rho: Rho, pi: Pi, hi: Pi }
 export type Prefix = { sigma: Sigma, rho: Rho, pi: Pi }
 export type Module = { sigma: Sigma, pi: Pi }
 

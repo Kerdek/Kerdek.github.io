@@ -124,7 +124,7 @@ export const read_comments = (s) => {
     }), main = arrow;
     return main;
 }), read_proof = run(({ proc, branch, call, cc, ret }) => (s) => {
-    const { pos, pp, pf, dt, lp, rp, lb, rb, cn, ce, ui, cp, ll, le, lm, pt } = s, universal = proc((l) => {
+    const { pos, pp, pf, dt, lp, rp, lb, rb, cn, ce, ui, cp, ll, le, pt } = s, universal = proc((l) => {
         const w = pos(), wli = read_comments(s), dtu = dt('proof');
         if (dtu) {
             return call(lead, b => {
@@ -141,20 +141,40 @@ export const read_comments = (s) => {
                 ...l ? { l } : {}, wli, ...i ? { i } : {}, b });
         });
     }), premise = proc((l) => {
-        const wi = pos(), wli = read_comments(s), i = pf(), wicn = read_comments(s), cnu = cn('proof'), t = cnu && read_proposition(s), wdt = pos(), dtu = dt('proof');
-        return call(lead, b => {
-            const m = [
-                ...i ? [] : [
-                    msg(wi, `Syntax Error`, `An identifier is expected here.`)
-                ],
-                ...dtu ? [] : [
-                    msg(wdt, `Syntax Error`, `\`.\` is expected here.`)
+        const wi = pos(), wldt = read_comments(s), dtu = dt('proof');
+        if (dtu) {
+            return call(main, b => {
+                return ret({ k: 'dot', m: [],
+                    ...l ? { l } : {},
+                    wldt, dtu, b });
+            });
+        }
+        const wli = wldt, i = pf();
+        if (i) {
+            return call(premise(null), b => {
+                return ret({ k: 'cdp', m: [], ...l ? { l } : {}, wli, i, b });
+            });
+        }
+        const wllb = wli, lbu = lb('proof'), wj = pos(), wlbi = read_comments(s), j = pf(), wcn = pos(), wicn = read_comments(s), cnu = cn('proof'), t = read_proposition(s), wrb = pos(), rbu = rb('proof');
+        const m = [
+            ...lbu ? [
+                ...j ? [
+                    ...cnu ? [
+                        ...rbu ? [] : [
+                            msg(wrb, `Syntax Error`, `\`)\` is expected here.`)
+                        ]
+                    ] : [
+                        msg(wcn, `Syntax Error`, `\`:\` is expected here.`)
+                    ]
+                ] : [
+                    msg(wj, `Syntax Error`, `An identifier is expected here.`)
                 ]
-            ];
-            return ret(t ? { k: 'cdt', m,
-                l, wli, i, wicn, cnu, t, ...dtu ? { dtu } : {}, b } :
-                { k: 'cdp', m,
-                    l, wli, i, wicn, ...dtu ? { dtu } : {}, b });
+            ] : [
+                msg(wi, `Syntax Error`, `An identifier or \`(\` is expected here.`)
+            ]
+        ];
+        return call(lbu ? premise(null) : main, b => {
+            return ret({ k: 'cdt', m, ...l ? { l } : {}, wllb, ...lbu ? { lbu } : {}, wlbi, ...j ? { i: j } : {}, wicn, ...cnu ? { cnu } : {}, t, ...rbu ? { rbu } : {}, b });
         });
     }), definition = proc((l) => {
         const wli = read_comments(s), wi = pos(), i = pp(), wce = pos(), wice = read_comments(s), ceu = ce('proof'), d = read_proposition(s), wdt = pos(), dtu = dt('proof');
@@ -189,8 +209,8 @@ export const read_comments = (s) => {
                     ]
                 ];
                 return ret(t ?
-                    { k: 'let', m, l, wli, i, wicn, cnu, t, ...ceu ? { ceu } : {}, d, ...dtu ? { dtu } : {}, b } :
-                    { k: 'lem', m, l, wli, i, wicn, ...ceu ? { ceu } : {}, d, ...dtu ? { dtu } : {}, b });
+                    { k: 'let', m, l, wli, ...i ? { i } : {}, wicn, cnu, t, ...ceu ? { ceu } : {}, d, ...dtu ? { dtu } : {}, b } :
+                    { k: 'lem', m, l, wli, ...i ? { i } : {}, wicn, ...ceu ? { ceu } : {}, d, ...dtu ? { dtu } : {}, b });
             });
         });
     }), print = proc((l) => {
@@ -213,23 +233,12 @@ export const read_comments = (s) => {
                 ],
                 lbu, b, ...rbu ? { rbu } : {} });
         });
-    }), lambda = proc((l) => {
-        const wdt = pos(), wldt = read_comments(s), dtu = dt('proof');
-        return call(lead, b => {
-            return ret({ k: 'lam', m: [
-                    ...dtu ? [] : [
-                        msg(wdt, `Syntax Error`, `\`.\` is expected here.`)
-                    ]
-                ],
-                l, wldt, ...dtu ? { dtu } : {}, b });
-        });
     }), reference = proc((i) => ret({ k: 'ref', m: [], i })), primary = () => tr(ui(), universal) ||
         tr(cp(), premise) ||
         tr(ll(), definition) ||
         tr(le(), lemma) ||
         tr(pt('proof'), print) ||
         tr(lb('proof'), brackets) ||
-        tr(lm('proof'), lambda) ||
         tr(pf(), reference), prop = () => {
         const lpu = lp();
         if (lpu) {
@@ -254,16 +263,18 @@ export const read_comments = (s) => {
         return call(u, r => {
             return cc(rhs({ k: 'mop', m: [], l, wlr, r }));
         });
-    }), lhs = proc((wa) => {
-        const w = { begin: wa, end: pos() }, b = prop();
+    }), lhs = proc((begin) => {
+        const b = prop(), end = pos(), w = { begin, end };
         if (b) {
             return cc(rhs({ k: 'err', m: [
-                    msg({ begin: wa, end: pos() }, 'Syntax Error', `A proposition is not allowed here.`)
+                    msg(w, 'Syntax Error', `A proposition is not allowed here.`)
                 ], w, b }));
         }
         const u = primary();
         if (!u) {
-            return ret({ k: 'err', m: [], w, b: { k: 'err', m: [], w } });
+            return ret({ k: 'err', m: [
+                    msg(w, 'Syntax Error', `A proof is expected here.`)
+                ], w, b: { k: 'err', m: [], w } });
         }
         return call(u, l => {
             return cc(rhs(l));

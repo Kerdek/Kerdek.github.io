@@ -39,11 +39,11 @@ prt: { l: Token, d: ConcreteProposition, dtu?: Token, b: ConcreteProof }
 lam: { l: Token, wldt: Tokens, dtu?: Token, b: ConcreteProof }
 uni: { l?: Token, wli: Tokens, i?: Token, b: ConcreteProof }
 dot: { l?: Token, wldt: Tokens, dtu: Token, b: ConcreteProof }
-cdp: { l: Token, wli: Tokens, i: Token | null, wicn: Tokens, dtu?: Token, b: ConcreteProof }
-cdt: { l: Token, wli: Tokens, i: Token | null, wicn: Tokens, cnu: Token, t: ConcreteProposition, dtu?: Token, b: ConcreteProof }
+cdp: { l?: Token, wli: Tokens, i: Token, b: ConcreteProof }
+cdt: { l?: Token, wllb: Tokens, lbu?: Token, wlbi: Tokens, i?: Token, wicn: Tokens, cnu?: Token, t: ConcreteProposition, rbu?: Token, b: ConcreteProof }
 def: { l: Token, wli: Tokens, i?: Token, wice: Tokens, ceu?: Token, d: ConcreteProposition, dtu?: Token, b: ConcreteProof }
-lem: { l: Token, wli: Tokens, i: Token | null, wicn: Tokens, ceu?: Token, d: ConcreteProof, dtu?: Token, b: ConcreteProof }
-let: { l: Token, wli: Tokens, i: Token | null, wicn: Tokens, cnu: Token, t: ConcreteProposition, ceu?: Token, d: ConcreteProof, dtu?: Token, b: ConcreteProof }
+lem: { l: Token, wli: Tokens, i?: Token, wicn: Tokens, ceu?: Token, d: ConcreteProof, dtu?: Token, b: ConcreteProof }
+let: { l: Token, wli: Tokens, i?: Token, wicn: Tokens, cnu: Token, t: ConcreteProposition, ceu?: Token, d: ConcreteProof, dtu?: Token, b: ConcreteProof }
 spe: { l: ConcreteProof, wlr: Tokens, r: ConcreteProposition }
 mop: { l: ConcreteProof, wlr: Tokens, r: ConcreteProof }
 ref: { i: Token }

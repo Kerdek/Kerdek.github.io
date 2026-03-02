@@ -2,11 +2,13 @@ import { download, elm, txt } from '../common/util/dom.js'
 import { create_editor } from './editor.js'
 import { create_pane } from '../common/panes/pane.js'
 import { files, files_changed } from './fs.js'
-import { list_item, menu_bar, top_border } from '../common/panes/ui.js'
-import { assign, mod } from '../common/util/di.js'
+import { left_border, list_item, menu_bar, top_border } from '../common/panes/ui.js'
+import { assign, lookup, mod } from '../common/util/di.js'
 import { prompt_filename } from '../common/panes/prompts.js'
 import { get_model_data } from './language_server.js'
-import { print_messages } from './print.js'
+import { html_format, print_goal, print_messages } from './print.js'
+import { select_statement } from './select.js'
+import { position_from_monaco } from './monaco_range.js'
 
 const { keys } = Object
 
@@ -69,7 +71,33 @@ expor = () => {
 ne = () => {
   current_filename = undefined
   refresh_title()
-  model.setValue('') },
+  model.setValue('') }
+
+let sched = false, good = true
+
+const schedule_refresh_goals = () => {
+  if (sched) {
+    return }
+  sched = true
+  good = false
+  window.setTimeout(() => {
+    sched = false
+    if (good) {
+      return }
+    refresh_goals() }, 300) },
+
+refresh_goals = () => {
+  good = true
+  goals.innerHTML = ''
+  const c = data.cache()
+  const pos = editor.getPosition()
+  if (pos && c.abstract) {
+    const w = position_from_monaco(pos)
+    const s = select_statement(w, false)(c.abstract)
+    if (s && s.k === 'proof') {
+      const g = lookup(c.transcript, s.e)
+      if (g) {
+        goals.append(...print_goal(html_format)(g)) } } } },
 
 menu = menu_bar([
   { label: 'File', tip: 'Actions on the file', items: [
@@ -90,6 +118,15 @@ output = mod(elm('div'), e => {
     overflowX: 'hidden',
     overflowY: 'scroll', }) }),
 
+goals = mod(elm('div'), e => {
+  assign(e.style, {
+    position: 'absolute',
+    inset: '0',
+    cursor: 'text',
+    margin: '1ch',
+    overflowX: 'hidden',
+    overflowY: 'scroll', }) }),
+
 content = mod(elm('div'), e => {
   assign(e.style, {
     height: '100%',
@@ -100,15 +137,26 @@ content = mod(elm('div'), e => {
     mod(elm('div'), e => {
       assign(e.style, {
         flex: '1 1 0',
-        position: 'relative',
         display: 'flex',
         flexDirection: 'column' })
       e.append(
         mod(elm('div'), e => {
           assign(e.style, {
             flex: '1 1 0',
-            position: 'relative' })
-          e.append(input) }),
+            display: 'flex',
+            flexDirection: 'row' })
+          e.append(
+            mod(elm('div'), e => {
+              assign(e.style, {
+                flex: '1 1 0',
+                position: 'relative' })
+              e.append(input) }),
+            mod(elm('div'), e => {
+              assign(e.style, {
+                width: '30%',
+                position: 'relative',
+                ...left_border })
+              e.append(goals) })) }),
         mod(elm('div'), e => {
           assign(e.style, {
             height: '30%',
@@ -123,7 +171,8 @@ all = mod(elm('div'), e => {
 
 const data = get_model_data(model)
 data.add_change_listener(() => {
-  const m = data.cache().messages
+  const c = data.cache()
+  const m = c.messages
   output.innerHTML = ''
   output.append(...m.length === 0 ? [
     mod(elm('div'), e => {
@@ -150,6 +199,9 @@ data.add_change_listener(() => {
         editor.revealPosition(p)
         editor.setPosition(p) }
       editor.focus() })) })
+
+editor.onDidChangeModelContent(schedule_refresh_goals)
+editor.onDidChangeCursorPosition(schedule_refresh_goals)
 
 if (text) {
   model.setValue(text) }

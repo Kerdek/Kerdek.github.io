@@ -47,8 +47,8 @@ const
 
 export const tokenizer = scanner({
   dt: sym<'top' | 'proposition' | 'proof'>(/^\./),
-  pp: name(/^[\w']+/, 'proposition'),
-  pf: name(/^[\w']+/, 'proof'),
+  pp: name(/^[a-zA-Z']+/, 'proposition'),
+  pf: name(/^[a-zA-Z0-9\-']+/, 'proof'),
   // ws: reg(/^(\s|--[\s\S]*?(\n|$)|\(\*[\s\S]*?(\*\)|$))*/, 'comment'),
   nl: reg(/^\n/, 'invalid'),
   wl: reg(/^[^\n\S]+/, 'invalid'),
@@ -64,14 +64,14 @@ export const tokenizer = scanner({
   rp: reg(/^\)/, 'propositionsymbol'),
   lb: sym<'proof'>(/^\[/),
   rb: sym<'proof'>(/^\]/),
-  dv: reg_skip(/^[\s\S]*?(\b(import|export|define|print|theorem)\b|\n|$)/, 'invalid'),
+  dv: reg_skip(/^[\s\S]*?(\b(import|export|print|define|theorem)\b|\n|$)/, 'invalid'),
   df: reg(/^\bdefine\b/, 'symbol'),
   pt: sym<'top' | 'proof'>(/^\bprint\b/),
   ip: reg(/^\bimport\b/, 'symbol'),
   ep: reg(/^\bexport\b/, 'symbol'),
-  cp: reg(/^\bpremise\b/, 'proofsymbol'),
+  ui: reg(/^\/\\/, 'proofsymbol'),
+  cp: reg(/^\\/, 'proofsymbol'),
   le: reg(/^\blemma\b/, 'proofsymbol'),
-  ui: reg(/^\bgiven\b/, 'proofsymbol'),
   ll: reg(/^\blet\b/, 'proofsymbol'),
   th: reg(/^\btheorem\b/, 'symbol'),
   li: reg(/^"(?:[^"\\]|\\[nt"\\])*"?/, 'proofsymbol') })

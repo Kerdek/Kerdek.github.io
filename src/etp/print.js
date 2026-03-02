@@ -4,6 +4,7 @@ import { elm, txt } from '../common/util/dom.js';
 import { top_border } from '../common/panes/ui.js';
 import { colors } from '../common/colors.js';
 import { visit_proposition } from './abstract.js';
+import { reduce } from './check.js';
 const { assign } = Object;
 const highlight_text = (c) => (s) => `<span style='color:${c};'>${escapeHTML(s)}</span>`, highlight = (c) => (s) => mod(elm('span'), e => {
     assign(e.style, {
@@ -62,13 +63,9 @@ export const print_proposition = (f) => run(({ proc, call, cc, ret }) => {
             ret([pps(`()`)]),
         err: ({}, {}) => ret([pps(`()`)])
     }));
-    return (tau) => main(tau, { p: 0, t: 0 });
-}), print_proof_name = (f, c) => [
-    f.pfs(`<`),
-    f.pf(c),
-    f.pfs(`>`)
-], print_goal = (f) => ({ tau, sigma, rho, pi, hi }) => {
-    const { pp, pfs, par, txt } = f, ppf = print_proposition(f);
+    return (tau) => main(reduce(tau), { p: 0, t: 0 });
+}), print_goal = (f) => ({ tau, sigma, rho, pi, hi }) => {
+    const { pp, pf, pfs, par, txt } = f, ppf = print_proposition(f);
     return [
         ...hi.length === 0 ? [] : [
             par(pfs(`{`), txt(` `), ...hi.map(i => [pp(i), txt(` `)]).flat(1), txt(` `), pfs(`}`))
@@ -77,7 +74,7 @@ export const print_proposition = (f) => run(({ proc, call, cc, ret }) => {
             par(...pi.map(i => [pp(i), txt(` `)]).flat(1))
         ],
         ...rho.map(({ i, d }) => par(pp(i), txt(` `), pfs(`:=`), txt(` `), ...ppf(d))),
-        ...sigma.map(({ i, t }) => par(...print_proof_name(f, i), txt(` `), pfs(`:`), txt(` `), ...ppf(t))),
+        ...sigma.map(({ i, t }) => par(pf(i), txt(` `), pfs(`:`), txt(` `), ...ppf(t))),
         par(pfs(`⊢`), txt(` `), ...ppf(tau))
     ];
 }, print_message_contents = (f) => {

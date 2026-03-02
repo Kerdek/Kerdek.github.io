@@ -1,13 +1,17 @@
 // import { lookup } from '../common/util/di.js'
+import { di, lookup, tr } from '../common/util/di.js';
 import { abstract_article } from './abstract.js';
 import { article_tokens } from './article_tokens.js';
-import { check_article, scan_article } from './check.js';
+import { aka, check_article, look_up_proof, scan_article } from './check.js';
 import { add_files_changed_listener, files } from './fs.js';
 import { article_messages } from './messages.js';
 import { languages } from './monaco.js';
+import { position_from_monaco, range_to_monaco } from './monaco_range.js';
 // import { position_from_monaco, range_to_monaco } from './monaco_range.js'
-import { print_message_contents, text_format } from './print.js';
+import { highlight_text_format, print_message_contents, print_proposition, text_format } from './print.js';
 import { read_article } from './read.js';
+import { empty_range } from './scanner.js';
+import { select_statement } from './select.js';
 // import { empty_range } from './scanner.js'
 // import { select_statement } from './select.js'
 import { token_kinds, tokenizer } from './tokenizer.js';
@@ -47,7 +51,7 @@ const get_file_data = (dependents, name) => {
     return data;
 };
 const fresh_text_model_data_cache = (model) => {
-    const version = model.getVersionId(), source = model.getValue(), concrete = read(source), abstract = abstract_article(concrete), sm = article_messages(concrete), dependencies = new Set(), [transcript, cm] = check_article(abstract, name => {
+    const version = model.getVersionId(), source = model.getValue(), concrete = read(source), abstract = abstract_article(concrete), sm = article_messages(concrete), dependencies = new Set(), [statement_transcript, transcript, cm] = check_article(abstract, name => {
         const data = get_file_data([], name);
         if (!data) {
             return null;
@@ -64,7 +68,7 @@ const fresh_text_model_data_cache = (model) => {
         message: /* m.title + ': ' +  */ m.c.map(c => print_message_contents(text_format)(c)).join('\n'),
         severity: monaco.MarkerSeverity.Error
     })));
-    return { version, source, concrete, abstract, transcript, messages };
+    return { version, source, concrete, abstract, transcript, statement_transcript, messages };
 };
 export const get_model_data = (model) => {
     let data = text_model_data_map.get(model.id);
@@ -141,30 +145,30 @@ languages.registerDocumentSemanticTokensProvider('semity', {
     }),
     releaseDocumentSemanticTokens(_resultId) { }
 });
-// languages.registerHoverProvider('church', {
-// provideHover: (model, position) => {
-// const
-//   e = get_model_data(model).cache(),
-//   wp = position_from_monaco(position),
-//   selection = e.abstract && select_statement(wp)(e.abstract)
-// return selection && {
-//   range: range_to_monaco(
-//     selection.k === 'statement' ? selection.n.w :
-//     selection.k === 'proof' ? selection.e.w :
-//     selection.k === 'proposition' ? selection.t.w :
-//     selection.k === 'binding' ? selection.w :
-//     empty_range(wp)),
-//   contents: (() =>
-//     tr(lookup(e.transcript, selection.e), g =>
-//       selection.k === 'term' ?
-//         assignable(g.found, g.expected, g) && assignable(g.expected, g.found, g) ?
-//           [`(term) ${print_type(highlight_text_format)(g.expected).join('')}`] :
-//         [`(term) ${print_type(highlight_text_format)(g.found).join('')}`,
-//         `(expected) ${print_type(highlight_text_format)(g.expected).join('')}`] :
-//       selection.k === 'type' ? [
-//         `(type) ${print_type(highlight_text_format)(aka(selection.t, g.bindings)).join('')}`] :
-//       selection.k === 'binding' ?
-//         tr(look_up_term(selection.i, g.judgments), j => [
-//         `(binding) ${print_type(highlight_text_format)(j.t).join('')}`]) || [] :
-//       []) || [])().map(value => ({ supportHtml: true, value })) } } })
+languages.registerHoverProvider('semity', {
+    provideHover: (model, position) => {
+        const c = get_model_data(model).cache(), wp = position_from_monaco(position), s = c.abstract && select_statement(wp, false)(c.abstract);
+        return s && {
+            range: range_to_monaco(s.k === 'statement' ? s.n.w :
+                s.k === 'proof' ? s.e.w :
+                    s.k === 'proposition' ? s.t.w :
+                        s.k === 'binding' ? s.w :
+                            empty_range(wp)),
+            contents: (s.k === 'proof' &&
+                tr(lookup(c.transcript, s.e), g => !g.found ?
+                    [`(proof) ${print_proposition(highlight_text_format)(g.tau).join('')}`] :
+                    [`(proof) ${print_proposition(highlight_text_format)(g.found).join('')}`,
+                        `(expected) ${print_proposition(highlight_text_format)(g.tau).join('')}`]) ||
+                s.k === 'proposition' &&
+                    di(lookup(c.transcript, s.e), g => tr(lookup(c.statement_transcript, s.n), pfx => [
+                        `(proposition) ${print_proposition(highlight_text_format)(aka(s.t, [...pfx.rho, ...g ? g.rho : []])).join('')}`
+                    ])) ||
+                s.k === 'binding' &&
+                    di(lookup(c.transcript, s.e), g => tr(lookup(c.statement_transcript, s.n), pfx => tr(look_up_proof(s.i, g ? g.sigma : [], pfx.sigma), j => [
+                        `(binding) ${print_proposition(highlight_text_format)(j.t).join('')}`
+                    ]))) ||
+                []).map(value => ({ supportHtml: true, value }))
+        };
+    }
+});
 //# sourceMappingURL=language_server.js.map

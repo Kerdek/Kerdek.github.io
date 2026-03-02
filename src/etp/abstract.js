@@ -48,7 +48,7 @@ export const abstract_article = walk_concrete_article({
         imp: e => call(main(e.l), l => call(main(e.r), r => ret(p.imp({ l, r }, e)))),
         app: e => call(main(e.l), l => call(main(e.r), r => ret(p.app({ l, r }, e)))),
         ref: e => ret(p.ref({}, e)),
-        var: e => ret(p.var({}, e)),
+        var: e => e.d[0] ? call(main(e.d[0]), d => ret(p.var({ d }, e))) : ret(p.var({ d: null }, e)),
         err: e => ret(p.err({}, e))
     }));
     return main;
@@ -59,7 +59,7 @@ export const abstract_article = walk_concrete_article({
         imp: e => call(main(e.l), l => call(main(e.r), r => ret(p.imp({ l, r }, e)))),
         app: e => call(main(e.l), l => call(main(e.r), r => ret(p.app({ l, r }, e)))),
         ref: e => ret(p.ref({}, e)),
-        var: e => ret(p.var({}, e)),
+        var: e => e.d[0] ? call(main(e.d[0]), d => ret(p.var({ d }, e))) : ret(p.var({ d: null }, e)),
         err: e => ret(p.err({}, e))
     })), main = proc((e) => c(e) ? call(inner(e), u => ret(u || f(e))) : ret(null));
     return main;

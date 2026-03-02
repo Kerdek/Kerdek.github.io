@@ -1,6 +1,6 @@
 import { Run, run } from './run.js'
 import { tr } from '../common/util/di.js'
-import { TextPosition } from './scanner.js'
+import { TextPosition, TextRange } from './scanner.js'
 import { Token, Tokenizer, Tokens } from './tokenizer.js'
 import {
   Messages,
@@ -140,7 +140,7 @@ read_proof =
   run(<P, R>({ proc, branch, call, cc, ret }: Run<ConcreteProof, P, R>) =>
   (s: Tokenizer) => {
   const
-  { pos, pp, pf, dt, lp, rp, lb, rb, cn, ce, ui, cp, ll, le, lm, pt } = s,
+  { pos, pp, pf, dt, lp, rp, lb, rb, cn, ce, ui, cp, ll, le, pt } = s,
 
   universal = proc((l: Token | null): ReturnType<typeof ret> => {
   const
@@ -157,27 +157,46 @@ read_proof =
         msg(w, `Syntax Error`, `A proposition name or \`.\` is expected here.`)]],
     ...l ? { l } : {}, wli, ...i ? { i } : {}, b }) }) }),
 
-  premise = proc((l: Token) => {
+  premise = proc((l: Token | null): R => {
   const
-  wi = pos(),
-  wli = read_comments(s),
-  i = pf(),
-  wicn = read_comments(s),
-  cnu = cn('proof'),
-  t = cnu && read_proposition(s),
-  wdt = pos(),
-  dtu = dt('proof')
-  return call(lead, b => {
+    wi = pos(),
+    wldt = read_comments(s),
+    dtu = dt('proof')
+  if (dtu) {
+    return call(main, b => {
+    return ret({ k: 'dot', m: [],
+      ...l ? { l } : {},
+      wldt, dtu, b }) }) }
+  const
+    wli = wldt,
+    i = pf()
+  if (i) {
+    return call(premise(null), b => {
+    return ret({ k: 'cdp', m: [], ...l ? { l } : {}, wli, i, b }) }) }
+  const
+    wllb = wli,
+    lbu = lb('proof'),
+    wj = pos(),
+    wlbi = read_comments(s),
+    j = pf(),
+    wcn = pos(),
+    wicn = read_comments(s),
+    cnu = cn('proof'),
+    t = read_proposition(s),
+    wrb = pos(),
+    rbu = rb('proof')
   const
     m = [
-      ...i ? [] : [
-        msg(wi, `Syntax Error`, `An identifier is expected here.`)],
-      ...dtu ? [] : [
-        msg(wdt, `Syntax Error`, `\`.\` is expected here.`)]]
-  return ret(t ? { k: 'cdt', m,
-     l, wli, i, wicn, cnu, t, ...dtu ? { dtu } : {}, b } :
-  { k: 'cdp', m,
-    l, wli, i, wicn, ...dtu ? { dtu } : {}, b }) }) }),
+      ...lbu ? [
+        ...j ? [
+          ...cnu ? [
+            ...rbu ? [] : [
+              msg(wrb, `Syntax Error`, `\`)\` is expected here.`)]] : [
+            msg(wcn, `Syntax Error`, `\`:\` is expected here.`)]] : [
+          msg(wj, `Syntax Error`, `An identifier is expected here.`)]] : [
+        msg(wi, `Syntax Error`, `An identifier or \`(\` is expected here.`)]]
+  return call(lbu ? premise(null) : main, b => {
+  return ret({ k: 'cdt', m, ...l ? { l } : {}, wllb, ...lbu ? { lbu } : {}, wlbi, ...j ? { i: j } : {}, wicn, ...cnu ? { cnu } : {}, t, ...rbu ? { rbu } : {}, b }) }) }),
 
   definition = proc((l: Token) => {
   const
@@ -225,8 +244,8 @@ read_proof =
       ...dtu ? [] : [
         msg(wdt, `Syntax Error`, `\`.\` is expected here.`)]]
   return ret(t ?
-    { k: 'let', m, l, wli, i, wicn, cnu, t, ...ceu ? { ceu } : {}, d, ...dtu ? { dtu } : {}, b } :
-  { k: 'lem', m, l, wli, i, wicn, ...ceu ? { ceu } : {}, d, ...dtu ? { dtu } : {}, b }) }) }) }),
+    { k: 'let', m, l, wli, ...i ? { i } : {}, wicn, cnu, t, ...ceu ? { ceu } : {}, d, ...dtu ? { dtu } : {}, b } :
+  { k: 'lem', m, l, wli, ...i ? { i } : {}, wicn, ...ceu ? { ceu } : {}, d, ...dtu ? { dtu } : {}, b }) }) }) }),
 
   print = proc((l: Token) => {
   const
@@ -249,17 +268,6 @@ read_proof =
         msg({ begin: lbu.w.begin, end: wrp }, `Syntax Error`, `\`[\` here is not matched.`)]],
     lbu, b, ...rbu ? { rbu } : {} }) }) }),
 
-  lambda = proc((l: Token) => {
-  const
-    wdt = pos(),
-    wldt = read_comments(s),
-    dtu = dt('proof')
-  return call(lead, b => {
-  return ret({ k: 'lam', m: [
-      ...dtu ? [] : [
-        msg(wdt, `Syntax Error`, `\`.\` is expected here.`)]],
-    l, wldt, ...dtu ? { dtu } : {}, b }) }) }),
-
   reference = proc((i: Token) =>
     ret({ k: 'ref', m: [], i })),
 
@@ -270,7 +278,6 @@ read_proof =
   tr(le(), lemma) ||
   tr(pt('proof'), print) ||
   tr(lb('proof'), brackets) ||
-  tr(lm('proof'), lambda) ||
   tr(pf(), reference),
 
   prop = (): ConcreteProposition | null => {
@@ -298,16 +305,18 @@ read_proof =
   return call(u, r => {
   return cc(rhs({ k: 'mop', m: [], l, wlr, r })) }) }),
 
-  lhs = proc((wa: TextPosition) => {
+  lhs = proc((begin: TextPosition) => {
   const
-    w = { begin: wa, end: pos() },
-    b = prop()
+    b = prop(),
+    end = pos(),
+    w: TextRange = { begin, end }
   if (b) {
     return cc(rhs({ k: 'err', m: [
-      msg({ begin: wa, end: pos() }, 'Syntax Error', `A proposition is not allowed here.`)], w, b })) }
+      msg(w, 'Syntax Error', `A proposition is not allowed here.`)], w, b })) }
   const u = primary()
   if (!u) {
-    return ret({ k: 'err', m: [], w, b: { k: 'err', m: [], w } }) }
+    return ret({ k: 'err', m: [
+      msg(w, 'Syntax Error', `A proof is expected here.`)], w, b: { k: 'err', m: [], w } }) }
   return call(u, l => {
   return cc(rhs(l)) }) }),
 

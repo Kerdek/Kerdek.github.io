@@ -13,6 +13,9 @@ css(`@font-face {
 font-family: CMU Typewriter Text;
 src: url('../../font/cmuntt.ttf'); }`)
 
+css(`.monaco-editor, .hover-row {
+font-family: CMU Typewriter Text; }`)
+
 assign(document.documentElement.style, {
 width: '100%',
 height: '100%',
