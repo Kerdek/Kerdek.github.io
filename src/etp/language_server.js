@@ -150,7 +150,7 @@ languages.registerDocumentSemanticTokensProvider('semity', {
 });
 languages.registerHoverProvider('semity', {
     provideHover: (model, position) => {
-        const c = get_model_data(model).cache(), wp = position_from_monaco(position), s = c.abstract && select_statement(wp, false)(c.abstract);
+        const p = print_proposition(highlight_text_format), c = get_model_data(model).cache(), wp = position_from_monaco(position), s = c.abstract && select_statement(wp, false)(c.abstract);
         return s && {
             range: range_to_monaco(s.k === 'statement' ? s.n.w :
                 s.k === 'proof' ? s.e.w :
@@ -158,17 +158,21 @@ languages.registerHoverProvider('semity', {
                         s.k === 'binding' ? s.w :
                             empty_range(wp)),
             contents: (s.k === 'proof' &&
-                tr(lookup(c.proof_transcript, s.e), g => !g.found ?
-                    [`(proof) ${print_proposition(highlight_text_format)(g.tau).join('')}`] :
-                    [`(proof) ${print_proposition(highlight_text_format)(g.found).join('')}`,
-                        `(expected) ${print_proposition(highlight_text_format)(g.tau).join('')}`]) ||
+                tr(lookup(c.proof_transcript, s.e), g => !g.found ? [
+                    `(proof) ${p(g.tau).join('')}`
+                ] : [
+                    `(proof) ${p(g.found).join('')}`,
+                    `(expected) ${p(g.tau).join('')}`
+                ]) ||
                 s.k === 'proposition' &&
-                    tr(s.e ? lookup(c.proof_transcript, s.e) : lookup(c.statement_transcript, s.n), g => [
-                        `(proposition) ${print_proposition(highlight_text_format)(aka(s.t, rho(g))).join('')}`
+                    tr(s.e ? lookup(c.proof_transcript, s.e) :
+                        lookup(c.statement_transcript, s.n), g => [
+                        `(proposition) ${p(aka(s.t, rho(g))).join('')}`
                     ]) ||
                 s.k === 'binding' &&
-                    tr(s.e ? lookup(c.proof_transcript, s.e) : lookup(c.statement_transcript, s.n), g => tr(look_up_proof(s.i, g), j => [
-                        `(binding) ${print_proposition(highlight_text_format)(j.t).join('')}`
+                    tr(s.e ? lookup(c.proof_transcript, s.e) :
+                        lookup(c.statement_transcript, s.n), g => tr(look_up_proof(s.i, g), j => [
+                        `(binding) ${p(j.t).join('')}`
                     ])) ||
                 []).map(value => ({ supportHtml: true, value }))
         };

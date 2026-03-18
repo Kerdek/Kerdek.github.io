@@ -4,6 +4,7 @@ import { assign, mod } from '../common/util/di.js';
 import { menu_bar } from '../common/panes/ui.js';
 import { add_script_editor } from './script_editor.js';
 import { add_file_list } from './file_list.js';
+import { alert } from '../common/panes/prompts.js';
 onbeforeunload = () => true;
 document.title = 'Semity Playground';
 css(`@font-face {
@@ -44,4 +45,5 @@ document.body.append(mod(menu_bar([
         zIndex: '99999'
     });
 }));
+alert("Licence Notice", "Use of this system or its source code is unauthorized until the doctrine of intellectual property is abolished.");
 //# sourceMappingURL=index.js.map
