@@ -15,6 +15,7 @@ export const
   opt = <T>(x: T): [NonNullable<T>] | [] => x ? [x] : [],
   optl = <T>(x: T[] | undefined): T[] | [] => x ? [...x] : [],
   optf = <I extends string, T>(i: I, x: T): { [i in I]: NonNullable<T> } | {} => x ? { [i]: x } : {},
+  cascade = <T, U>(f: (ctx: U) => T, a: U, b: U) => f(a) || f(b),
   uniques = <T>(a: T[]) => [...new Set(a)],
   lookup = <K, V>(a: [K, V][], i: K) => a.reduce<V | null>((p, [k, v]) => k === i ? v : p, null),
   visit: VisitG = o => (e, ...r) => ((o as any)[e.k])(e, ...r),
