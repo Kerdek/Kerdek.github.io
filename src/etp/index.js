@@ -45,5 +45,5 @@ document.body.append(mod(menu_bar([
         zIndex: '99999'
     });
 }));
-alert("Licence Notice", "Use of this system or its source code is unauthorized until the doctrine of intellectual property is abolished.");
+alert("Licence Notice", "Use of this system or its source code is unauthorized\nuntil the doctrine of intellectual property is abolished.");
 //# sourceMappingURL=index.js.map

@@ -48,5 +48,5 @@ document.body.append(mod(menu_bar([
   assign(e.style, {
     zIndex: '99999' }) }))
 
-alert("Licence Notice", "Use of this system or its source code is unauthorized until the doctrine of intellectual property is abolished.")
+alert("Licence Notice", "Use of this system or its source code is unauthorized\nuntil the doctrine of intellectual property is abolished.")
 
