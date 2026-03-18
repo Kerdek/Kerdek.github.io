@@ -17,7 +17,8 @@ app: { l: ConcreteProposition, wlr: Tokens, r: ConcreteProposition }
 err: { w: TextRange } }
 
 export type ConcretePropositions =
-{ [K in keyof ConcretePropositionsT]: { k: K, m: Messages } & ConcretePropositionsT[K] }
+{ [K in keyof ConcretePropositionsT]:
+  { k: K, m: Messages } & ConcretePropositionsT[K] }
 export type ConcretePropositionKind = keyof ConcretePropositions
 export type ConcreteProposition = Values<ConcretePropositions>
 
@@ -29,7 +30,8 @@ export type ConcretePropositionResults<T> =
 export type ConcretePropositionResult<T> = Values<ConcretePropositionResults<T>>
 
 export type ConcretePropositionConversion<T> =
-{ [K in ConcretePropositionKind]: (r: ConcretePropositionResults<T>[K], e: ConcretePropositions[K]) => T }
+{ [K in ConcretePropositionKind]:
+  (r: ConcretePropositionResults<T>[K], e: ConcretePropositions[K]) => T }
 
 export type ConcreteProofsT = {
 par: { lbu: Token, b: ConcreteProof, rbu?: Token }

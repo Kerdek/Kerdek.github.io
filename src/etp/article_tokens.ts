@@ -2,8 +2,7 @@ import { opt } from '../common/util/di.js'
 import { walk_concrete_article } from './concrete.js'
 import { Token } from './tokenizer.js'
 
-export const article_tokens = walk_concrete_article<
-  Token[], Token[], Token[]>({
+export const article_tokens = walk_concrete_article<Token[], Token[], Token[]>({
 proposition: {
   par: ({ b }, { lpu, rpu }) => [lpu, ...b, ...opt(rpu)],
   led: ({ b }, { wab }) => [...wab, ...b],

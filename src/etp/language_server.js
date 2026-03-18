@@ -1,25 +1,24 @@
 // import { lookup } from '../common/util/di.js'
-import { di, lookup, tr } from '../common/util/di.js';
+import { lookup, tr } from '../common/util/di.js';
 import { abstract_article } from './abstract.js';
 import { article_tokens } from './article_tokens.js';
-import { aka, check_article, look_up_proof, scan_article } from './check.js';
+import { check_article, collect_article_exports } from './check.js';
+import { look_up_proof, look_up_proposition, rho } from './context.js';
 import { add_files_changed_listener, files } from './fs.js';
 import { article_messages } from './messages.js';
 import { languages } from './monaco.js';
 import { position_from_monaco, range_to_monaco } from './monaco_range.js';
-// import { position_from_monaco, range_to_monaco } from './monaco_range.js'
 import { highlight_text_format, print_message_contents, print_proposition, text_format } from './print.js';
+import { aka } from './proposition.js';
 import { read_article } from './read.js';
 import { empty_range } from './scanner.js';
 import { select_statement } from './select.js';
-// import { empty_range } from './scanner.js'
-// import { select_statement } from './select.js'
 import { token_kinds, tokenizer } from './tokenizer.js';
 const read = (text) => read_article(tokenizer(text, { line: 1, col: 1 }));
 const text_model_data_map = new Map();
 const file_data_map = new Map();
 const fresh_file_data = (dependents, source) => {
-    const concrete = read(source), abstract = abstract_article(concrete), dependencies = new Set(), context = scan_article(abstract, name => {
+    const get_import = (name) => {
         if (dependents.includes(name)) {
             return null;
         }
@@ -30,7 +29,8 @@ const fresh_file_data = (dependents, source) => {
         dependencies.add(name);
         data.dependencies.forEach(d => dependencies.add(d));
         return data.context;
-    });
+    }, concrete = read(source), abstract = abstract_article(concrete), dependencies = new Set(), context = { sigma: [], rho: [], pi: [] };
+    collect_article_exports(abstract, get_import, context);
     return { context, dependencies };
 };
 const get_file_data = (dependents, name) => {
@@ -51,7 +51,7 @@ const get_file_data = (dependents, name) => {
     return data;
 };
 const fresh_text_model_data_cache = (model) => {
-    const version = model.getVersionId(), source = model.getValue(), concrete = read(source), abstract = abstract_article(concrete), sm = article_messages(concrete), dependencies = new Set(), [statement_transcript, transcript, cm] = check_article(abstract, name => {
+    const get_import = (name) => {
         const data = get_file_data([], name);
         if (!data) {
             return null;
@@ -59,16 +59,19 @@ const fresh_text_model_data_cache = (model) => {
         dependencies.add(name);
         data.dependencies.forEach(d => dependencies.add(d));
         return data.context;
-    }), messages = [...sm || [], ...cm];
-    monaco.editor.setModelMarkers(model, 'syntax', messages.map(m => ({
-        startLineNumber: 'begin' in m.w ? m.w.begin.line : m.w.line,
-        startColumn: 'begin' in m.w ? m.w.begin.col : m.w.col,
-        endLineNumber: 'end' in m.w ? m.w.end.line : m.w.line,
-        endColumn: 'end' in m.w ? m.w.end.col : m.w.col,
-        message: /* m.title + ': ' +  */ m.c.map(c => print_message_contents(text_format)(c)).join('\n'),
-        severity: monaco.MarkerSeverity.Error
-    })));
-    return { version, source, concrete, abstract, transcript, statement_transcript, messages };
+    }, version = model.getVersionId(), source = model.getValue(), concrete = read(source), abstract = abstract_article(concrete), dependencies = new Set(), messages = article_messages(concrete) || [], statement_transcript = [], proof_transcript = [];
+    check_article(abstract, {
+        sigma: [], pi: [], rho: []
+    }, get_import, statement_transcript, proof_transcript, messages),
+        monaco.editor.setModelMarkers(model, 'syntax', messages.map(m => ({
+            startLineNumber: 'begin' in m.w ? m.w.begin.line : m.w.line,
+            startColumn: 'begin' in m.w ? m.w.begin.col : m.w.col,
+            endLineNumber: 'end' in m.w ? m.w.end.line : m.w.line,
+            endColumn: 'end' in m.w ? m.w.end.col : m.w.col,
+            message: /* m.title + ': ' +  */ m.c.map(c => print_message_contents(text_format)(c)).join('\n'),
+            severity: monaco.MarkerSeverity.Error
+        })));
+    return { version, source, concrete, abstract, proof_transcript, statement_transcript, messages };
 };
 export const get_model_data = (model) => {
     let data = text_model_data_map.get(model.id);
@@ -155,20 +158,35 @@ languages.registerHoverProvider('semity', {
                         s.k === 'binding' ? s.w :
                             empty_range(wp)),
             contents: (s.k === 'proof' &&
-                tr(lookup(c.transcript, s.e), g => !g.found ?
+                tr(lookup(c.proof_transcript, s.e), g => !g.found ?
                     [`(proof) ${print_proposition(highlight_text_format)(g.tau).join('')}`] :
                     [`(proof) ${print_proposition(highlight_text_format)(g.found).join('')}`,
                         `(expected) ${print_proposition(highlight_text_format)(g.tau).join('')}`]) ||
                 s.k === 'proposition' &&
-                    di(lookup(c.transcript, s.e), g => tr(lookup(c.statement_transcript, s.n), pfx => [
-                        `(proposition) ${print_proposition(highlight_text_format)(aka(s.t, [...pfx.rho, ...g ? g.rho : []])).join('')}`
-                    ])) ||
+                    tr(s.e ? lookup(c.proof_transcript, s.e) : lookup(c.statement_transcript, s.n), g => [
+                        `(proposition) ${print_proposition(highlight_text_format)(aka(s.t, rho(g))).join('')}`
+                    ]) ||
                 s.k === 'binding' &&
-                    di(lookup(c.transcript, s.e), g => tr(lookup(c.statement_transcript, s.n), pfx => tr(look_up_proof(s.i, g ? g.sigma : [], pfx.sigma), j => [
+                    tr(s.e ? lookup(c.proof_transcript, s.e) : lookup(c.statement_transcript, s.n), g => tr(look_up_proof(s.i, g), j => [
                         `(binding) ${print_proposition(highlight_text_format)(j.t).join('')}`
-                    ]))) ||
+                    ])) ||
                 []).map(value => ({ supportHtml: true, value }))
         };
+    }
+});
+languages.registerDefinitionProvider('semity', {
+    provideDefinition: (model, position) => {
+        const c = get_model_data(model).cache(), s = c.abstract && select_statement(position_from_monaco(position), true)(c.abstract), to_monaco = ({ wi }) => wi.begin.line === 0 ? null : {
+            uri: model.uri,
+            range: range_to_monaco(wi)
+        };
+        return !s || s.k === 'binding' ?
+            null :
+            tr('e' in s ? lookup(c.proof_transcript, s.e) : lookup(c.statement_transcript, s.n), g => s.k === 'proposition' && s.t.k === 'ref' ?
+                tr(look_up_proposition(s.t.i, g), to_monaco) :
+                s.k === 'proof' && s.e.k === 'ref' ?
+                    tr(look_up_proof(s.e.i, g), to_monaco) :
+                    null);
     }
 });
 //# sourceMappingURL=language_server.js.map

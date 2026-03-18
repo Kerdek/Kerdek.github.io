@@ -36,10 +36,10 @@ export type PropositionConversion<T> =
   (r: PropositionResults<T>[K], e: Propositions[K]) => T }
 
 export type ProofsT = {
-uni: { w: TextRange, k: 'uni', i: Identifier, b: Proof }
-cdp: { w: TextRange, k: 'cdp', i: Identifier, t?: Proposition, b: Proof }
-def: { w: TextRange, k: 'def', i: Identifier, d: Proposition, b: Proof }
-lem: { w: TextRange, k: 'lem', i: Identifier, t?: Proposition, d: Proof, b: Proof }
+uni: { w: TextRange, k: 'uni', wi: TextRange, i: Identifier, b: Proof }
+cdp: { w: TextRange, k: 'cdp', wi: TextRange, i: Identifier, t?: Proposition, b: Proof }
+def: { w: TextRange, k: 'def', wi: TextRange, i: Identifier, d: Proposition, b: Proof }
+lem: { w: TextRange, k: 'lem', wi: TextRange, i: Identifier, t?: Proposition, d: Proof, b: Proof }
 spe: { w: TextRange, k: 'spe', l: Proof, r: Proposition }
 mop: { w: TextRange, k: 'mop', l: Proof, r: Proof }
 ref: { w: TextRange, k: 'ref', i: Identifier }
@@ -63,11 +63,11 @@ export type ProofConversion<T> =
 { [K in ProofKind]: (r: ProofResults<T>[K], e: Proofs[K]) => T }
 
 export type StatementsT = {
-imp: { a: Statement | null, i: Identifier }
-exf: { a: Statement | null, i: Identifier }
-def: { a: Statement | null, i: Identifier, d: Proposition }
+imp: { a: Statement | null, wi: TextRange, i: Identifier }
+exf: { a: Statement | null, wi: TextRange, i: Identifier }
+def: { a: Statement | null, wi: TextRange, i: Identifier, d: Proposition }
 prt: { a: Statement | null, d: Proposition }
-thm: { a: Statement | null, i: Identifier, t: Proposition, d: Proof } }
+thm: { a: Statement | null, wi: TextRange, i: Identifier, t: Proposition, d: Proof } }
 
 export type Statements = {
   [K in keyof StatementsT]: { w: TextRange, k: K } & StatementsT[K] }
@@ -95,8 +95,8 @@ proposition: {
   par: ({ b }, { lpu, rpu }) => ({ ...b, w: { begin: lpu.w.begin, end: (rpu || b).w.end} }),
   led: ({ b }) => b,
   trl: ({ l }) => l,
-  uni: ({ b }, { l, i }) => i ? { k: 'uni', w: fspan(l || i, b), i: i.text, b } : b,
-  lam: ({ b }, { l, i }) => i ? { k: 'lam', w: fspan(l || i, b), i: i.text, b } : b,
+  uni: ({ b }, { l, i }) => i ? { k: 'uni', w: fspan(l || i, b), wi: i.w, i: i.text, b } : b,
+  lam: ({ b }, { l, i }) => i ? { k: 'lam', w: fspan(l || i, b), wi: i.w, i: i.text, b } : b,
   dot: ({ b }, { }) => b,
   ref: ({ }, { i }) => ({ k: 'ref', w: i.w, i: i.text }),
   imp: ({ l, r }, { }) => ({ k: 'imp', w: fspan(l, r), l, r }),
@@ -108,24 +108,24 @@ proof: {
   trl: ({ l }, { }) => l,
   prt: ({ d, b }, { l }) => ({ k: 'prt', w: fspan(l, b), d, b }),
   lam: ({ b }, { }) => b,
-  uni: ({ b }, { l, i }) => !i ? b : ({ k: 'uni', w: fspan(l || i, b), i: i.text, b }),
+  uni: ({ b }, { l, i }) => !i ? b : ({ k: 'uni', w: fspan(l || i, b), wi: i.w, i: i.text, b }),
   dot: ({ b }, { }) => b,
-  cdp: ({ b }, { l, i }) => !i ? b : { k: 'cdp', w: fspan(l || i, b), i: i.text, b },
-  cdt: ({ t, b }, { l, i }) => !i ? b : { k: 'cdp', w: fspan(l || i, b), i: i.text, t, b },
-  def: ({ d, b }, { l, i }) => !i ? b : { k: 'def', w: fspan(l, b), i: i ? i.text : '', d, b, },
-  lem: ({ d, b }, { l, i }) => !i ? b : { k: 'lem', w: fspan(l, b), i: i.text, d, b },
-  let: ({ t, d, b }, { l, i }) => !i ? b : { k: 'lem', w: fspan(l, b), i: i.text, t, d, b },
+  cdp: ({ b }, { l, i }) => !i ? b : { k: 'cdp', w: fspan(l || i, b), wi: i.w, i: i.text, b },
+  cdt: ({ t, b }, { l, i }) => !i ? b : { k: 'cdp', w: fspan(l || i, b), wi: i.w, i: i.text, t, b },
+  def: ({ d, b }, { l, i }) => !i ? b : { k: 'def', w: fspan(l, b), wi: i.w, i: i ? i.text : '', d, b, },
+  lem: ({ d, b }, { l, i }) => !i ? b : { k: 'lem', w: fspan(l, b), wi: i.w, i: i.text, d, b },
+  let: ({ t, d, b }, { l, i }) => !i ? b : { k: 'lem', w: fspan(l, b), wi: i.w, i: i.text, t, d, b },
   spe: ({ l, r }, { }) => ({ k: 'spe', w: fspan(l, r), l, r }),
   mop: ({ l, r }, { }) => ({ k: 'mop', w: fspan(l, r), l, r }),
   ref: ({ }, { i }) => ({ k: 'ref', w: i.w, i: i.text }),
   err: ({ }, { w }) => ({ k: 'err', w }) },
 statement: {
   trl: ({ a }, { }) => a,
-  imp: ({ a }, { l, i }) => !i ? a : { a, k: 'imp', w: fspan(l, i), i: JSON.parse(i.text) },
-  exf: ({ a }, { l, i }) => !i ? a : { a, k: 'exf', w: fspan(l, i), i: i.text },
-  def: ({ a, d }, { l, i }) => !i ? a : { a, k: 'def', w: fspan(l, d), i: i.text, d },
+  imp: ({ a }, { l, i }) => !i ? a : { a, k: 'imp', w: fspan(l, i), wi: i.w, i: JSON.parse(i.text) },
+  exf: ({ a }, { l, i }) => !i ? a : { a, k: 'exf', w: fspan(l, i), wi: i.w, i: i.text },
+  def: ({ a, d }, { l, i }) => !i ? a : { a, k: 'def', w: fspan(l, d), wi: i.w, i: i.text, d },
   prt: ({ a, d }, { l }) => ({ a, k: 'prt', w: fspan(l, d), d }),
-  thm: ({ a, t, d }, { l, i }) => !i ? a : { a, k: 'thm', w: fspan(l, d), i: i.text, t, d } } }),
+  thm: ({ a, t, d }, { l, i }) => !i ? a : { a, k: 'thm', w: fspan(l, d), wi: i.w, i: i.text, t, d } } }),
 
 visit_proposition: Visit<Propositions> = visit,
 visit_proof: Visit<Proofs> = visit,

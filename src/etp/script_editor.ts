@@ -95,7 +95,7 @@ refresh_goals = () => {
     const w = position_from_monaco(pos)
     const s = select_statement(w, false)(c.abstract)
     if (s && s.k === 'proof') {
-      const g = lookup(c.transcript, s.e)
+      const g = lookup(c.proof_transcript, s.e)
       if (g) {
         goals.append(...print_goal(html_format)(g)) } } } },
 

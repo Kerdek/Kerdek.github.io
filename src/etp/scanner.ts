@@ -27,7 +27,8 @@ export const range_includes_inclusive = (w: TextRange, wp: TextPosition) =>
 position_less_equal(w.begin, wp) &&
 position_less_equal(wp, w.end)
 
-export const fspan = (a: { w: TextRange }, b: { w: TextRange }) => ({ begin: a.w.begin, end: b.w.end })
+export const fspan = (a: { w: TextRange }, b: { w: TextRange }) =>
+({ begin: a.w.begin, end: b.w.end })
 
 export type TokenT<TokenKind> = {
   w: TextRange,

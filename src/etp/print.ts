@@ -4,6 +4,7 @@ import { elm, txt } from '../common/util/dom.js'
 import { top_border } from '../common/panes/ui.js'
 import { colors } from '../common/colors.js'
 import { TextPosition, TextRange } from './scanner.js'
+import { reduce } from './proposition.js'
 import {
   Goal,
   MessageContent,
@@ -12,7 +13,6 @@ import {
   Propositions,
   Proposition,
   visit_proposition } from './abstract.js'
-import { reduce } from './check.js'
 
 const { assign } = Object
 

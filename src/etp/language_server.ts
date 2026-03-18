@@ -1,21 +1,19 @@
 // import { lookup } from '../common/util/di.js'
-import { di, lookup, tr } from '../common/util/di.js'
+import { lookup, tr } from '../common/util/di.js'
 import { Statement, abstract_article } from './abstract.js'
 import { article_tokens } from './article_tokens.js'
-import { StatementTranscript, Transcript, aka, check_article, look_up_proof, scan_article } from './check.js'
+import { StatementTranscript, ProofTranscript, check_article, collect_article_exports } from './check.js'
 import { ConcreteStatement } from './concrete.js'
-import { Messages, Module } from './context.js'
+import { Messages, Module, Prefix, look_up_proof, look_up_proposition, rho } from './context.js'
 import { add_files_changed_listener, files } from './fs.js'
 import { article_messages } from './messages.js'
 import { languages } from './monaco.js'
 import { position_from_monaco, range_to_monaco } from './monaco_range.js'
-// import { position_from_monaco, range_to_monaco } from './monaco_range.js'
 import { highlight_text_format, print_message_contents, print_proposition, text_format } from './print.js'
+import { aka } from './proposition.js'
 import { read_article } from './read.js'
-import { empty_range } from './scanner.js'
+import { TextRange, empty_range } from './scanner.js'
 import { select_statement } from './select.js'
-// import { empty_range } from './scanner.js'
-// import { select_statement } from './select.js'
 import { token_kinds, tokenizer } from './tokenizer.js'
 
 const read = (text: string): ConcreteStatement =>
@@ -26,7 +24,7 @@ source: string
 version: number
 concrete: ConcreteStatement
 abstract: Statement | null
-transcript: Transcript
+proof_transcript: ProofTranscript
 statement_transcript: StatementTranscript
 messages: Messages }
 
@@ -48,10 +46,7 @@ const fresh_file_data = (
   dependents: string[],
   source: string): FileData => {
 const
-  concrete = read(source),
-  abstract = abstract_article(concrete),
-  dependencies = new Set<string>(),
-  context = scan_article(abstract, name => {
+  get_import = (name: string) => {
     if (dependents.includes(name)) {
       return null }
     const data = get_file_data(dependents, name)
@@ -59,7 +54,12 @@ const
       return null }
     dependencies.add(name)
     data.dependencies.forEach(d => dependencies.add(d))
-    return data.context })
+    return data.context },
+  concrete = read(source),
+  abstract = abstract_article(concrete),
+  dependencies = new Set<string>(),
+  context: Prefix = { sigma: [], rho: [], pi: [] }
+collect_article_exports(abstract, get_import, context)
 return { context, dependencies } }
 
 const get_file_data = (
@@ -81,20 +81,23 @@ return data }
 const fresh_text_model_data_cache = (
   model: monaco.editor.ITextModel): TextModelDataCache => {
 const
-  version = model.getVersionId(),
-  source = model.getValue(),
-  concrete = read(source),
-  abstract = abstract_article(concrete),
-  sm = article_messages(concrete),
-  dependencies = new Set<string>(),
-  [statement_transcript, transcript, cm] = check_article(abstract, name => {
+  get_import = (name: string) => {
     const data = get_file_data([], name)
     if (!data) {
       return null }
     dependencies.add(name)
     data.dependencies.forEach(d => dependencies.add(d))
-    return data.context }),
-  messages = [...sm || [], ...cm]
+    return data.context },
+  version = model.getVersionId(),
+  source = model.getValue(),
+  concrete = read(source),
+  abstract = abstract_article(concrete),
+  dependencies = new Set<string>(),
+  messages: Messages = article_messages(concrete) || [],
+  statement_transcript: StatementTranscript = [],
+  proof_transcript: ProofTranscript = []
+check_article(abstract, {
+    sigma: [], pi: [], rho: [] }, get_import, statement_transcript, proof_transcript, messages),
 monaco.editor.setModelMarkers(model, 'syntax', messages.map(m => ({
   startLineNumber: 'begin' in m.w ? m.w.begin.line : m.w.line,
   startColumn: 'begin' in m.w ? m.w.begin.col : m.w.col,
@@ -102,7 +105,7 @@ monaco.editor.setModelMarkers(model, 'syntax', messages.map(m => ({
   endColumn: 'end' in m.w ? m.w.end.col : m.w.col,
   message: /* m.title + ': ' +  */m.c.map(c => print_message_contents(text_format)(c)).join('\n'),
   severity: monaco.MarkerSeverity.Error })))
-return { version, source, concrete, abstract, transcript, statement_transcript, messages } }
+return { version, source, concrete, abstract, proof_transcript, statement_transcript, messages } }
 
 export const get_model_data = (
   model: monaco.editor.ITextModel): TextModelData => {
@@ -171,6 +174,7 @@ releaseDocumentSemanticTokens(_resultId) { } })
 languages.registerHoverProvider('semity', {
 provideHover: (model, position) => {
 const
+  p = print_proposition(highlight_text_format),
   c = get_model_data(model).cache(),
   wp = position_from_monaco(position),
   s = c.abstract && select_statement(wp, false)(c.abstract)
@@ -183,18 +187,37 @@ return s && {
     empty_range(wp)),
   contents: (
       s.k === 'proof' &&
-        tr(lookup(c.transcript, s.e), g =>
-        !g.found ?
-          [`(proof) ${print_proposition(highlight_text_format)(g.tau).join('')}`] :
-        [`(proof) ${print_proposition(highlight_text_format)(g.found).join('')}`,
-        `(expected) ${print_proposition(highlight_text_format)(g.tau).join('')}`]) ||
+        tr(lookup(c.proof_transcript, s.e), g =>
+        !g.found ? [
+          `(proof) ${p(g.tau).join('')}`] : [
+          `(proof) ${p(g.found).join('')}`,
+          `(expected) ${p(g.tau).join('')}`]) ||
       s.k === 'proposition' &&
-        di(lookup(c.transcript, s.e), g =>
-        tr(lookup(c.statement_transcript, s.n), pfx => [
-          `(proposition) ${print_proposition(highlight_text_format)(aka(s.t, [...pfx.rho, ...g ? g.rho : []])).join('')}`])) ||
+        tr(s.e ? lookup(c.proof_transcript, s.e) :
+          lookup(c.statement_transcript, s.n), g => [
+        `(proposition) ${p(aka(s.t, rho(g))).join('')}`]) ||
       s.k === 'binding' &&
-        di(lookup(c.transcript, s.e), g =>
-        tr(lookup(c.statement_transcript, s.n), pfx =>
-        tr(look_up_proof(s.i, g ? g.sigma : [], pfx.sigma), j => [
-        `(binding) ${print_proposition(highlight_text_format)(j.t).join('')}`]))) ||
+        tr(s.e ? lookup(c.proof_transcript, s.e) :
+          lookup(c.statement_transcript, s.n), g =>
+        tr(look_up_proof(s.i, g), j => [
+        `(binding) ${p(j.t).join('')}`])) ||
       []).map(value => ({ supportHtml: true, value })) } } })
+
+
+languages.registerDefinitionProvider('semity', {
+  provideDefinition: (model, position) => {
+  const
+    c = get_model_data(model).cache(),
+    s = c.abstract && select_statement(position_from_monaco(position), true)(c.abstract),
+    to_monaco = ({ wi }: { wi: TextRange }): monaco.languages.ProviderResult<monaco.languages.Definition> =>
+      wi.begin.line === 0 ? null : {
+        uri: model.uri,
+        range: range_to_monaco(wi) }
+  return !s || s.k === 'binding' ?
+    null :
+  tr('e' in s ? lookup(c.proof_transcript, s.e) : lookup(c.statement_transcript, s.n), g =>
+  s.k === 'proposition' && s.t.k === 'ref' ?
+    tr(look_up_proposition(s.t.i, g), to_monaco) :
+  s.k === 'proof' && s.e.k === 'ref' ?
+    tr(look_up_proof(s.e.i, g), to_monaco) :
+  null) } })

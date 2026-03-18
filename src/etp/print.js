@@ -3,8 +3,8 @@ import { di, mod } from '../common/util/di.js';
 import { elm, txt } from '../common/util/dom.js';
 import { top_border } from '../common/panes/ui.js';
 import { colors } from '../common/colors.js';
+import { reduce } from './proposition.js';
 import { visit_proposition } from './abstract.js';
-import { reduce } from './check.js';
 const { assign } = Object;
 const highlight_text = (c) => (s) => `<span style='color:${c};'>${escapeHTML(s)}</span>`, highlight = (c) => (s) => mod(elm('span'), e => {
     assign(e.style, {
