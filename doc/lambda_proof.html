@@ -204,10 +204,10 @@ is a function type <span class="nw"><code class="c"><!--
 --> <span class="pi">Q</span></code>.</span>
 Universal quantification
 <span class="i m">(<!--
--->∀<span class="v">i</span>.<span class="v">P</span><!--
+-->∀<span class="v">a</span>.<span class="v">P</span><!--
 -->)</span>
 is a polymorphic type <span class="nw"><code class="c"><!--
---><span class="ps">∀</span><span class="pi">i</span><!--
+--><span class="ps">∀</span><span class="pi">a</span><!--
 --><span class="ps">.</span><span class="pi">P</span><!--
 --></code>.</span>
 Rules of logical inference are typing rules. A type checker
@@ -225,8 +225,8 @@ of computation.
 is a program. It has no type annotations.
 In this system, programs are not constrained by types.</p>
 
-<p><code class="a"><span class="ts">define</span> <!--
---><span class="pi">square</span> <span class="ps">⅂</span><!--
+<p><code class="a"><span class="ts">define</span><!--
+--> <span class="pi">square</span> <span class="ps">⅂</span><!--
 --><span class="pi">a</span><span class="ps">.</span>
 <span class="pi">mul</span> <span class="pi">a</span><!--
 --> <span class="pi">a</span><span class="ts">.</span>
@@ -262,12 +262,12 @@ type judgment ensures it is valid.</p>
 what counts as proof about a program. That is, the program
 will be part of a proposition:</p>
 
-<p><code class="a"><span class="ts">theorem</span> <!--
---><span class="fi">Real-non_negative-square</span> <!--
---><span class="ps">∀</span><span class="pi">a</span><!--
+<p><code class="a"><span class="ts">theorem</span><!--
+--> <span class="fi">Real-non_negative-square</span><!--
+--> <span class="ps">∀</span><span class="pi">a</span><!--
 --><span class="ps">.</span>
-<span class="pi">Real</span> <span class="pi">a</span> <!--
---><span class="ps">→</span><!--
+<span class="pi">Real</span> <span class="pi">a</span><!--
+--> <span class="ps">→</span><!--
 --> <span class="pi">non_negative</span> <span class="ps">(</span><!--
 --><span class="pi">square</span> <span class="pi">a</span><!--
 --><span class="ps">)</span><span class="ts">.</span></code></p>
@@ -345,12 +345,12 @@ A proposition is a type which is proved by its inhabitants, proofs.</p>
 --><span class="ps">)</span></code>,
 we need a proof (a term) of this proposition (this type). Such a proof is:</p>
 
-<p><code class="a"><span class="ts">proof</span> <!--
---><span class="fi">Real-non_negative-square</span> <!--
---><span class="fs">Ʌ</span><!--
+<p><code class="a"><span class="ts">proof</span><!--
+--> <span class="fi">Real-non_negative-square</span><!--
+--> <span class="fs">Ʌ</span><!--
 --><span class="pi">a</span><span class="fs">.</span>
 <span class="fs">⅂</span><span class="fi">pa</span><!--
---> <span class="fs">:</span> <span class="pi">Real</span><!--
+--><span class="fs">:</span> <span class="pi">Real</span><!--
 --> <span class="pi">a</span><span class="fs">.</span>
 <span class="fi">Real-non_negative-mul</span> <span class="ps">(</span><span class="pi">a</span><span class="ps">)</span><!--
 --> <span class="ps">(</span><span class="pi">a</span><span class="ps">)</span> <span class="fi">pa</span><!--
@@ -395,9 +395,9 @@ are <code class="c"><span class="pi">Real</span></code> and have equal
 <span class="nw"><code class="c"><span class="pi">sign</span><!--
 --></code>.</span> Its proposition is:</p>
 
-<p><code class="a"><span class="ts">theorem</span> <!--
---><span class="fi">Real-non_negative-mul</span> <!--
---><span class="ps">∀</span><!--
+<p><code class="a"><span class="ts">theorem</span><!--
+--> <span class="fi">Real-non_negative-mul</span><!--
+--> <span class="ps">∀</span><!--
 --><span class="pi">a</span> <span class="pi">b</span><!--
 --><span class="ps">.</span>
 <span class="pi">Real</span><!--
@@ -420,9 +420,9 @@ are <code class="c"><span class="pi">Real</span></code> and have equal
 --> <span class="ps">(</span><span class="pi">sign</span><!--
 --> <span class="pi">a</span><span class="ps">)</span></code>:</span></p>
 
-<p><code class="a"><span class="ts">theorem</span> <!--
---><span class="fi">Eq-refl</span> <!--
---><span class="ps">∀</span><!--
+<p><code class="a"><span class="ts">theorem</span><!--
+--> <span class="fi">Eq-refl</span><!--
+--> <span class="ps">∀</span><!--
 --><span class="pi">a<span class="ps">.</span>
 <span class="pi">Eq</span> <span class="pi">a</span><!--
 --> <span class="pi">a</span></code></p>
@@ -462,16 +462,16 @@ contradiction. For example, in the theory of unintepreted functions, Russell's
 classic paradox, <code class="c">Y not</code> shows the contradiction.</p>
 
 <p><code class="a">-- statement of contradiction
-define False
-∀x.a.
+define False ∀a.
+a.
 
 -- `Not a` means `a` implies `False`
-define Not
-⅂x.a → False.
+define Not ⅂a.
+a → False.
 
 -- fixed point combinator
-define Y
-⅂f.(⅂x.f (a a)) (⅂x.f (a a)).
+define Y ⅂f.
+(⅂a.f (a a)) (⅂a.f (a a)).
 
 -- Russell's theorem
 theorem Russell
@@ -506,96 +506,92 @@ Each of them uses the context <span class="i m">Γ</span> to track types.
 <h3>Generalization (<code class="c">∀</code> Introduction)</h3>
 
 <p><strong>Logical form</strong>: Given arbitrary
-<span class="i m v">i</span>, <span class="i m v">P</span>. So,
-<span class="i m">∀<span class="v">i</span><!--
+<span class="i m v">a</span>, <span class="i m v">P</span>. So,
+<span class="i m">∀<span class="v">a</span><!--
 -->.<span class="v">P</span></span>.</p>
 
 <p><strong>Proof term</strong>: Type abstraction which proves
-<code class="c">∀<span class="i m v">i</span><!--
+<code class="c">∀<span class="i m v">a</span><!--
 -->.<span class="i m v">P</span></code>:</p>
 
 <p style="text-align:center;width:100%;"><code class="c"><!--
--->Ʌ<span class="i m v">i</span>.<span class="i m v">E</span></code></p>
+-->Ʌ<span class="i m v">b</span>.<span class="i m v">E</span></code></p>
 
 <p>This is a <em>generalization</em> over given
-<code class="c"><span class="i m v">i</span></code> of proof
+<code class="c"><span class="i m v">b</span></code> of proof
 <span class="i m"><code class="c"><span class="i m v">E</span></code>
 <span class="q">:</span>
-<code class="c"><span class="i m v">P</span></code></span>.</p>
+<code class="c"><span class="i m"><span class="v">P</span><!--
+--><span class="lb">[</span><span class="v">a</span> := <!--
+--><span class="v">b</span><span class="rb">]</span></span></code></span>.</p>
 
 <p><strong>Judgment rule</strong>:
-<code class="c"><span class="i m v">i</span></code>
+<code class="c"><span class="i m v">b</span></code>
 must not be bound in <span class="i m">Γ</span>,
 and <code class="c"><span class="i m v">E</span></code> must prove
 <code class="c"><span class="i m"><span class="v">P</span><!--
---><span class="lb">[</span><span class="v">j</span>
- <!--
---><span class="v">i</span><span class="rb">]</span></span></code>
+--><span class="lb">[</span><span class="v">a</span> := <!--
+--><span class="v">b</span><span class="rb">]</span></span></code>
 in <span class="i m">Γ,
-<code class="c"><span class="i m v">i</span></code></span> (proposition
-<code class="c"><span class="i m v">i</span></code>
+<code class="c"><span class="i m v">b</span></code></span> (proposition
+<code class="c"><span class="i m v">b</span></code>
 appended to <span class="i m">Γ</span>).</p>
 
 <p></p><div class="rule"><div class="rulebox m">
 
-<!-- i ∉ Γ -->
-<p><code class="c"><span class="i m v">i</span></code> ∉ Γ</p>
+<!-- b ∉ Γ -->
+<p><code class="c"><span class="i m v">b</span></code> ∉ Γ</p>
 
-<!-- Γ, i ⊢ E : P[j
- i] -->
-<p>Γ, <code class="c"><span class="i m v">i</span></code>
+<!-- Γ, b ⊢ E : P[a := b] -->
+<p>Γ, <code class="c"><span class="i m v">b</span></code>
 <span class="q">⊢</span> <code class="c"><!--
 --><span class="i m v">E</span></code> <span class="q">:</span>
 <code class="c"><span class="i m"><span class="v">P</span><!--
---><span class="lb">[</span><span class="v">j</span><!--
--->
- <span class="v">i</span><span class="rb">]</span></span></code></p>
+--><span class="lb">[</span><span class="v">a</span> := <!--
+--><span class="v">b</span><span class="rb">]</span></span></code></p>
 
 <hr>
 
-<!-- Γ ⊢ Ʌi.E : ∀j.P -->
+<!-- Γ ⊢ Ʌb.E : ∀a.P -->
 Γ <span class="q">⊢</span> <code class="c">Ʌ<!--
---><span class="i m v">i</span>.<span class="i m v">E</span></code>
+--><span class="i m v">b</span>.<span class="i m v">E</span></code>
 <span class="q">:</span> <code class="c">∀<!--
---><span class="i m v">j</span>.<span class="i m v">P</span></code>
+--><span class="i m v">a</span>.<span class="i m v">P</span></code>
 
 </div></div><p></p>
 
-<p><strong>Mechanics</strong>: <code class="c">Ʌa.</code>
+<p><strong>Mechanics</strong>: <code class="c">Ʌb.</code>
 discharges the universal quantifier <code class="c">∀a.</code>
-in the goal and introduces an arbitrary <code class="c">a</code>
+in the goal and introduces an arbitrary <code class="c">b</code>
 in the context. The body uses these like type parameters.</p>
 
 <p><strong>Example</strong>:</p>
 
-<p><code class="a">theorem ImpRefl :
-∀a.a → a
+<p><code class="a">theorem Imp-refl ∀a.
+a → a.
 
-
-Ʌa.
-⅂Pa : a.
+proof Imp-refl Ʌa.
+⅂pa: a.
 pa.</code></p>
 
-<p>The body <code class="c">⅂Pa : a.pa</code> proves
+<p>The body <code class="c">⅂pa: a.pa</code> proves
 <code class="c">a → a</code> for arbitrary
 <span class="nw"><code class="c">a</code>.</span></p>
 
 <h3>Specialization (<code class="c">∀</code> Elimination)</h3>
 
 <p><strong>Logical form</strong>:
-<span class="i m">∀<span class="v">i</span><!--
+<span class="i m">∀<span class="v">a</span><!--
 -->.<span class="v">P</span></span>. So,
 <span class="i m"><span class="v">P</span><!--
---><span class="lb">[</span><span class="v">i</span><!--
--->
- <span class="v">T</span><span class="rb">]</span></span>
-for some <span class="i m v">T</span>.</p>
+--><span class="lb">[</span><span class="v">a</span><!--
+--> := <span class="v">Q</span><span class="rb">]</span></span>
+for some <span class="i m v">Q</span>.</p>
 
 <p><strong>Proof term</strong>: Type application which proves
 <span class="nw"><code class="c"><span class="i m"><!--
 --><span class="v">P</span><span class="lb">[</span><!--
---><span class="v">i</span>
- <span class="v">T</span><!--
+--><span class="v">a</span> := <span class="v">Q</span><!--
 --><span class="rb">]</span></span></code>.</span></p>
 
 <p style="text-align:center;width:100%;">
@@ -613,7 +609,7 @@ for proposition <span class="nw"><code class="c"><!--
 <code class="c"><span class="i m v">Q</span></code>
 must be closed in <span class="i m">Γ</span>,
 and <code class="c"><span class="i m v">E</span></code>
-must prove <code class="c">∀<span class="i m v">i</span><!--
+must prove <code class="c">∀<span class="i m v">a</span><!--
 -->.<span class="i m v">P</span></code>
 in <span class="i m">Γ</span>.</p>
 
@@ -623,23 +619,21 @@ in <span class="i m">Γ</span>.</p>
 <p>Γ <span class="q">⊢</span>
 <code class="c"><span class="i m v">Q</span></code></p>
 
-<!-- Γ ⊢ E : ∀i.P -->
+<!-- Γ ⊢ E : ∀a.P -->
 <p>Γ <span class="q">⊢</span>
 <code class="c"><span class="i m v">E</span></code>
 <span class="q">:</span>
-<code class="c">∀<span class="i m v">i</span><!--
+<code class="c">∀<span class="i m v">a</span><!--
 -->.<span class="i m v">P</span></code></p>
 
 <hr>
 
-<!-- Γ ⊢ E Q : P[i
- Q] -->
+<!-- Γ ⊢ E Q : P[a := Q] -->
 Γ <span class="q">⊢</span> <code class="c"><!--
 --><span class="i m v">E</span> <span class="i m v">Q</span></code>
 <span class="q">:</span> <code class="c"><span class="i m"><!--
 --><span class="v">P</span><span class="lb">[</span><!--
---><span class="v">i</span>
- <span class="v">Q</span><!--
+--><span class="v">a</span> := <span class="v">Q</span><!--
 --><span class="rb">]</span></span></code>
 
 </div></div><p></p>
@@ -652,11 +646,11 @@ This instantiates the proof for specific propositions.</span></p>
 
 <p><strong>Examples</strong>:</p>
 
-<p><code class="a">theorem FalseOfFalse :
-false → false
+<p><code class="a">theorem False-of-False
+False → False.
 
-
-ImpRefl false
+proof False-of-False
+ImpRefl (False).
 </code></p>
 
 <h3>Conditional Proof (<code class="c">→</code> Introduction)</h3>
@@ -668,15 +662,15 @@ ImpRefl false
 <span class="v">Q</span></span></span>.</p>
 
 <p><strong>Proof term</strong>: Lambda abstraction which proves
-<code class="c"><span class="i m v">P</span> → <!--
---><span class="i m v">Q</span></code>:</p>
+<code class="c"><span class="i m v">P</span> →<!--
+--> <span class="i m v">Q</span></code>:</p>
 
 <p style="text-align:center;width:100%;"><!--
---><code class="c">⅂<span class="i m v">i</span> : <!--
---><span class="i m v">P</span>.<span class="i m v">E</span></code></p>
+--><code class="c">⅂<span class="i m v">a</span> :<!--
+--> <span class="i m v">P</span>.<span class="i m v">E</span></code></p>
 
 <p>This is a <em>conditional proof</em> on premise
-<span class="i m"><code class="c"><span class="i m v">i</span></code>
+<span class="i m"><code class="c"><span class="i m v">a</span></code>
 <span class="q">:</span> <code class="c"><!--
 --><span class="i m v">P</span></code></span>
 of proof <span class="i m"><code class="c"><!--
@@ -684,28 +678,28 @@ of proof <span class="i m"><code class="c"><!--
 <code class="c"><span class="i m v">Q</span></code></span>.</p>
 
 <p><strong>Judgment rule</strong>:
-<code class="c"><span class="i m v">i</span></code>
+<code class="c"><span class="i m v">a</span></code>
 must not be bound in <span class="i m">Γ</span>,
 <code class="c"><span class="i m v">P</span></code>
 must be closed in <span class="i m">Γ</span>, and
 <code class="c"><span class="i m v">E</span></code>
 must prove <code class="c"><span class="i m v">Q</span></code> in
 <span class="i m">Γ</span>,
-<code class="c"><span class="i m v">i</span></code>
+<code class="c"><span class="i m v">a</span></code>
 <span class="q">:</span> <code class="c"><span class="i m"><!--
 --><span class="v">P</span></span></code>.</p>
 
 <p><div class="rule"><div class="rulebox m">
 
-<!-- i ∉ Γ -->
-<p><code class="c"><span class="i m v">i</span></code> ∉ Γ</p>
+<!-- a ∉ Γ -->
+<p><code class="c"><span class="i m v">a</span></code> ∉ Γ</p>
 
 <!-- Γ ⊢ P -->
 <p>Γ <span class="q">⊢</span>
 <code class="c"><span class="i m v">P</span></code></p>
 
-<!-- Γ, i : P ⊢ E : Q -->
-<p>Γ, <code class="c"><span class="i m v">i</span></code>
+<!-- Γ, a : P ⊢ E : Q -->
+<p>Γ, <code class="c"><span class="i m v">a</span></code>
 <span class="q">:</span> <code class="c"><span class="i m"><!--
 --><span class="v">P</span></span></code> <span class="q">⊢</span>
 <code class="c"><span class="i m v">E</span></code>
@@ -714,9 +708,9 @@ must prove <code class="c"><span class="i m v">Q</span></code> in
 
 <hr>
 
-<!-- Γ ⊢ ⅂i : P.E : P -> Q -->
+<!-- Γ ⊢ ⅂a : P.E : P -> Q -->
 Γ <span class="q">⊢</span>
-<code class="c">⅂<span class="i m v">i</span><!--
+<code class="c">⅂<span class="i m v">a</span><!--
 --> : <span class="i m v">P</span>.<span class="i m v">E</span></code><!--
 --> <span class="q">:</span> <code class="c"><span class="i m"><!--
 --><span class="v">P</span></span><!--
@@ -724,7 +718,7 @@ must prove <code class="c"><span class="i m v">Q</span></code> in
 
 </div></div></p>
 
-<p><strong>Mechanics</strong>: <code class="c">⅂Pa : t.</code>
+<p><strong>Mechanics</strong>: <code class="c">⅂pa : t.</code>
 discharges the antecedent
 <code class="c">t →</code>
 in the goal and introduces a premise
@@ -734,21 +728,20 @@ in the context. The body uses these like function parameters.</p>
 
 <p><strong>Example</strong>:</p>
 
-<p><code class="a">theorem Syllogism :
-∀a b.a → (a → b) → b
+<p><code class="a">theorem Imp-syl ∀a b.
+a → (a → b) → b.
 
+proof Imp-syl Ʌa b.
+⅂pa : a.
+⅂pab : a → b.
+pab pa.</code></p>
 
-Ʌa b.
-⅂Pa : a.
-⅂Pab : a → b.
-Pab pa.</code></p>
-
-<p>The body <code class="c">Pab pa</code> proves
+<p>The body <code class="c">pab pa</code> proves
 <code class="c">b</code> for arbitrary propositions
 <code class="c">a</code> and <code class="c">b</code> and premises
 <span class="i m"><code class="c">pa</code> <span class="q">:</span>
 <code class="c">a</code></span> and
-<span class="i m"><code class="c">Pab</code>
+<span class="i m"><code class="c">pab</code>
 <span class="q">:</span> <code class="c">a → b</code></span>.</p>
 
 <h3>Modus Ponens (<code class="c">→</code> Elimination)</h3>
@@ -810,10 +803,10 @@ must prove <code class="c"><span class="i m v">P</span><!--
 </div></div><p></p>
 
 <p><strong>Mechanics</strong>: When
-<span><code class="c">Pab</code> <span class="q">:</span>
+<span><code class="c">pab</code> <span class="q">:</span>
 <code class="c">a → b</code> and
 <span><code class="c">pa</code> <span class="q">:</span>
-<code class="c">a</code>, <code class="c">Pab pa</code> proves
+<code class="c">a</code>, <code class="c">pab pa</code> proves
 <span class="nw"><code class="c">b</code>.</span>
 This applies the proof to specific premises.</span></span></p>
 
