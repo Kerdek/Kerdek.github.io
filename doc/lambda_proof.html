@@ -366,7 +366,7 @@ is a type abstraction which introduces the type variable
 <span class="nw"><!--
 --><code class="c"><span class="pi">a</span></code>.</span>
 The conditional proof <code class="c"><span class="fs">⅂</span><!--
---><span class="fi">pa</span> <span class="fs">:</span><!--
+--><span class="fi">pa</span><span class="fs">:</span><!--
 --> <span class="pi">Real</span> <span class="pi">a</span><!--
 --><span class="fs">.</span></code> is an abstraction which
 introduces proof <code class="c"><span class="fi">pa</span></code>
@@ -666,7 +666,7 @@ ImpRefl (False).
 --> <span class="i m v">Q</span></code>:</p>
 
 <p style="text-align:center;width:100%;"><!--
---><code class="c">⅂<span class="i m v">a</span> :<!--
+--><code class="c">⅂<span class="i m v">a</span>:<!--
 --> <span class="i m v">P</span>.<span class="i m v">E</span></code></p>
 
 <p>This is a <em>conditional proof</em> on premise
@@ -718,7 +718,7 @@ must prove <code class="c"><span class="i m v">Q</span></code> in
 
 </div></div></p>
 
-<p><strong>Mechanics</strong>: <code class="c">⅂pa : t.</code>
+<p><strong>Mechanics</strong>: <code class="c">⅂pa: t.</code>
 discharges the antecedent
 <code class="c">t →</code>
 in the goal and introduces a premise
@@ -732,8 +732,8 @@ in the context. The body uses these like function parameters.</p>
 a → (a → b) → b.
 
 proof Imp-syl Ʌa b.
-⅂pa : a.
-⅂pab : a → b.
+⅂pa: a.
+⅂pab: a → b.
 pab pa.</code></p>
 
 <p>The body <code class="c">pab pa</code> proves
