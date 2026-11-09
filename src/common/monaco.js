@@ -12,5 +12,5 @@ require.config({
     }
 });
 await new Promise(cb => require(['vs/editor/editor.main'], cb));
-export const { languages, editor } = monaco;
+export const { languages, editor, Uri, Position, Range, MarkerSeverity } = monaco;
 //# sourceMappingURL=monaco.js.map

@@ -1,4 +1,4 @@
-import { Run, run } from './run.js'
+import { Run, run } from '../common/util/run3.js'
 import { tr } from '../common/util/di.js'
 import { TextPosition, TextRange } from './scanner.js'
 import { Token, Tokenizer, Tokens } from './tokenizer.js'
@@ -51,7 +51,7 @@ read_proposition =
     const
       w = pos(),
       wli = read_comments(s),
-      dtu = dt('proposition')
+      dtu = dt('type_symbol')
     if (dtu) {
       return call(main, b => {
       return ret({ k: 'dot', m: [],
@@ -68,7 +68,7 @@ read_proposition =
     const
       w = pos(),
       wli = read_comments(s),
-      dtu = dt('proposition')
+      dtu = dt('type_symbol')
     if (dtu) {
       return call(main, b => {
       return ret({ k: 'dot', m: [],
@@ -95,8 +95,8 @@ read_proposition =
     ret({ k: 'ref', m: [], i })),
 
   primary = () =>
-    tr(al('proposition'), universal) ||
-    tr(lm('proposition'), lambda) ||
+    tr(al('type_symbol'), universal) ||
+    tr(lm('type_symbol'), lambda) ||
     tr(lp(), parens) ||
     tr(pp(), reference),
 
@@ -146,7 +146,7 @@ read_proof =
   const
     w = pos(),
     wli = read_comments(s),
-    dtu = dt('proof')
+    dtu = dt('term_symbol')
   if (dtu) {
     return call(lead, b => {
     return ret({ k: 'dot', m: [], ...l ? { l } : {}, wldt: wli, dtu, b }) }) }
@@ -161,7 +161,7 @@ read_proof =
   const
     wi = pos(),
     wldt = read_comments(s),
-    dtu = dt('proof')
+    dtu = dt('term_symbol')
   if (dtu) {
     return call(main, b => {
     return ret({ k: 'dot', m: [],
@@ -175,16 +175,16 @@ read_proof =
     return ret({ k: 'cdp', m: [], ...l ? { l } : {}, wli, i, b }) }) }
   const
     wllb = wli,
-    lbu = lb('proof'),
+    lbu = lb('term_symbol'),
     wj = pos(),
     wlbi = read_comments(s),
     j = pf(),
     wcn = pos(),
     wicn = read_comments(s),
-    cnu = cn('proof'),
+    cnu = cn('term_symbol'),
     t = read_proposition(s),
     wrb = pos(),
-    rbu = rb('proof')
+    rbu = rb('term_symbol')
   const
     m = [
       ...lbu ? [
@@ -205,10 +205,10 @@ read_proof =
     i = pp(),
     wce = pos(),
     wice = read_comments(s),
-    ceu = ce('proof'),
+    ceu = ce('term_symbol'),
     d = read_proposition(s),
     wdt = pos(),
-    dtu = dt('proof')
+    dtu = dt('term_symbol')
   return call(lead, b => {
   return ret({ k: 'def', m: [
       ...i ? [] : [
@@ -226,14 +226,14 @@ read_proof =
     i = pf(),
     wicn = read_comments(s),
     wcn = pos(),
-    ceup = ce('proof'),
-    cnu = !ceup && cn('proof'),
+    ceup = ce('term_symbol'),
+    cnu = !ceup && cn('term_symbol'),
     t = cnu && read_proposition(s),
-    ceu = ceup || ce('proof')
+    ceu = ceup || ce('term_symbol')
   return call(lead, d => {
   const
     wdt = pos(),
-    dtu = dt('proof')
+    dtu = dt('term_symbol')
   return call(lead, b => {
   const
     m = [
@@ -251,7 +251,7 @@ read_proof =
   const
     d = read_proposition(s),
     wdt = pos(),
-    dtu = dt('proof')
+    dtu = dt('term_symbol')
   return call(lead, b => {
   return ret({ k: 'prt', m: [
       ...dtu ? [] : [
@@ -262,7 +262,7 @@ read_proof =
   return call(main, b => {
   const
     wrp = pos(),
-    rbu = rb('proof')
+    rbu = rb('term_symbol')
   return ret({ k: 'par', m: [
       ...rbu ? [] : [
         msg({ begin: lbu.w.begin, end: wrp }, `Syntax Error`, `\`[\` here is not matched.`)]],
@@ -276,8 +276,8 @@ read_proof =
   tr(cp(), premise) ||
   tr(ll(), definition) ||
   tr(le(), lemma) ||
-  tr(pt('proof'), print) ||
-  tr(lb('proof'), brackets) ||
+  tr(pt('term_symbol'), print) ||
+  tr(lb('term_symbol'), brackets) ||
   tr(pf(), reference),
 
   prop = (): ConcreteProposition | null => {
@@ -344,7 +344,7 @@ read_article =
     i = li(),
     wdt = pos(),
     widt = read_comments(s),
-    dtu = dt('top')
+    dtu = dt('document_symbol')
   return call(main, a =>
   ret({ a, k: 'imp', m: [...m,
       ...i ? [] : [
@@ -360,7 +360,7 @@ read_article =
     i = pf(),
     wdt = pos(),
     widt = read_comments(s),
-    dtu = dt('top')
+    dtu = dt('document_symbol')
   return call(main, a =>
   ret({ a, k: 'exf', m: [...m,
       ...i ? [] : [
@@ -374,10 +374,10 @@ read_article =
     wli = read_comments(s),
     i = pp(),
     wice = read_comments(s),
-    ceu = ce('top'),
+    ceu = ce('document_symbol'),
     d = read_proposition(s),
     wdt = pos(),
-    dtu = dt('top')
+    dtu = dt('document_symbol')
   return call(main, a =>
   ret({ a, k: 'def', m: [...m,
       ...i ?
@@ -393,7 +393,7 @@ read_article =
     wld = read_comments(s),
     d = read_proposition(s),
     wdt = pos(),
-    dtu = dt('top')
+    dtu = dt('document_symbol')
   return call(main, a =>
   ret({ a, k: 'prt', m: [...m,
       ...dtu ? [] : [
@@ -407,13 +407,13 @@ read_article =
     i = pf(),
     wicn = read_comments(s),
     wcn = pos(),
-    cnu = cn('top'),
+    cnu = cn('document_symbol'),
     t = read_proposition(s),
     wce = pos(),
-    ceu = ce('top'),
+    ceu = ce('document_symbol'),
     d = read_proof(s),
     wdt = pos(),
-    dtu = dt('top')
+    dtu = dt('document_symbol')
   return call(main, a =>
   ret({ a, k: 'thm', m: [...m,
       ...i ? [] : [
@@ -447,7 +447,7 @@ main = branch(() => {
     tr(ip(), impor) ||
     tr(ep(), expor) ||
     tr(df(), define) ||
-    tr(pt('top'), print) ||
+    tr(pt('document_symbol'), print) ||
     tr(th(), theorem)
   if (!l) {
     return ret({ a: null, k: 'trl', m, wal }) }

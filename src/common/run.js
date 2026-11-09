@@ -1,53 +1,57 @@
-/*
-
-run.ts
-Theodoric Stier
-All rights reserved 2024
-
-This module assists in writing
-non-recursive algorithms on recursive
-data structures.
-
-*/
-const ret = [];
-const jmp = x => [x];
-const call = (x, y) => [x, y];
-const run = s => {
-    const y = [s];
-    let ops = 0;
-    for (;;) {
-        if (ops++ > 1e7) {
-            throw new Error("Too many steps.");
+// sync and promise trampolines
+export const run_v = (s) => {
+    const z = [];
+    let f = s({
+        branch: u => u,
+        proc: u => (...a) => () => u(...a),
+        call: (u, v) => (z.push(v), f = u, true),
+        cc: u => (f = u, true),
+        ret: () => !!(f = z.pop())
+    });
+    while (f())
+        ;
+}, run = (s) => {
+    const z = [];
+    let f = s({
+        branch: u => u,
+        proc: u => (...a) => () => u(...a),
+        call: (u, v) => (z.push(v), f = u, true),
+        cc: u => (f = u, true),
+        ret: x => {
+            const t = z.pop();
+            f = t ? () => t(x) : x;
+            return !!t;
         }
-        const f = y.shift();
-        if (!f) {
-            return;
+    });
+    while (f())
+        ;
+    return f;
+}, run_va = async (s) => {
+    const z = [];
+    let f = s({
+        branch: u => u,
+        proc: u => (...a) => () => u(...a),
+        call: (u, v) => (z.push(v), f = u, true),
+        cc: u => (f = u, true),
+        ret: () => !!(f = z.pop())
+    });
+    while (await f())
+        ;
+}, run_a = async (s) => {
+    const z = [];
+    let f = s({
+        branch: u => u,
+        proc: u => (...a) => () => u(...a),
+        call: (u, v) => (z.push(v), f = u, true),
+        cc: u => (f = u, true),
+        ret: x => {
+            const t = z.pop();
+            f = t ? () => t(x) : x;
+            return !!t;
         }
-        y.unshift(...f());
-    }
-};
-const async_run = async (s) => {
-    const y = [s];
-    let ops = 0;
-    for (;;) {
-        if (ops++ > 1e7) {
-            throw new Error("Too many steps.");
-        }
-        const f = y.shift();
-        if (!f) {
-            return;
-        }
-        y.unshift(...await f());
-    }
-};
-export const homproc = e => {
-    let d;
-    run(e((x, v) => call(x, () => v(d)), x => jmp(x), v => (d = v, ret)));
-    return d;
-};
-export const async_homproc = async (e) => {
-    let d;
-    await async_run(e((x, v) => call(x, () => v(d)), x => jmp(x), v => (d = v, ret)));
-    return d;
+    });
+    while (await f())
+        ;
+    return f;
 };
 //# sourceMappingURL=run.js.map

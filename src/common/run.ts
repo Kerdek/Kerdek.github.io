@@ -1,75 +1,91 @@
-/*
+// sync and promise trampolines
 
-run.ts
-Theodoric Stier
-All rights reserved 2024
+export type EntryPointV = <P, R>(t: RunV<P, R>) => P
+export type RunV<P, R> = {
+branch: (u: () => R) => P,
+proc: <A extends any[]>(u: (...a: A) => R) => (...a: A) => P,
+call: (u: P, v: () => R) => R,
+cc: (u: P) => R,
+ret: () => R }
 
-This module assists in writing
-non-recursive algorithms on recursive
-data structures.
+export type EntryPoint<V> = <P, R>(t: Run<V, P, R>) => P
+export type Run<V, P, R> = {
+branch: (u: () => R) => P,
+proc: <A extends any[]>(u: (...a: A) => R) => (...a: A) => P,
+call: (u: P, v: (x: V) => R) => R,
+cc: (u: P) => R,
+ret: (x: V) => R }
 
-*/
+export type EntryPointVA = <P, R>(t: RunVA<P, R>) => P
+export type RunVA<P, R> = {
+branch: (u: () => Promise<R>) => P,
+proc: <A extends any[]>(u: (...a: A) => Promise<R>) => (...a: A) => P,
+call: (u: P, v: () => Promise<R>) => R,
+cc: (u: P) => R,
+ret: () => R }
 
-type Stack = Process[]
-type Branch = [] | [Process] | [Process, Process]
-type Process = () => Branch
-type Run = (x: Process) => void
+export type EntryPointA<V> = <P, R>(t: RunAsync<V, P, R>) => P
+export type RunAsync<V, P, R> = {
+branch: (u: () => Promise<R>) => P,
+proc: <A extends any[]>(u: (...a: A) => Promise<R>) => (...a: A) => P,
+call: (u: P, v: (x: V) => Promise<R>) => R,
+cc: (u: P) => R,
+ret: (x: V) => R }
 
-type AsyncStack = AsyncProcess[]
-type AsyncBranch = [] | [AsyncProcess] | [AsyncProcess, AsyncProcess]
-type AsyncProcess = () => Promise<AsyncBranch>
-type AsyncRun = (x: AsyncProcess) => Promise<void>
+export const
 
-type HomCall<Result, RealWorld> = (u: () => RealWorld, v: (x: Result) => RealWorld) => RealWorld
-type HomCC<_Result, RealWorld> = (u: () => RealWorld) => RealWorld
-type HomRet<Result, RealWorld> = (x: Result) => RealWorld
+run_v = (s: EntryPointV): void => {
+type R = boolean
+type P = () => R
+const z: (() => R)[] = []
+let f: any = s<P, R>({
+  branch: u => u,
+  proc: u => (...a) => () => u(...a),
+  call: (u, v) => (z.push(v), f = u, true),
+  cc: u => (f = u, true),
+  ret: () => !!(f = z.pop()) })
+while (f()); },
 
-type AsyncHomCall<Result, RealWorld> = (u: () => Promise<RealWorld>, v: (x: Result) => Promise<RealWorld>) => RealWorld
-type AsyncHomCC<_Result, RealWorld> = (u: () => Promise<RealWorld>) => RealWorld
-type AsyncHomRet<Result, RealWorld> = (x: Result) => RealWorld
+run = <V>(s: <P, R>(t: Run<V, P, R>) => P): V => {
+type R = boolean
+type P = () => R
+const z: ((x: V) => R)[] = []
+let f: any = s<P, R>({
+  branch: u => u,
+  proc: u => (...a) => () => u(...a),
+  call: (u, v) => (z.push(v), f = u, true),
+  cc: u => (f = u, true),
+  ret: x => {
+    const t = z.pop()
+    f = t ? () => t(x) : x
+    return !!t } })
+while (f());
+return f },
 
-export type HomStem<Result> = <RealWorld>(call: HomCall<Result, RealWorld>, cc: HomCC<Result, RealWorld>, ret: HomRet<Result, RealWorld>) => () => RealWorld
+run_va = async (s: EntryPointVA): Promise<void> => {
+type R = boolean
+type P = () => Promise<R>
+const z: (() => Promise<R>)[] = []
+let f: any = s<P, R>({
+  branch: u => u,
+  proc: u => (...a) => () => u(...a),
+  call: (u, v) => (z.push(v), f = u, true),
+  cc: u => (f = u, true),
+  ret: () => !!(f = z.pop()) })
+while (await f()); },
 
-type HomProc = <Result>(e: HomStem<Result>) => Result
-type AsyncHomProc = <Result>(e: <RealWorld>(call: AsyncHomCall<Result, RealWorld>, cc: AsyncHomCC<Result, RealWorld>, ret: AsyncHomRet<Result, RealWorld>) => () => Promise<RealWorld>) => Promise<Result>
-
-const ret: Branch = []
-const jmp: {
-  (destination: () => Branch): Branch
-  (destination: () => Promise<AsyncBranch>): AsyncBranch }= x => [x] as any
-
-const call: {
-  (destination: () => Branch, then: Process): Branch
-  (destination: () => Promise<AsyncBranch>, then: AsyncProcess): AsyncBranch } = (x, y) => [x, y] as any
-
-const run: Run = s => {
-const y: Stack = [s]
-let ops: number = 0
-for (;;) {
-  if (ops++ > 1e7) {
-    throw new Error("Too many steps.") }
-  const f = y.shift()
-  if (!f) {
-    return }
-  y.unshift(...f()) } }
-
-const async_run: AsyncRun = async s => {
-const y: AsyncStack = [s]
-let ops: number = 0
-for (;;) {
-  if (ops++ > 1e7) {
-    throw new Error("Too many steps.") }
-  const f = y.shift()
-  if (!f) {
-    return }
-  y.unshift(...await f()) } }
-
-export const homproc: HomProc = e => {
-let d!: any
-run(e((x, v) => call(x, () => v(d)), x => jmp(x), v => (d = v, ret)))
-return d }
-
-export const async_homproc: AsyncHomProc = async e => {
-let d!: any
-await async_run(e((x, v) => call(x, () => v(d)), x => jmp(x), v => (d = v, ret)))
-return d }
+run_a = async <V>(s: EntryPointA<V>): Promise<V> => {
+type R = boolean
+type P = () => Promise<R>
+const z: ((x: V) => Promise<R>)[] = []
+let f: any = s<P, R>({
+  branch: u => u,
+  proc: u => (...a) => () => u(...a),
+  call: (u, v) => (z.push(v), f = u, true),
+  cc: u => (f = u, true),
+  ret: x => {
+    const t = z.pop()
+    f = t ? () => t(x) : x
+    return !!t } })
+while (await f());
+return f }

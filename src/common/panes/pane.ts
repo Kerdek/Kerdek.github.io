@@ -16,7 +16,7 @@ user_size?: true | false } & (
 { size: [number, number] } |
 { auto_size: true } )
 
-export type CreatePane = (element: HTMLElement, options?: CreatePaneOptions) => Pane
+export type CreatePane = (element: HTMLElement, options?: CreatePaneOptions) => Promise<Pane>
 
 type PaneMeta = {
   all: HTMLElement,
@@ -53,7 +53,7 @@ set_emph() }
 
 let pane_spawn = 0
 
-export const create_pane: CreatePane = (element, options): Pane => {
+export const create_pane: CreatePane = async (element, options) => {
 
   pane_spawn += 100
 

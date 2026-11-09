@@ -1,5 +1,5 @@
 import { di, visit } from '../common/util/di.js';
-import { run } from './run.js';
+import { run } from '../common/util/run3.js';
 export const visit_concrete_proposition = visit, visit_concrete_proof = visit, visit_concrete_statement = visit, walk_concrete_article = (c) => {
     const { proposition: p, proof: o, statement: n } = c, typ = run(({ proc, call, ret }) => {
         const main = proc(visit_concrete_proposition({

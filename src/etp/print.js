@@ -1,4 +1,4 @@
-import { run } from './run.js';
+import { run } from '../common/util/run3.js';
 import { di, mod } from '../common/util/di.js';
 import { elm, txt } from '../common/util/dom.js';
 import { top_border } from '../common/panes/ui.js';
@@ -13,19 +13,19 @@ const highlight_text = (c) => (s) => `<span style='color:${c};'>${escapeHTML(s)}
     e.append(txt(s));
 }), hparens = ({ pps: tys }, c, s) => !c ? s : [tys(`(`), ...s, tys(`)`)], pos = (w) => `(${w.line}, ${w.col})`;
 export const escapeHTML = (s) => s.replace(/[\u00A0-\u9999<>\&\\]/g, i => '&#' + i.charCodeAt(0) + ';'), highlight_text_format = {
-    pp: highlight_text(colors.proposition),
-    pf: highlight_text(colors.proof),
-    pps: highlight_text(colors.propositionsymbol),
-    pfs: highlight_text(colors.proofsymbol),
+    pp: highlight_text(colors.type_text),
+    pf: highlight_text(colors.term_text),
+    pps: highlight_text(colors.type_symbol),
+    pfs: highlight_text(colors.term_symbol),
     div: (...x) => `${x.join('')}\n`,
     par: (...x) => `${x.join('')}\n`,
     txt: x => x,
     typ: x => x
 }, html_format = {
-    pp: highlight(colors.proposition),
-    pf: highlight(colors.proof),
-    pps: highlight(colors.propositionsymbol),
-    pfs: highlight(colors.proofsymbol),
+    pp: highlight(colors.type_text),
+    pf: highlight(colors.term_text),
+    pps: highlight(colors.type_symbol),
+    pfs: highlight(colors.term_symbol),
     div: (...x) => mod(elm('div'), e => { assign(e.style, { ...top_border }), e.append(...x); }),
     par: (...x) => mod(elm('div'), e => { e.append(...x); }),
     txt: txt,
@@ -100,7 +100,7 @@ export const print_messages = (g, curse) => g.map(({ w, m, c }) => mod(elm('div'
                 title: 'Click to highlight the text.'
             });
             assign(e.style, {
-                color: colors.symbol,
+                color: colors.document_symbol,
                 cursor: 'pointer'
             });
             e.addEventListener('click', () => curse(w));

@@ -1,4 +1,4 @@
-import { run } from './run.js';
+import { run } from '../common/util/run3.js';
 import { di, uniques } from '../common/util/di.js';
 import { msg, look_up_proposition_rho, proposition_bound_pi, safe, undefine } from './context.js';
 import { visit_proposition } from './abstract.js';

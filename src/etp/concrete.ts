@@ -1,6 +1,6 @@
-import { Values, Visit, di, visit } from '../common/util/di.js'
+import { ValueOf, Visit, di, visit } from '../common/util/di.js'
 import { Messages } from './context.js'
-import { Run, run } from './run.js'
+import { Run, run } from '../common/util/run3.js'
 import { TextRange } from './scanner.js'
 import { Token, Tokens } from './tokenizer.js'
 
@@ -20,14 +20,14 @@ export type ConcretePropositions =
 { [K in keyof ConcretePropositionsT]:
   { k: K, m: Messages } & ConcretePropositionsT[K] }
 export type ConcretePropositionKind = keyof ConcretePropositions
-export type ConcreteProposition = Values<ConcretePropositions>
+export type ConcreteProposition = ValueOf<ConcretePropositions>
 
 export type ConcretePropositionResults<T> =
 { [K in ConcretePropositionKind]:
   { [F in keyof ConcretePropositionsT[K] as ConcretePropositionsT[K][F] extends
     ConcreteProposition ? F : never]:
     T } }
-export type ConcretePropositionResult<T> = Values<ConcretePropositionResults<T>>
+export type ConcretePropositionResult<T> = ValueOf<ConcretePropositionResults<T>>
 
 export type ConcretePropositionConversion<T> =
 { [K in ConcretePropositionKind]:
@@ -54,7 +54,7 @@ err: { w: TextRange, b: ConcreteProposition } }
 export type ConcreteProofs =
 { [K in keyof ConcreteProofsT]: { k: K, m: Messages } & ConcreteProofsT[K] }
 export type ConcreteProofKind = keyof ConcreteProofs
-export type ConcreteProof = Values<ConcreteProofs>
+export type ConcreteProof = ValueOf<ConcreteProofs>
 
 export type ConcreteProofResults<T, U> =
 { [K in ConcreteProofKind]:
@@ -63,7 +63,7 @@ export type ConcreteProofResults<T, U> =
     ConcreteProofsT[K][F] extends ConcreteProof ? T :
     ConcreteProofsT[K][F] extends ConcreteProposition ? U :
     never }}
-export type ConcreteProofResult<T, U> = Values<ConcreteProofResults<T, U>>
+export type ConcreteProofResult<T, U> = ValueOf<ConcreteProofResults<T, U>>
 
 export type ConcreteProofConversion<T, U> =
 { [K in ConcreteProofKind]: (r: ConcreteProofResults<T, U>[K], e: ConcreteProofs[K]) => T }
@@ -79,7 +79,7 @@ thm: { a: ConcreteStatement | null, wal: Tokens, l: Token, wli: Tokens, i: Token
 export type ConcreteStatements = {
   [K in keyof ConcreteStatementsT]: { k: K, m: Messages } & ConcreteStatementsT[K] }
 export type ConcreteStatementKind = keyof ConcreteStatements
-export type ConcreteStatement = Values<ConcreteStatements>
+export type ConcreteStatement = ValueOf<ConcreteStatements>
 
 export type ConcreteStatementResults<S, T, U> =
 { [K in ConcreteStatementKind]:
@@ -89,7 +89,7 @@ export type ConcreteStatementResults<S, T, U> =
     ConcreteStatementsT[K][F] extends ConcreteProof ? T :
     ConcreteStatementsT[K][F] extends ConcreteProposition ? U :
     never }}
-export type ConcreteStatementResult<S, T, U> = Values<ConcreteStatementResults<S, T, U>>
+export type ConcreteStatementResult<S, T, U> = ValueOf<ConcreteStatementResults<S, T, U>>
 
 export type ConcreteStatementConversion<S, T, U> =
 { [K in ConcreteStatementKind]: (r: ConcreteStatementResults<S, T, U>[K], e: ConcreteStatements[K]) => S }

@@ -7,7 +7,7 @@ import { ConcreteStatement } from './concrete.js'
 import { Messages, Module, Prefix, look_up_proof, look_up_proposition, rho } from './context.js'
 import { add_files_changed_listener, files } from './fs.js'
 import { article_messages } from './messages.js'
-import { languages } from './monaco.js'
+import { languages } from '../common/monaco.js'
 import { position_from_monaco, range_to_monaco } from './monaco_range.js'
 import { highlight_text_format, print_message_contents, print_proposition, text_format } from './print.js'
 import { aka } from './proposition.js'
@@ -188,18 +188,18 @@ return s && {
   contents: (
       s.k === 'proof' &&
         tr(lookup(c.proof_transcript, s.e), g =>
-        !g.found ? [
-          `(proof) ${p(g.tau).join('')}`] : [
-          `(proof) ${p(g.found).join('')}`,
-          `(expected) ${p(g.tau).join('')}`]) ||
+        !g[1].found ? [
+          `(proof) ${p(g[1].tau).join('')}`] : [
+          `(proof) ${p(g[1].found).join('')}`,
+          `(expected) ${p(g[1].tau).join('')}`]) ||
       s.k === 'proposition' &&
         tr(s.e ? lookup(c.proof_transcript, s.e) :
           lookup(c.statement_transcript, s.n), g => [
-        `(proposition) ${p(aka(s.t, rho(g))).join('')}`]) ||
+        `(proposition) ${p(aka(s.t, rho(g[1]))).join('')}`]) ||
       s.k === 'binding' &&
         tr(s.e ? lookup(c.proof_transcript, s.e) :
           lookup(c.statement_transcript, s.n), g =>
-        tr(look_up_proof(s.i, g), j => [
+        tr(look_up_proof(s.i, g[1]), j => [
         `(binding) ${p(j.t).join('')}`])) ||
       []).map(value => ({ supportHtml: true, value })) } } })
 
@@ -217,7 +217,7 @@ languages.registerDefinitionProvider('semity', {
     null :
   tr('e' in s ? lookup(c.proof_transcript, s.e) : lookup(c.statement_transcript, s.n), g =>
   s.k === 'proposition' && s.t.k === 'ref' ?
-    tr(look_up_proposition(s.t.i, g), to_monaco) :
+    tr(look_up_proposition(s.t.i, g[1]), to_monaco) :
   s.k === 'proof' && s.e.k === 'ref' ?
-    tr(look_up_proof(s.e.i, g), to_monaco) :
+    tr(look_up_proof(s.e.i, g[1]), to_monaco) :
   null) } })

@@ -4,8 +4,9 @@ import { elm, hover_accent, txt } from '../util/dom.js'
 
 export type MenuBarItem = {
 label: string,
-tip: string,
-items: DropDownMenuItem[] }
+tip: string } & ({
+handler: () => void } | {
+items: DropDownMenuItem[] })
 
 export type DropDownMenuItemText = {
 type: 'text',
@@ -177,7 +178,7 @@ return [node, mod(elm('div'), e => {
   e.append(
     node, elm('br')) })] },
 
-menu_bar_item = ({ label, tip, items}: MenuBarItem) =>
+menu_bar_item = (i: MenuBarItem) =>
 mod(elm('div'), e => {
   assign(e.style, {
     ...right_border,
@@ -191,16 +192,17 @@ mod(elm('div'), e => {
     paddingRight: '8px',
     cursor: 'pointer' })
   e.tabIndex = 0
-  simple_tool_tip(e, tip)
+  simple_tool_tip(e, i.tip)
   e.addEventListener
   hover_accent(e, {
     background: colors.background }, {
     background: colors.ruler })
   e.addEventListener('pointerdown', ev => {
     const bcr = e.getBoundingClientRect()
-    drop_down_menu(bcr.left, bcr.bottom, ev.pointerId, items) })
+    'items' in i ? drop_down_menu(bcr.left, bcr.bottom, ev.pointerId, i.items) :
+    i.handler() })
   e.append(
-    txt(label)) }),
+    txt(i.label)) }),
 
 menu_bar = (items: MenuBarItem[]) =>
 mod(elm('div'), e => {
@@ -258,7 +260,7 @@ for (const item of items) {
           paddingRight: '8px',
           ...('handler' in item) ? {
             cursor: 'pointer' } : {
-            color: colors.symbol } })
+            color: colors.document_symbol } })
         if ('handler' in item) {
           hover_accent(e, {
             background: colors.background }, {

@@ -1,4 +1,4 @@
-import { run } from './run.js';
+import { run } from '../common/util/run3.js';
 import { tr } from '../common/util/di.js';
 import { msg } from './context.js';
 export const read_comments = (s) => {
@@ -40,7 +40,7 @@ export const read_comments = (s) => {
     return r;
 }, read_proposition = run(({ proc, branch, call, cc, ret }) => (s) => {
     const { pos, pp, al, lm, dt, lp, rp, op } = s, universal = proc((l) => {
-        const w = pos(), wli = read_comments(s), dtu = dt('proposition');
+        const w = pos(), wli = read_comments(s), dtu = dt('type_symbol');
         if (dtu) {
             return call(main, b => {
                 return ret({ k: 'dot', m: [],
@@ -58,7 +58,7 @@ export const read_comments = (s) => {
                 ...l ? { l } : {}, wli, ...i ? { i } : {}, b });
         });
     }), lambda = proc((l) => {
-        const w = pos(), wli = read_comments(s), dtu = dt('proposition');
+        const w = pos(), wli = read_comments(s), dtu = dt('type_symbol');
         if (dtu) {
             return call(main, b => {
                 return ret({ k: 'dot', m: [],
@@ -85,8 +85,8 @@ export const read_comments = (s) => {
                 ],
                 lpu, b, ...rpu ? { rpu } : {} });
         });
-    }), reference = proc((i) => ret({ k: 'ref', m: [], i })), primary = () => tr(al('proposition'), universal) ||
-        tr(lm('proposition'), lambda) ||
+    }), reference = proc((i) => ret({ k: 'ref', m: [], i })), primary = () => tr(al('type_symbol'), universal) ||
+        tr(lm('type_symbol'), lambda) ||
         tr(lp(), parens) ||
         tr(pp(), reference), rhs = proc((l) => {
         const wlr = read_comments(s);
@@ -125,7 +125,7 @@ export const read_comments = (s) => {
     return main;
 }), read_proof = run(({ proc, branch, call, cc, ret }) => (s) => {
     const { pos, pp, pf, dt, lp, rp, lb, rb, cn, ce, ui, cp, ll, le, pt } = s, universal = proc((l) => {
-        const w = pos(), wli = read_comments(s), dtu = dt('proof');
+        const w = pos(), wli = read_comments(s), dtu = dt('term_symbol');
         if (dtu) {
             return call(lead, b => {
                 return ret({ k: 'dot', m: [], ...l ? { l } : {}, wldt: wli, dtu, b });
@@ -141,7 +141,7 @@ export const read_comments = (s) => {
                 ...l ? { l } : {}, wli, ...i ? { i } : {}, b });
         });
     }), premise = proc((l) => {
-        const wi = pos(), wldt = read_comments(s), dtu = dt('proof');
+        const wi = pos(), wldt = read_comments(s), dtu = dt('term_symbol');
         if (dtu) {
             return call(main, b => {
                 return ret({ k: 'dot', m: [],
@@ -155,7 +155,7 @@ export const read_comments = (s) => {
                 return ret({ k: 'cdp', m: [], ...l ? { l } : {}, wli, i, b });
             });
         }
-        const wllb = wli, lbu = lb('proof'), wj = pos(), wlbi = read_comments(s), j = pf(), wcn = pos(), wicn = read_comments(s), cnu = cn('proof'), t = read_proposition(s), wrb = pos(), rbu = rb('proof');
+        const wllb = wli, lbu = lb('term_symbol'), wj = pos(), wlbi = read_comments(s), j = pf(), wcn = pos(), wicn = read_comments(s), cnu = cn('term_symbol'), t = read_proposition(s), wrb = pos(), rbu = rb('term_symbol');
         const m = [
             ...lbu ? [
                 ...j ? [
@@ -177,7 +177,7 @@ export const read_comments = (s) => {
             return ret({ k: 'cdt', m, ...l ? { l } : {}, wllb, ...lbu ? { lbu } : {}, wlbi, ...j ? { i: j } : {}, wicn, ...cnu ? { cnu } : {}, t, ...rbu ? { rbu } : {}, b });
         });
     }), definition = proc((l) => {
-        const wli = read_comments(s), wi = pos(), i = pp(), wce = pos(), wice = read_comments(s), ceu = ce('proof'), d = read_proposition(s), wdt = pos(), dtu = dt('proof');
+        const wli = read_comments(s), wi = pos(), i = pp(), wce = pos(), wice = read_comments(s), ceu = ce('term_symbol'), d = read_proposition(s), wdt = pos(), dtu = dt('term_symbol');
         return call(lead, b => {
             return ret({ k: 'def', m: [
                     ...i ? [] : [
@@ -193,9 +193,9 @@ export const read_comments = (s) => {
                 l, wli, ...i ? { i } : i, wice, ...ceu ? { ceu } : {}, ...dtu ? { dtu } : {}, d, b });
         });
     }), lemma = proc((l) => {
-        const wi = pos(), wli = read_comments(s), i = pf(), wicn = read_comments(s), wcn = pos(), ceup = ce('proof'), cnu = !ceup && cn('proof'), t = cnu && read_proposition(s), ceu = ceup || ce('proof');
+        const wi = pos(), wli = read_comments(s), i = pf(), wicn = read_comments(s), wcn = pos(), ceup = ce('term_symbol'), cnu = !ceup && cn('term_symbol'), t = cnu && read_proposition(s), ceu = ceup || ce('term_symbol');
         return call(lead, d => {
-            const wdt = pos(), dtu = dt('proof');
+            const wdt = pos(), dtu = dt('term_symbol');
             return call(lead, b => {
                 const m = [
                     ...i ? [] : [
@@ -214,7 +214,7 @@ export const read_comments = (s) => {
             });
         });
     }), print = proc((l) => {
-        const d = read_proposition(s), wdt = pos(), dtu = dt('proof');
+        const d = read_proposition(s), wdt = pos(), dtu = dt('term_symbol');
         return call(lead, b => {
             return ret({ k: 'prt', m: [
                     ...dtu ? [] : [
@@ -225,7 +225,7 @@ export const read_comments = (s) => {
         });
     }), brackets = proc((lbu) => {
         return call(main, b => {
-            const wrp = pos(), rbu = rb('proof');
+            const wrp = pos(), rbu = rb('term_symbol');
             return ret({ k: 'par', m: [
                     ...rbu ? [] : [
                         msg({ begin: lbu.w.begin, end: wrp }, `Syntax Error`, `\`[\` here is not matched.`)
@@ -237,8 +237,8 @@ export const read_comments = (s) => {
         tr(cp(), premise) ||
         tr(ll(), definition) ||
         tr(le(), lemma) ||
-        tr(pt('proof'), print) ||
-        tr(lb('proof'), brackets) ||
+        tr(pt('term_symbol'), print) ||
+        tr(lb('term_symbol'), brackets) ||
         tr(pf(), reference), prop = () => {
         const lpu = lp();
         if (lpu) {
@@ -288,7 +288,7 @@ export const read_comments = (s) => {
     return main;
 }), read_article = run(({ proc, branch, call, cc, ret }) => (s) => {
     const { pos, pp, pf, dt, cn, ce, ip, ep, df, pt, th, nl, dv, li } = s, impor = (l) => proc((wal, m) => {
-        const wi = pos(), wli = read_comments(s), i = li(), wdt = pos(), widt = read_comments(s), dtu = dt('top');
+        const wi = pos(), wli = read_comments(s), i = li(), wdt = pos(), widt = read_comments(s), dtu = dt('document_symbol');
         return call(main, a => ret({ a, k: 'imp', m: [...m,
                 ...i ? [] : [
                     msg(wi, `Syntax Error`, `A file name is expected here.`)
@@ -298,7 +298,7 @@ export const read_comments = (s) => {
                 ]],
             wal, l, wli, ...i ? { i } : {}, widt, ...dtu ? { dtu } : {} }));
     }), expor = (l) => proc((wal, m) => {
-        const wi = pos(), wli = read_comments(s), i = pf(), wdt = pos(), widt = read_comments(s), dtu = dt('top');
+        const wi = pos(), wli = read_comments(s), i = pf(), wdt = pos(), widt = read_comments(s), dtu = dt('document_symbol');
         return call(main, a => ret({ a, k: 'exf', m: [...m,
                 ...i ? [] : [
                     msg(wi, `Syntax Error`, `An identifier is expected here.`)
@@ -308,7 +308,7 @@ export const read_comments = (s) => {
                 ]],
             wal, l, wli, i, widt, ...dtu ? { dtu } : {} }));
     }), define = (l) => proc((wal, m) => {
-        const wli = read_comments(s), i = pp(), wice = read_comments(s), ceu = ce('top'), d = read_proposition(s), wdt = pos(), dtu = dt('top');
+        const wli = read_comments(s), i = pp(), wice = read_comments(s), ceu = ce('document_symbol'), d = read_proposition(s), wdt = pos(), dtu = dt('document_symbol');
         return call(main, a => ret({ a, k: 'def', m: [...m,
                 ...i ?
                     ceu ? [] : [
@@ -321,14 +321,14 @@ export const read_comments = (s) => {
                 ]],
             wal, l, wli, ...i ? { i } : {}, wice, ...ceu ? { ceu } : {}, d, ...dtu ? { dtu } : {} }));
     }), print = (l) => proc((wal, m) => {
-        const wld = read_comments(s), d = read_proposition(s), wdt = pos(), dtu = dt('top');
+        const wld = read_comments(s), d = read_proposition(s), wdt = pos(), dtu = dt('document_symbol');
         return call(main, a => ret({ a, k: 'prt', m: [...m,
                 ...dtu ? [] : [
                     msg(wdt, `Syntax Error`, `\`.\` is expected here.`)
                 ]],
             wal, l, wld, d, ...dtu ? { dtu } : {} }));
     }), theorem = (l) => proc((wal, m) => {
-        const wi = pos(), wli = read_comments(s), i = pf(), wicn = read_comments(s), wcn = pos(), cnu = cn('top'), t = read_proposition(s), wce = pos(), ceu = ce('top'), d = read_proof(s), wdt = pos(), dtu = dt('top');
+        const wi = pos(), wli = read_comments(s), i = pf(), wicn = read_comments(s), wcn = pos(), cnu = cn('document_symbol'), t = read_proposition(s), wce = pos(), ceu = ce('document_symbol'), d = read_proof(s), wdt = pos(), dtu = dt('document_symbol');
         return call(main, a => ret({ a, k: 'thm', m: [...m,
                 ...i ? [] : [
                     msg(wi, `Syntax Error`, `An identifier is expected here.`)
@@ -363,7 +363,7 @@ export const read_comments = (s) => {
         let l = tr(ip(), impor) ||
             tr(ep(), expor) ||
             tr(df(), define) ||
-            tr(pt('top'), print) ||
+            tr(pt('document_symbol'), print) ||
             tr(th(), theorem);
         if (!l) {
             return ret({ a: null, k: 'trl', m, wal });

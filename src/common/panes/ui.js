@@ -139,7 +139,7 @@ export const separator = () => mod(elm('div'), e => {
             });
             e.append(node, elm('br'));
         })];
-}, menu_bar_item = ({ label, tip, items }) => mod(elm('div'), e => {
+}, menu_bar_item = (i) => mod(elm('div'), e => {
     assign(e.style, {
         ...right_border,
         whiteSpace: 'pre',
@@ -153,7 +153,7 @@ export const separator = () => mod(elm('div'), e => {
         cursor: 'pointer'
     });
     e.tabIndex = 0;
-    simple_tool_tip(e, tip);
+    simple_tool_tip(e, i.tip);
     e.addEventListener;
     hover_accent(e, {
         background: colors.background
@@ -162,9 +162,10 @@ export const separator = () => mod(elm('div'), e => {
     });
     e.addEventListener('pointerdown', ev => {
         const bcr = e.getBoundingClientRect();
-        drop_down_menu(bcr.left, bcr.bottom, ev.pointerId, items);
+        'items' in i ? drop_down_menu(bcr.left, bcr.bottom, ev.pointerId, i.items) :
+            i.handler();
     });
-    e.append(txt(label));
+    e.append(txt(i.label));
 }), menu_bar = (items) => mod(elm('div'), e => {
     assign(e.style, {
         background: colors.background,
@@ -216,7 +217,7 @@ export const separator = () => mod(elm('div'), e => {
                         ...('handler' in item) ? {
                             cursor: 'pointer'
                         } : {
-                            color: colors.symbol
+                            color: colors.document_symbol
                         }
                     });
                     if ('handler' in item) {

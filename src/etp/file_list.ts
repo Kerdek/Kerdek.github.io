@@ -1,12 +1,12 @@
 import { download, elm } from '../common/util/dom.js'
 import { create_pane } from '../common/panes/pane.js'
 import { files, files_changed, valid_filename, add_files_changed_listener, remove_files_changed_listener } from './fs.js'
-import { yes_no, alert, prompt_filename } from '../common/panes/prompts.js'
+import { yes_no, alert, prompt } from '../common/panes/prompts.js'
 import { add_script_editor } from './script_editor.js'
 import { button, menu_bar, context_menu } from '../common/panes/ui.js'
 import { assign, mod } from '../common/util/di.js'
 
-export const add_file_list = (): void => {
+export const add_file_list = async (): Promise<void> => {
 const menu = menu_bar([{
   label: 'File',
   tip: 'Actions on the files',
@@ -15,7 +15,7 @@ const menu = menu_bar([{
     label: 'New',
     tip: 'Create a new file',
     handler: async () => {
-      const name = await prompt_filename('')
+      const name = await prompt('File Name', '')
       if (name) {
         if (name in files) {
           alert('Error', 'Rename: File already exists.')
@@ -65,7 +65,7 @@ const update = () => {
         delete files[label]
         files_changed() } }
     const rename_file = async () => {
-      const name = await prompt_filename(label)
+      const name = await prompt('File Name', label)
       if (name) {
         if (name in files) {
           alert('Error', 'Rename: File already exists.')
@@ -110,7 +110,7 @@ const all = mod(elm('div'), e => {
         position: 'relative' })
       e.append(content) })) })
 update()
-const pane = create_pane(all)
+const pane = await create_pane(all)
 pane.set_title('File List')
 add_files_changed_listener(update)
 pane.add_close_handler(() => {

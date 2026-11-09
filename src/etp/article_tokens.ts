@@ -1,4 +1,4 @@
-import { opt } from '../common/util/di.js'
+import { opt } from'../common/util/di.js'
 import { walk_concrete_article } from './concrete.js'
 import { Token } from './tokenizer.js'
 

@@ -1,4 +1,4 @@
-import { Run, run } from './run.js'
+import { Run, run } from '../common/util/run3.js'
 import { di, mod } from '../common/util/di.js'
 import { elm, txt } from '../common/util/dom.js'
 import { top_border } from '../common/panes/ui.js'
@@ -52,20 +52,20 @@ export const
 escapeHTML = (s: string) => s.replace(/[\u00A0-\u9999<>\&\\]/g, i => '&#'+i.charCodeAt(0)+';'),
 
 highlight_text_format: Format<string> = {
-pp: highlight_text(colors.proposition),
-pf: highlight_text(colors.proof),
-pps: highlight_text(colors.propositionsymbol),
-pfs: highlight_text(colors.proofsymbol),
+pp: highlight_text(colors.type_text),
+pf: highlight_text(colors.term_text),
+pps: highlight_text(colors.type_symbol),
+pfs: highlight_text(colors.term_symbol),
 div: (...x) => `${x.join('')}\n`,
 par: (...x) => `${x.join('')}\n`,
 txt: x => x,
 typ: x => x },
 
 html_format: Format<Node> = {
-pp: highlight(colors.proposition),
-pf: highlight(colors.proof),
-pps: highlight(colors.propositionsymbol),
-pfs: highlight(colors.proofsymbol),
+pp: highlight(colors.type_text),
+pf: highlight(colors.term_text),
+pps: highlight(colors.type_symbol),
+pfs: highlight(colors.term_symbol),
 div: (...x) => mod(elm('div'), e => { assign(e.style, { ...top_border }), e.append(...x) }),
 par: (...x) => mod(elm('div'), e => { e.append(...x) }),
 txt: txt,
@@ -175,7 +175,7 @@ export const print_messages = (g: Messages, curse: (w: TextPosition | TextRange)
               assign(e, {
                 title: 'Click to highlight the text.' })
               assign(e.style, {
-                color: colors.symbol,
+                color: colors.document_symbol,
                 cursor: 'pointer' })
               e.addEventListener('click', () =>
                 curse(w))

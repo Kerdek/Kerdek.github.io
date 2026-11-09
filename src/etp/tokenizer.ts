@@ -4,11 +4,11 @@ import { TokenT, scanner } from "./scanner.js"
 
 export type TokenKind =
 'invalid' |
-'proposition' |
-'propositionsymbol' |
-'proof' |
-'proofsymbol' |
-'symbol' |
+'type_text' |
+'type_symbol' |
+'term_text' |
+'term_symbol' |
+'document_symbol' |
 'comment'
 
 export type Token = TokenT<TokenKind>
@@ -25,14 +25,14 @@ const
     (t: string): [string, TokenKind] | null =>
     di(t.match(r), m =>
     !m || f.some(e => e == m[0]) ? null : [m[0], k]),
-  sym = <K extends 'top' | 'proposition' | 'proof'>(r: RegExp) =>
+  sym = <K extends 'document_symbol' | 'type_symbol' | 'term_symbol'>(r: RegExp) =>
     (t: string, k: K): [string, TokenKind] | null =>
     di(t.match(r), m =>
-    !m ? null : [m[0], k === 'top' ? 'symbol' : k === 'proposition' ? 'propositionsymbol' : 'proofsymbol']),
-  // symf = <K extends 'top' | 'proposition' | 'proof'>(r: RegExp, f: string[]) =>
+    !m ? null : [m[0], k]),
+  // symf = <K extends 'top' | 'type_text' | 'term_text'>(r: RegExp, f: string[]) =>
   //   (t: string, k: K): [string, TokenKind] | null =>
   //   di(t.match(r), m =>
-  //   !m || f.some(e => e == m[0]) ? null : [m[0], k === 'top' ? 'symbol' : k === 'proposition' ? 'propositionsymbol' : 'proofsymbol']),
+  //   !m || f.some(e => e == m[0]) ? null : [m[0], k === 'top' ? 'document_symbol' : k === 'type_text' ? 'type_symbol' : 'term_symbol']),
   reg_skip = (r: RegExp, k: TokenKind) =>
   (t: string): [string, TokenKind] | null =>
     di(t.match(r), m =>
@@ -46,42 +46,41 @@ const
     [m[0], k]))
 
 export const tokenizer = scanner({
-  dt: sym<'top' | 'proposition' | 'proof'>(/^\./),
-  pp: name(/^[a-zA-Z']+/, 'proposition'),
-  pf: name(/^[a-zA-Z0-9\-']+/, 'proof'),
-  // ws: reg(/^(\s|--[\s\S]*?(\n|$)|\(\*[\s\S]*?(\*\)|$))*/, 'comment'),
-  nl: reg(/^\n/, 'invalid'),
-  wl: reg(/^[^\n\S]+/, 'invalid'),
-  ch: reg(/^--[^\n]*/, 'comment'),
-  cl: reg(/^\(\*/, 'comment'),
-  cb: reg(/^(?:[^\n]*?\*\)|[^\n]+)/, 'comment'),
-  op: regf(/^[->:=]+/, 'propositionsymbol', [":", ":="]),
-  ce: sym<"top" | "proof">(/^:=/),
-  cn: sym<"top" | "proof">(/^:/),
-  al: sym<'proof' | 'proposition'>(/^\\\//),
-  lm: sym<'proof' | 'proposition'>(/^\\/),
-  lp: reg(/^\(/, 'propositionsymbol'),
-  rp: reg(/^\)/, 'propositionsymbol'),
-  lb: sym<'proof'>(/^\[/),
-  rb: sym<'proof'>(/^\]/),
-  dv: reg_skip(/^[\s\S]*?(\b(import|export|print|define|theorem)\b|\n|$)/, 'invalid'),
-  df: reg(/^\bdefine\b/, 'symbol'),
-  pt: sym<'top' | 'proof'>(/^\bprint\b/),
-  ip: reg(/^\bimport\b/, 'symbol'),
-  ep: reg(/^\bexport\b/, 'symbol'),
-  ui: reg(/^\/\\/, 'proofsymbol'),
-  cp: reg(/^\\/, 'proofsymbol'),
-  le: reg(/^\blemma\b/, 'proofsymbol'),
-  ll: reg(/^\blet\b/, 'proofsymbol'),
-  th: reg(/^\btheorem\b/, 'symbol'),
-  li: reg(/^"(?:[^"\\]|\\[nt"\\])*"?/, 'proofsymbol') })
+dt: sym<'document_symbol' | 'type_symbol' | 'term_symbol'>(/^\./),
+pp: name(/^[a-zA-Z_']+/, 'type_text'),
+pf: name(/^[a-zA-Z0-9_\-']+/, 'term_text'),
+nl: reg(/^\n/, 'invalid'),
+wl: reg(/^[^\n\S]+/, 'invalid'),
+ch: reg(/^--[^\n]*/, 'comment'),
+cl: reg(/^\(\*/, 'comment'),
+cb: reg(/^(?:[^\n]*?\*\)|[^\n]+)/, 'comment'),
+op: regf(/^[->:=]+/, 'type_symbol', [":", ":="]),
+ce: sym<'document_symbol' | 'term_symbol'>(/^:=/),
+cn: sym<'document_symbol' | 'term_symbol'>(/^:/),
+al: sym<'term_symbol' | 'type_symbol'>(/^\\\//),
+lm: sym<'term_symbol' | 'type_symbol'>(/^\\/),
+lp: reg(/^\(/, 'type_symbol'),
+rp: reg(/^\)/, 'type_symbol'),
+lb: sym<'term_symbol'>(/^\[/),
+rb: sym<'term_symbol'>(/^\]/),
+dv: reg_skip(/^[\s\S]*?(\b(import|export|print|define|theorem)\b|\n|$)/, 'invalid'),
+df: reg(/^\bdefine\b/, 'document_symbol'),
+pt: sym<'document_symbol' | 'term_symbol'>(/^\bprint\b/),
+ip: reg(/^\bimport\b/, 'document_symbol'),
+ep: reg(/^\bexport\b/, 'document_symbol'),
+ui: reg(/^\/\\/, 'term_symbol'),
+cp: reg(/^\\/, 'term_symbol'),
+le: reg(/^\blemma\b/, 'term_symbol'),
+ll: reg(/^\blet\b/, 'term_symbol'),
+th: reg(/^\btheorem\b/, 'document_symbol'),
+li: reg(/^"(?:[^"\\]|\\[nt"\\])*"?/, 'term_symbol') })
 
 export const token_kinds: (keyof Colors)[] = [
-  'invalid',
-  'foreground',
-  'proposition',
-  'propositionsymbol',
-  'proof',
-  'proofsymbol',
-  'symbol',
-  'comment']
+'invalid',
+'foreground',
+'type_text',
+'type_symbol',
+'term_text',
+'term_symbol',
+'document_symbol',
+'comment']

@@ -4,7 +4,7 @@ import { create_pane } from '../common/panes/pane.js'
 import { files, files_changed } from './fs.js'
 import { left_border, list_item, menu_bar, top_border } from '../common/panes/ui.js'
 import { assign, lookup, mod } from '../common/util/di.js'
-import { prompt_filename } from '../common/panes/prompts.js'
+import { prompt } from '../common/panes/prompts.js'
 import { get_model_data } from './language_server.js'
 import { html_format, print_goal, print_messages } from './print.js'
 import { select_statement } from './select.js'
@@ -12,7 +12,9 @@ import { position_from_monaco } from './monaco_range.js'
 
 const { keys } = Object
 
-export const add_script_editor = (text?: string | undefined, name?: string): void => {
+export const add_script_editor = async (
+  text?: string | undefined,
+  name?: string): Promise<void> => {
 const
 input = mod(elm('div'), e => {
   assign(e.style, {
@@ -39,7 +41,7 @@ save = () => {
     files_changed() } },
 
 save_as = async () => {
-  const name = await prompt_filename(current_filename || '')
+  const name = await prompt('File Name', current_filename || '')
   if (name) {
     current_filename = name
     refresh_title()
@@ -97,7 +99,7 @@ refresh_goals = () => {
     if (s && s.k === 'proof') {
       const g = lookup(c.proof_transcript, s.e)
       if (g) {
-        goals.append(...print_goal(html_format)(g)) } } } },
+        goals.append(...print_goal(html_format)(g[1])) } } } },
 
 menu = menu_bar([
   { label: 'File', tip: 'Actions on the file', items: [
@@ -206,5 +208,5 @@ editor.onDidChangeCursorPosition(schedule_refresh_goals)
 if (text) {
   model.setValue(text) }
 let current_filename: string | undefined = name
-const pane = create_pane(all)
+const pane = await create_pane(all)
 refresh_title() }

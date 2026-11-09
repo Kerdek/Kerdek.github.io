@@ -1,4 +1,4 @@
-import { Run, run } from './run.js'
+import { Run, run } from '../common/util/run3.js'
 import { uniques } from '../common/util/di.js'
 import {
   Module, Prefix, Goal, Messages,

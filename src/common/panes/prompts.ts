@@ -1,10 +1,9 @@
-import { valid_filename } from '../../etp/fs.js'
 import { assign, mod } from '../util/di.js'
 import { elm, txt } from '../util/dom.js'
 import { create_pane } from './pane.js'
 import { button, text_box } from './ui.js'
 
-export const prompt = async (title: string, suggest: string) => new Promise<string | undefined>(c => {
+export const prompt = async (title: string, suggest: string) => new Promise<string | undefined>(async c => {
   let value: string | undefined = undefined
   const ok = () => {
     value = node.data
@@ -20,7 +19,7 @@ export const prompt = async (title: string, suggest: string) => new Promise<stri
         ok()
         return false }
       return true })})
-  const pane = create_pane(
+  const pane = await create_pane(
     mod(elm('div'), e => {
       assign(e.style, {
         padding: '20px',
@@ -38,11 +37,11 @@ export const prompt = async (title: string, suggest: string) => new Promise<stri
     c(value) })
   box.focus() })
 
-export const alert = async (title: string, text: string) => new Promise<void>(c => {
+export const alert = async (title: string, text: string) => new Promise<void>(async c => {
   const box = mod(elm('div'), e => {
     e.style.margin = '4px'
     e.append(txt(text)) })
-  const pane = create_pane(
+  const pane = await create_pane(
     mod(elm('div'), e => {
       assign(e.style, {
         whiteSpace: 'pre',
@@ -68,12 +67,12 @@ export const alert = async (title: string, text: string) => new Promise<void>(c 
     c() })
   box.focus() })
 
-export const yes_no = async (title: string, text: string) => new Promise<boolean>(c => {
+export const yes_no = async (title: string, text: string) => new Promise<boolean>(async c => {
   let value = false
   const box = mod(elm('div'), e => {
     e.style.margin = '20px'
     e.append(txt(text)) })
-  const pane = create_pane(
+  const pane = await create_pane(
     mod(elm('div'), e => {
       assign(e.style, {
         whiteSpace: 'pre',
@@ -102,13 +101,4 @@ export const yes_no = async (title: string, text: string) => new Promise<boolean
   pane.set_title(title)
   pane.add_close_handler(() => {
     c(value) })
-  box.focus() }),
-
-prompt_filename = async (name: string) => {
-  const new_name = await prompt('Enter File Name', name)
-  if (new_name === undefined) {
-    return undefined }
-  if (!valid_filename(new_name)) {
-    await alert('Error', `Invalid file name entered: ${new_name}`)
-    return undefined }
-  return new_name }
+  box.focus() })

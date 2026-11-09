@@ -1,13 +1,13 @@
 import { colors, mode } from '../common/colors.js'
 import { token_kinds } from './tokenizer.js'
-import { editor } from './monaco.js'
+import { editor } from '../common/monaco.js'
 
 editor.defineTheme('semity', {
   base: mode === 'dark' ? 'hc-black' : 'vs',
   inherit: true,
   rules: token_kinds.map(token => ({ token, foreground: colors[token] })),
   colors: {
-    'editor.lineHighlightBackground': colors.lineHighlight,
+    'editor.lineHighlightBackground': colors.line_highlight,
     'editorRuler.foreground': colors.ruler,
     'editorIndentGuide.background1': colors.guide,
     'editorIndentGuide.background2': colors.guide,

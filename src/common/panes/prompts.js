@@ -1,9 +1,8 @@
-import { valid_filename } from '../../etp/fs.js';
 import { assign, mod } from '../util/di.js';
 import { elm, txt } from '../util/dom.js';
 import { create_pane } from './pane.js';
 import { button, text_box } from './ui.js';
-export const prompt = async (title, suggest) => new Promise(c => {
+export const prompt = async (title, suggest) => new Promise(async (c) => {
     let value = undefined;
     const ok = () => {
         value = node.data;
@@ -24,7 +23,7 @@ export const prompt = async (title, suggest) => new Promise(c => {
             return true;
         });
     });
-    const pane = create_pane(mod(elm('div'), e => {
+    const pane = await create_pane(mod(elm('div'), e => {
         assign(e.style, {
             padding: '20px',
             display: 'flex',
@@ -44,12 +43,12 @@ export const prompt = async (title, suggest) => new Promise(c => {
     });
     box.focus();
 });
-export const alert = async (title, text) => new Promise(c => {
+export const alert = async (title, text) => new Promise(async (c) => {
     const box = mod(elm('div'), e => {
         e.style.margin = '4px';
         e.append(txt(text));
     });
-    const pane = create_pane(mod(elm('div'), e => {
+    const pane = await create_pane(mod(elm('div'), e => {
         assign(e.style, {
             whiteSpace: 'pre',
             padding: '4px',
@@ -79,13 +78,13 @@ export const alert = async (title, text) => new Promise(c => {
     });
     box.focus();
 });
-export const yes_no = async (title, text) => new Promise(c => {
+export const yes_no = async (title, text) => new Promise(async (c) => {
     let value = false;
     const box = mod(elm('div'), e => {
         e.style.margin = '20px';
         e.append(txt(text));
     });
-    const pane = create_pane(mod(elm('div'), e => {
+    const pane = await create_pane(mod(elm('div'), e => {
         assign(e.style, {
             whiteSpace: 'pre',
             padding: '4px',
@@ -120,15 +119,5 @@ export const yes_no = async (title, text) => new Promise(c => {
         c(value);
     });
     box.focus();
-}), prompt_filename = async (name) => {
-    const new_name = await prompt('Enter File Name', name);
-    if (new_name === undefined) {
-        return undefined;
-    }
-    if (!valid_filename(new_name)) {
-        await alert('Error', `Invalid file name entered: ${new_name}`);
-        return undefined;
-    }
-    return new_name;
-};
+});
 //# sourceMappingURL=prompts.js.map

@@ -26,7 +26,7 @@ const metas = [], shift_down = (i) => {
     set_emph();
 };
 let pane_spawn = 0;
-export const create_pane = (element, options) => {
+export const create_pane = async (element, options) => {
     pane_spawn += 100;
     if (pane_spawn > document.body.clientHeight - 100) {
         pane_spawn -= document.body.clientHeight - 200;

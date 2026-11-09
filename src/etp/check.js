@@ -1,4 +1,4 @@
-import { run } from './run.js';
+import { run } from '../common/util/run3.js';
 import { uniques } from '../common/util/di.js';
 import { msg, rho, pi, push_sigma, push_rho, push_pi, push_module, empty_prefix, set_tau, empty_goal, push_hi, look_up_proof, proof_bound, proposition_bound, safe } from './context.js';
 import { visit_proof, visit_statement } from './abstract.js';

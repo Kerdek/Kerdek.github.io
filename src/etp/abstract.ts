@@ -1,4 +1,4 @@
-import { Values, Visit, visit } from '../common/util/di.js'
+import { OfTable, ValueOf, Visit, visit } from '../common/util/di.js'
 import { Run, run } from '../common/util/run3.js'
 import { walk_concrete_article } from './concrete.js'
 import { TextRange, fspan } from './scanner.js'
@@ -17,9 +17,13 @@ var: { o?: Proposition, d: Variable }
 err: { o?: Proposition } }
 
 export type Propositions =
-{ [K in keyof PropositionsT]: { w: TextRange, k: K } & PropositionsT[K] }
-export type PropositionKind = keyof Propositions
-export type Proposition = Values<Propositions>
+OfTable<{ w: TextRange }, PropositionsT>
+
+export type PropositionKind =
+keyof Propositions
+
+export type Proposition =
+ValueOf<Propositions>
 
 export type PropositionResults<T> =
 { [K in PropositionKind]:
@@ -29,7 +33,7 @@ export type PropositionResults<T> =
     never] :
     PropositionsT[K][F] extends Variable ? T | null :
     T } }
-export type PropositionResult<T> = Values<PropositionResults<T>>
+export type PropositionResult<T> = ValueOf<PropositionResults<T>>
 
 export type PropositionConversion<T> =
 { [K in PropositionKind]:
@@ -47,9 +51,13 @@ prt: { w: TextRange, k: 'prt', d: Proposition, b: Proof }
 err: { w: TextRange, k: 'err', b?: Proposition } }
 
 export type Proofs =
-{ [K in keyof ProofsT]: { w: TextRange, k: K } & ProofsT[K] }
-export type ProofKind = keyof Proofs
-export type Proof = Values<Proofs>
+OfTable<{ w: TextRange }, ProofsT>
+
+export type ProofKind =
+keyof Proofs
+
+export type Proof =
+ValueOf<Proofs>
 
 export type ProofResults<T> =
 { [K in ProofKind]:
@@ -57,7 +65,7 @@ export type ProofResults<T> =
     ProofsT[K][F] extends Proof ? F : never]:
     ProofsT[K][F] extends Proof ? T :
     never }}
-export type ProofResult<T> = Values<ProofResults<T>>
+export type ProofResult<T> = ValueOf<ProofResults<T>>
 
 export type ProofConversion<T> =
 { [K in ProofKind]: (r: ProofResults<T>[K], e: Proofs[K]) => T }
@@ -72,7 +80,7 @@ thm: { a: Statement | null, wi: TextRange, i: Identifier, t: Proposition, d: Pro
 export type Statements = {
   [K in keyof StatementsT]: { w: TextRange, k: K } & StatementsT[K] }
 export type StatementKind = keyof Statements
-export type Statement = Values<Statements>
+export type Statement = ValueOf<Statements>
 
 export type StatementResults<S> =
 { [K in StatementKind]:
@@ -80,7 +88,7 @@ export type StatementResults<S> =
     StatementsT[K][F] extends Statement | null ? F : never]:
     StatementsT[K][F] extends Statement | null ? S | null :
     never }}
-export type StatementResult<S> = Values<StatementResults<S>>
+export type StatementResult<S> = ValueOf<StatementResults<S>>
 
 export type StatementConversion<S> =
 { [K in StatementKind]: (r: StatementResults<S>[K], e: Statements[K]) => S }
