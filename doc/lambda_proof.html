@@ -151,86 +151,45 @@ code {
 
 <h2>The Verification Gap</h2>
 
-<p>If you've spent time writing functional programs, you've
-experienced a familiar tension. You write a function, test it
-on inputs, watch it behave correctly, and yet some
-nagging doubt remains. Does it always work? For every possible input?
-You may tell a colleague "the result is never negative".
-That claim transcends any finite test suite.
-That claim is not about a handful of test cases;
-it's about all possible inputs—a universal property.
+<p>If you've written a functional program, you
+probably experienced a familiar tension. You write a function, test it
+on inputs, watch it behave correctly. Yet, some doubt remains.
+Does it always work? For every possible input?
+You may say "the result is never negative".
+That claim transcends the test suite.
+It is not about a handful of test cases.
+It's about all possible inputs—a universal property.
 Yet, your evidence remains circumstantial.</p>
 
-<p>This gap between testing and certainty has driven programmers
+<p>This gap between testing and certainty drives programmers
 toward various solutions: more tests, property-based testing,
-careful code review, defensive programming, sophisticated typing,
-and flagging systems. These are valuable practices, but they share
-a fundamental limitation: they can show the existence of counterexamples,
-but they don't establish universal truths. Those live in comments,
-documentation, and natural language discussions. Those are not
-checked by rigorous machinery.</p>
+careful code review, defensive programming, and sophisticated typing systems.
+These are valuable practices, but they share
+a fundamental limitation: they don't establish
+universal properties. Those live in comments,
+documentation, and discussions, which are not
+checked by the machine.</p>
 
-<p>Herein lies an alternative:
-what if your claims about programs could be expressed with the same
-mathematical precision as the programs? What if proving
-its properties was as sure as checking its types? This is the promise of
-the Curry-Howard correspondence, the profound connection between
-programs and proofs that underlies much of modern proof assistants
-and dependently-typed programming languages.</p>
-
-<h2>The Curry-Howard Correspondence</h2>
-
-<p>This correspondence establishes a precise mapping between
-domains that might seem unrelated:</p>
-
-<p><ul>
-<li><strong>Logic</strong>:
-  propositions, proofs, and inference rules</li>
-<li><strong>Programs</strong>:
-  types, terms, and typing judgments</li>
-</ul></p>
-
-<p>By Curry-Howard, each logical construct
-is a programming construct:</p>
-
-<p>A logical proposition is a type. A proof of that proposition
-is a term inhabiting that type. To prove a proposition is to
-provide a well-typed term. Logical implication
-<span class="i m">(<!--
---><span class="v">P</span> → <span class="v">Q</span><!--
--->)</span>
-is a function type <span class="nw"><code class="c"><!--
---><span class="pi">P</span> <span class="ps">→</span><!--
---> <span class="pi">Q</span></code>.</span>
-Universal quantification
-<span class="i m">(<!--
--->∀<span class="v">a</span>.<span class="v">P</span><!--
--->)</span>
-is a polymorphic type <span class="nw"><code class="c"><!--
---><span class="ps">∀</span><span class="pi">a</span><!--
---><span class="ps">.</span><span class="pi">P</span><!--
---></code>.</span>
-Rules of logical inference are typing rules. A type checker
-is a proof checker. Type soundness is logical soundness.</p>
-
-<h2>Why Lambda Calculus?</h2>
+<h2>Testing the Program</h2>
 
 <p>Alonzo Church's untyped lambda calculus is a simple model
-of computation.
+of computation. In the untyped lambda calculus,
 <span class="i m"><code class="c"><span class="pi">square</span></code><!--
 --> = <code class="c"><span class="ps">⅂</span><!--
 --><span class="pi">a</span><span class="ps">.</span><!--
 --><span class="pi">mul</span> <span class="pi">a</span><!--
 --> <span class="pi">a</span></code></span>
-is a program. It has no type annotations.
-In this system, programs are not constrained by types.</p>
+is a program.</p>
 
 <p><code class="a"><span class="ts">define</span><!--
---> <span class="pi">square</span> <span class="ps">⅂</span><!--
+--> <span class="pi">square</span> <span class="ts">:=</span> <span class="ps">⅂</span><!--
 --><span class="pi">a</span><span class="ps">.</span>
 <span class="pi">mul</span> <span class="pi">a</span><!--
 --> <span class="pi">a</span><span class="ts">.</span>
 </code></p>
+
+<p>Note: The program has no type annotations. In untyped lambda calculus,
+programs are not constrained by types.</p>
 
 <p>You might claim <code class="c"><span class="pi">square</span></code>
 always returns a non-negative result for real number inputs.
@@ -252,21 +211,27 @@ This reasoning is sound, but it is prose.</p>
 
 <h2>From Testing to Proving</h2>
 
-<p>Testing can show the presence of bugs.
-Proof, by contrast, establishes a universal property for all inputs.
-It closes the gap between specification and implementation:
-the specification is a type, the correctness is a term, and
-type judgment ensures it is valid.</p>
+<p>What if your claims about the program could
+be expressed with the same precision as the program?
+What if a computer could check that they are correct?
+This is the promise of the Curry-Howard correspondence,
+the connection between programs and proofs that underlies
+much of modern proof assistants and dependently-typed
+programming languages.</p>
 
-<p>We won't constrain the program with types. We will constrain
-what counts as proof about a program. That is, the program
+<p>Testing can show the presence of bugs.
+Proof, by contrast, can show their absence.
+It closes the gap between specification and implementation.</p>
+
+<p>Other approaches constrain the program with types. We will constrain
+what counts as proof. That is, the program
 will be part of a proposition:</p>
 
 <p><code class="a"><span class="ts">theorem</span><!--
 --> <span class="fi">Real-non_negative-square</span><!--
---> <span class="ps">∀</span><span class="pi">a</span><!--
---><span class="ps">.</span>
-<span class="pi">Real</span> <span class="pi">a</span><!--
+--> <span class="ts">:</span>
+<span class="ps">∀</span><span class="pi">a</span><!--
+--><span class="ps">.</span><span class="pi">Real</span> <span class="pi">a</span><!--
 --> <span class="ps">→</span><!--
 --> <span class="pi">non_negative</span> <span class="ps">(</span><!--
 --><span class="pi">square</span> <span class="pi">a</span><!--
@@ -293,22 +258,22 @@ proposition. A program that returns a proposition is a
 <p><ul>
 <li><strong>Arrows</strong>
 <code class="c"><span class="ps">→</span></code>:
-Implication. <code class="c"><span class="pi">P</span><!--
---> <span class="ps">→</span> <span class="pi">Q</span></code>
-says "<code class="c"><span class="pi">P</span></code> implies
-<span class="nw"><code class="c"><span class="pi">Q</span><!--
+Implication. <code class="c"><span class="pi">a</span><!--
+--> <span class="ps">→</span> <span class="pi">b</span></code>
+says "<code class="c"><span class="pi">a</span></code> implies
+<span class="nw"><code class="c"><span class="pi">b</span><!--
 --></code>.</span>"</li>
 
 <li><strong>Quantifiers</strong> <code class="c"><!--
 --><span class="ps">∀</span></code>:
 For all. <code class="c"><span class="ps">∀</span><!--
 --><span class="pi">a</span><span class="ps">.</span><!--
---><span class="pi">P</span></code> says "For all
+--><span class="pi">b</span></code> says "For all
 <code class="c"><span class="pi">a</span></code>, <span class="nw"><!--
---><code class="c"><span class="pi">P</span></code>.</span>"</li>
+--><code class="c"><span class="pi">b</span></code>.</span>"</li>
 </ul></p>
 
-<p>These are features of propositions which state properties.
+<p>Propositions which state properties.
 Our programs remain untyped, but they occur in propositions,
 and those say things about them.</p>
 
@@ -319,9 +284,7 @@ and those say things about them.</p>
 --><span class="pi">square</span> <span class="pi">a</span><!--
 --><span class="ps">)</span></code> is a proposition. The program
 <code class="c"><span class="pi">square</span></code>
-is part of it.</p>
-
-<code class="c"><span class="pi">Real</span></code> and
+is part of it. <code class="c"><span class="pi">Real</span></code> and
 <code class="c"><span class="pi">non_negative</span></code>
 are predicates. The arrow <code class="c"><span class="ps">→</span></code>
 connects the antecedent to the consequent. The quantifier
@@ -329,7 +292,7 @@ connects the antecedent to the consequent. The quantifier
 --><span class="ps">.</span></code>
 ranges over all possible inputs.</p>
 
-<h2>Proofs as Terms</h2>
+<h2>Proofs</h2>
 
 <p>A type might be inhabited by a term (e.g.
 <code class="c"><span class="pi">2</span></code>
@@ -347,10 +310,10 @@ we need a proof (a term) of this proposition (this type). Such a proof is:</p>
 
 <p><code class="a"><span class="ts">proof</span><!--
 --> <span class="fi">Real-non_negative-square</span><!--
---> <span class="fs">Ʌ</span><!--
---><span class="pi">a</span><span class="fs">.</span>
+--> <span class="ts">:=</span>
+<span class="fs">Ʌ</span><span class="pi">a</span><span class="fs">.</span>
 <span class="fs">⅂</span><span class="fi">pa</span><!--
---><span class="fs">:</span> <span class="pi">Real</span><!--
+--> <span class="fs">:</span> <span class="pi">Real</span><!--
 --> <span class="pi">a</span><span class="fs">.</span>
 <span class="fi">Real-non_negative-mul</span> <span class="ps">(</span><span class="pi">a</span><span class="ps">)</span><!--
 --> <span class="ps">(</span><span class="pi">a</span><span class="ps">)</span> <span class="fi">pa</span><!--
@@ -366,13 +329,13 @@ is a type abstraction which introduces the type variable
 <span class="nw"><!--
 --><code class="c"><span class="pi">a</span></code>.</span>
 The conditional proof <code class="c"><span class="fs">⅂</span><!--
---><span class="fi">pa</span><span class="fs">:</span><!--
+--><span class="fi">pa</span> <span class="fs">:</span><!--
 --> <span class="pi">Real</span> <span class="pi">a</span><!--
 --><span class="fs">.</span></code> is an abstraction which
 introduces proof <code class="c"><span class="fi">pa</span></code>
 of <code class="c"><span class="pi">Real</span><!--
 --> <span class="pi">a</span></code>, the antecedent.
-The body proves <span class="nw"><code class="c"><!--
+The body shows <span class="nw"><code class="c"><!--
 --><span class="pi">non_negative</span> <span class="ps">(</span><!--
 --><span class="pi">square</span> <span class="pi">a</span><!--
 --><span class="ps">)</span></code>,</span> the consequent.</p>
@@ -397,7 +360,8 @@ are <code class="c"><span class="pi">Real</span></code> and have equal
 
 <p><code class="a"><span class="ts">theorem</span><!--
 --> <span class="fi">Real-non_negative-mul</span><!--
---> <span class="ps">∀</span><!--
+--> <span class="ts">:</span>
+<span class="ps">∀</span><!--
 --><span class="pi">a</span> <span class="pi">b</span><!--
 --><span class="ps">.</span>
 <span class="pi">Real</span><!--
@@ -411,7 +375,7 @@ are <code class="c"><span class="pi">Real</span></code> and have equal
 --><span class="ps">)</span> <span class="ps">→</span>
 <span class="pi">non_negative</span> <span class="ps">(</span><!--
 --><span class="pi">mul</span> <span class="pi">a</span><!--
---> <span class="pi">b</span><span class="ps">)</span></code></p>
+--> <span class="pi">b</span><span class="ps">)</span><span class="ts">.</span></code></p>
 
 <p><code class="c"><span class="fi">Eq-refl</span></code> takes care of
 <span class="nw"><code class="c"><span class="pi">Eq</span><!--
@@ -422,10 +386,10 @@ are <code class="c"><span class="pi">Real</span></code> and have equal
 
 <p><code class="a"><span class="ts">theorem</span><!--
 --> <span class="fi">Eq-refl</span><!--
---> <span class="ps">∀</span><!--
+--> <span class="ts">:</span> <span class="ps">∀</span><!--
 --><span class="pi">a<span class="ps">.</span>
 <span class="pi">Eq</span> <span class="pi">a</span><!--
---> <span class="pi">a</span></code></p>
+--> <span class="pi">a</span><span class="ts">.</span></code></p>
 
 <p>The proof has computational meaning. It takes proof of
 <code class="c"><span class="pi">Real</span><!--
@@ -436,21 +400,54 @@ about multiplication, and produces proof of <span class="nw"><!--
 --> <span class="pi">a</span><span class="ps">)</span></code>.</span></p>
 
 <p>The system is untyped only with respect to the programs
-being discussed, but it is very much typed with respect to proofs.
-The propositions form a typing system which makes universal
-claims about those untyped programs, and the typing rules of
-proof terms mirror logic. That's the move that closes the
-verification gap: you're not typing your program; you're typing
+being discussed. The propositions form a typing system which makes universal
+claims about those untyped programs, and the typing rules
+correspond to logic. That's what closes the
+verification gap: not typing your program, but typing
 your argument about the program.</p>
 
-</tbody></table></div><p></p>
+</tbody></table></div>
+
+<h2>The Curry-Howard Correspondence</h2>
+
+<p>This correspondence establishes a precise mapping between
+domains that might seem unrelated:</p>
+
+<p><ul>
+<li><strong>Logic</strong>:
+  propositions, proofs, and inference rules</li>
+<li><strong>Programs</strong>:
+  types, terms, and typing judgments</li>
+</ul></p>
+
+<p>By Curry-Howard, each logical construct
+is a programming construct:</p>
+
+<p>A logical proposition is a type. A proof of that proposition
+is a term inhabiting that type. To prove a proposition is to
+provide a well-typed term. Logical implication
+<span class="i m">(<!--
+--><span class="v">a</span> → <span class="v">b</span><!--
+-->)</span>
+is a function type <span class="nw"><code class="c"><!--
+--><span class="pi">a</span> <span class="ps">→</span><!--
+--> <span class="pi">b</span></code>.</span>
+Universal quantification
+<span class="i m">(<!--
+-->∀<span class="v">a</span>.<span class="v">b</span><!--
+-->)</span>
+is a polymorphic type <span class="nw"><code class="c"><!--
+--><span class="ps">∀</span><span class="pi">a</span><!--
+--><span class="ps">.</span><span class="pi">b</span><!--
+--></code>.</span>
+Rules of logical inference are typing rules. A type checker
+is a proof checker. Type soundness is logical soundness.</p>
 
 <h2>Summary</h2>
 
 <p>This calculus makes proof judgment mechanical:
-writing a proof is writing a well-typed term.
-Type soundness guarantees logical soundness.
-If a proof type-checks, it is a valid proof of its proposition.</p>
+a proof is a well-typed term.
+A valid proof shows its proposition.</p>
 
 <h1>Appendices</h1>
 
@@ -462,30 +459,28 @@ contradiction. For example, in the theory of unintepreted functions, Russell's
 classic paradox, <code class="c">Y not</code> shows the contradiction.</p>
 
 <p><code class="a">-- statement of contradiction
-define False ∀a.
+define False := ∀a.
 a.
 
 -- `Not a` means `a` implies `False`
-define Not ⅂a.
+define Not := ⅂a.
 a → False.
 
 -- fixed point combinator
-define Y ⅂f.
+define Y := ⅂f.
 (⅂a.f (a a)) (⅂a.f (a a)).
 
 -- Russell's theorem
-theorem Russell
-Y Not.
+theorem Russell :
+Y Not :=
 
-proof Russel
-⅂pfp: Y Not.
-pfp pfp.
+⅂p: Y Not.
+p p.
 
 -- inconsistency
-theorem Contradiction
-False.
+theorem Contradiction :
+False :=
 
-proof Contradiction
 Russell Russell.
 </code></p>
 
@@ -498,227 +493,192 @@ Some examples include:</p>
 <li>Type Theories</li>
 </ul></p>
 
-<h2>Rules of Inference</h2>
+<h2>Judgment Rules</h2>
 
 These are the four possible ways to construct proofs.
 Each of them uses the context <span class="i m">Γ</span> to track types.
 
-<h3>Generalization (<code class="c">∀</code> Introduction)</h3>
+<h3>Generalization (<code class="c">∀</code> Formation)</h3>
 
 <p><strong>Logical form</strong>: Given arbitrary
-<span class="i m v">a</span>, <span class="i m v">P</span>. So,
+<span class="i m v">a</span>, <span class="i m v">p</span><span class="m"> </span><span class="i m v">a</span>. So,
 <span class="i m">∀<span class="v">a</span><!--
--->.<span class="v">P</span></span>.</p>
+-->.<span class="i m v">p</span><span class="m"> </span><span class="i m v">a</span></span>.</p>
 
-<p><strong>Proof term</strong>: Type abstraction which proves
+<p><strong>Proof term</strong>: Type abstraction which shows
 <code class="c">∀<span class="i m v">a</span><!--
--->.<span class="i m v">P</span></code>:</p>
+-->.<span class="i m v">p</span><span class="m"> </span><span class="i m v">a</span></code>:</p>
 
 <p style="text-align:center;width:100%;"><code class="c"><!--
 -->Ʌ<span class="i m v">b</span>.<span class="i m v">E</span></code></p>
 
-<p>This is a <em>generalization</em> over given
+<p>This is a <em>generalization</em> over arbitrary
 <code class="c"><span class="i m v">b</span></code> of proof
 <span class="i m"><code class="c"><span class="i m v">E</span></code>
 <span class="q">:</span>
-<code class="c"><span class="i m"><span class="v">P</span><!--
---><span class="lb">[</span><span class="v">a</span> := <!--
---><span class="v">b</span><span class="rb">]</span></span></code></span>.</p>
+<code class="c"><span class="i m"><span class="v">p</span><!--
+--> <span class="v">b</span></span></code></span>.</p>
 
 <p><strong>Judgment rule</strong>:
 <code class="c"><span class="i m v">b</span></code>
-must not be bound in <span class="i m">Γ</span>,
-and <code class="c"><span class="i m v">E</span></code> must prove
-<code class="c"><span class="i m"><span class="v">P</span><!--
---><span class="lb">[</span><span class="v">a</span> := <!--
---><span class="v">b</span><span class="rb">]</span></span></code>
-in <span class="i m">Γ,
-<code class="c"><span class="i m v">b</span></code></span> (proposition
-<code class="c"><span class="i m v">b</span></code>
-appended to <span class="i m">Γ</span>).</p>
+must not be bound,
+and <code class="c"><span class="i m v">E</span></code> must show
+<code class="c"><span class="i m"><span class="v">p</span><!--
+--> <span class="v">b</span></span></code>
+in <span class="i m"><code class="c"><span class="i m v">b</span></code> <span class="q">⊢</span></span> <!--
+-->(proposition <code class="c"><span class="i m v">b</span><!--
+--></code> appended to <span class="i m q">⊢</span>).</p>
 
-<p></p><div class="rule"><div class="rulebox m">
+<div class="rule"><div class="rulebox m">
 
-<!-- b ∉ Γ -->
-<p><code class="c"><span class="i m v">b</span></code> ∉ Γ</p>
+<!-- ⊬ b -->
+<p><span class="i m q">⊬</span> <code class="c"><span class="i m v">b</span></code></p>
 
-<!-- Γ, b ⊢ E : P[a := b] -->
-<p>Γ, <code class="c"><span class="i m v">b</span></code>
+<!-- b ⊢ E : p b -->
+<p><code class="c"><span class="i m v">b</span></code>
 <span class="q">⊢</span> <code class="c"><!--
 --><span class="i m v">E</span></code> <span class="q">:</span>
-<code class="c"><span class="i m"><span class="v">P</span><!--
---><span class="lb">[</span><span class="v">a</span> := <!--
---><span class="v">b</span><span class="rb">]</span></span></code></p>
+<code class="c"><span class="i m"><span class="v">p</span><!--
+--> <span class="v">b</span></span></code></p>
 
 <hr>
 
-<!-- Γ ⊢ Ʌb.E : ∀a.P -->
-Γ <span class="q">⊢</span> <code class="c">Ʌ<!--
+<!-- ⊢ Ʌb.E : ∀a.p a -->
+<span class="q">⊢</span> <code class="c">Ʌ<!--
 --><span class="i m v">b</span>.<span class="i m v">E</span></code>
 <span class="q">:</span> <code class="c">∀<!--
---><span class="i m v">a</span>.<span class="i m v">P</span></code>
+--><span class="i m v">a</span>.<span class="i m v">p</span> <span class="i m v">a</span></code>
 
-</div></div><p></p>
+</div></div>
 
 <p><strong>Mechanics</strong>: <code class="c">Ʌb.</code>
 discharges the universal quantifier <code class="c">∀a.</code>
 in the goal and introduces an arbitrary <code class="c">b</code>
 in the context. The body uses these like type parameters.</p>
 
-<p><strong>Example</strong>:</p>
-
-<p><code class="a">theorem Imp-refl ∀a.
-a → a.
-
-proof Imp-refl Ʌa.
-⅂pa: a.
-pa.</code></p>
-
-<p>The body <code class="c">⅂pa: a.pa</code> proves
-<code class="c">a → a</code> for arbitrary
-<span class="nw"><code class="c">a</code>.</span></p>
-
-<h3>Specialization (<code class="c">∀</code> Elimination)</h3>
+<h3>Specialization (<code class="c">∀</code> Usage)</h3>
 
 <p><strong>Logical form</strong>:
 <span class="i m">∀<span class="v">a</span><!--
--->.<span class="v">P</span></span>. So,
-<span class="i m"><span class="v">P</span><!--
---><span class="lb">[</span><span class="v">a</span><!--
---> := <span class="v">Q</span><span class="rb">]</span></span>
-for some <span class="i m v">Q</span>.</p>
+-->.<span class="v">p</span> <span class="v">a</span></span>. So,
+<span class="i m"><span class="v">p</span><!--
+--> <span class="v">b</span></span>
+for some <span class="i m v">b</span>.</p>
 
-<p><strong>Proof term</strong>: Type application which proves
+<p><strong>Proof term</strong>: Type application which shows
 <span class="nw"><code class="c"><span class="i m"><!--
---><span class="v">P</span><span class="lb">[</span><!--
---><span class="v">a</span> := <span class="v">Q</span><!--
---><span class="rb">]</span></span></code>.</span></p>
+--><span class="v">p</span> <span class="v">b</span><!--
+--></span></code>.</span></p>
 
 <p style="text-align:center;width:100%;">
 <code class="c"><span class="i m v">E</span><!--
---> <span class="i m v">Q</span></code></p>
+--> (<span class="i m v">b</span>)</code></p>
 
 <p>This is a <em>specialization</em> of proof
 <span class="i m"><code class="c"><span class="i m v">E</span></code>
 <span class="q">:</span>
-<code class="c"><span class="i m v">P</span></code></span>
+<code class="c"><span class="i m v">p</span> <span class="i m v">b</span></code></span>
 for proposition <span class="nw"><code class="c"><!--
---><span class="i m v">Q</span></code>.</span></p>
+--><span class="i m v">b</span></code>.</span></p>
 
 <p><strong>Judgment rule</strong>:
-<code class="c"><span class="i m v">Q</span></code>
-must be closed in <span class="i m">Γ</span>,
+<code class="c"><span class="i m v">b</span></code>
+must be closed,
 and <code class="c"><span class="i m v">E</span></code>
-must prove <code class="c">∀<span class="i m v">a</span><!--
--->.<span class="i m v">P</span></code>
-in <span class="i m">Γ</span>.</p>
+must show <code class="c">∀<span class="i m v">a</span><!--
+-->.<span class="i m v">p</span> <span class="i m v">a</span></code>.</p>
 
-<p></p><div class="rule"><div class="rulebox m">
+<div class="rule"><div class="rulebox m">
 
-<!-- Γ ⊢ Q -->
-<p>Γ <span class="q">⊢</span>
-<code class="c"><span class="i m v">Q</span></code></p>
+<!-- ⊢ b -->
+<p><span class="q">⊢</span>
+<code class="c"><span class="i m v">b</span></code></p>
 
-<!-- Γ ⊢ E : ∀a.P -->
-<p>Γ <span class="q">⊢</span>
+<!-- ⊢ E : ∀a.p a -->
+<p><span class="q">⊢</span>
 <code class="c"><span class="i m v">E</span></code>
 <span class="q">:</span>
 <code class="c">∀<span class="i m v">a</span><!--
--->.<span class="i m v">P</span></code></p>
+-->.<span class="i m v">p</span> <span class="i m v">a</span></code></p>
 
 <hr>
 
-<!-- Γ ⊢ E Q : P[a := Q] -->
-Γ <span class="q">⊢</span> <code class="c"><!--
---><span class="i m v">E</span> <span class="i m v">Q</span></code>
+<!-- ⊢ E (b) : p b -->
+<span class="q">⊢</span> <code class="c"><!--
+--><span class="i m v">E</span> (<span class="i m v">b</span>)</code>
 <span class="q">:</span> <code class="c"><span class="i m"><!--
---><span class="v">P</span><span class="lb">[</span><!--
---><span class="v">a</span> := <span class="v">Q</span><!--
---><span class="rb">]</span></span></code>
+--><span class="v">p</span> <span class="v">b</span><!--
+--></span></code>
 
-</div></div><p></p>
+</div></div>
 
-<p><strong>Mechanics</strong>: When <code class="c">pa</code>
-proves <code class="c">∀x.x → y</code>,
-<code class="c">pa (Real a)</code> proves
-<code class="c">Real a → y</code>.
-This instantiates the proof for specific propositions.</p>
+<p><strong>Mechanics</strong>: Specialization instantiates the generalization proof for specific propositions.</p>
 
-<p><strong>Examples</strong>:</p>
+<h3>Assumption (<code class="c">→</code> Formation)</h3>
 
-<p><code class="a">theorem False-of-False
-False → False.
-
-proof False-of-False
-ImpRefl (False).
-</code></p>
-
-<h3>Conditional Proof (<code class="c">→</code> Introduction)</h3>
-
-<p><strong>Logical form</strong>: Assuming premise
-<span class="i m v">P</span>, <span class="i m v">Q</span>. So,
+<p><strong>Logical form</strong>: Assuming
+<span class="i m v">a</span>, <span class="i m v">b</span>. So,
 <span class="nw"><!--
---><span class="i m"><span class="v">P</span> →
-<span class="v">Q</span></span></span>.</p>
+--><span class="i m"><span class="v">a</span> →
+<span class="v">b</span></span></span>.</p>
 
-<p><strong>Proof term</strong>: Lambda abstraction which proves
-<code class="c"><span class="i m v">P</span> →<!--
---> <span class="i m v">Q</span></code>:</p>
+<p><strong>Proof term</strong>: Lambda abstraction which shows
+<code class="c"><span class="i m v">a</span> →<!--
+--> <span class="i m v">b</span></code>:</p>
 
 <p style="text-align:center;width:100%;"><!--
---><code class="c">⅂<span class="i m v">a</span>:<!--
---> <span class="i m v">P</span>.<span class="i m v">E</span></code></p>
+--><code class="c">⅂<span class="i m v">P</span> :<!--
+--> <span class="i m v">a</span>.<span class="i m v">E</span></code></p>
 
-<p>This is a <em>conditional proof</em> on premise
-<span class="i m"><code class="c"><span class="i m v">a</span></code>
+<p>This is an <em>assumption</em> on premise
+<span class="i m"><code class="c"><span class="i m v">P</span></code>
 <span class="q">:</span> <code class="c"><!--
---><span class="i m v">P</span></code></span>
+--><span class="i m v">a</span></code></span>
 of proof <span class="i m"><code class="c"><!--
 --><span class="i m v">E</span></code> <span class="q">:</span>
-<code class="c"><span class="i m v">Q</span></code></span>.</p>
+<code class="c"><span class="i m v">b</span></code></span>.</p>
 
 <p><strong>Judgment rule</strong>:
-<code class="c"><span class="i m v">a</span></code>
-must not be bound in <span class="i m">Γ</span>,
 <code class="c"><span class="i m v">P</span></code>
-must be closed in <span class="i m">Γ</span>, and
-<code class="c"><span class="i m v">E</span></code>
-must prove <code class="c"><span class="i m v">Q</span></code> in
-<span class="i m">Γ</span>,
+must not be bound,
 <code class="c"><span class="i m v">a</span></code>
+must be closed, and
+<code class="c"><span class="i m v">E</span></code>
+must show <code class="c"><span class="i m v">b</span></code> in
+<code class="c"><span class="i m v">P</span></code>
 <span class="q">:</span> <code class="c"><span class="i m"><!--
---><span class="v">P</span></span></code>.</p>
+--><span class="v">a</span></span></code> <span class="i m q">⊢</span>.</p>
 
 <p><div class="rule"><div class="rulebox m">
 
-<!-- a ∉ Γ -->
-<p><code class="c"><span class="i m v">a</span></code> ∉ Γ</p>
+<!-- ⊬ P -->
+<p><span class="i m q">⊬</span> <code class="c"><span class="i m v">P</span></code></p>
 
-<!-- Γ ⊢ P -->
-<p>Γ <span class="q">⊢</span>
-<code class="c"><span class="i m v">P</span></code></p>
+<!-- ⊢ a -->
+<p><span class="q">⊢</span>
+<code class="c"><span class="i m v">a</span></code></p>
 
-<!-- Γ, a : P ⊢ E : Q -->
-<p>Γ, <code class="c"><span class="i m v">a</span></code>
+<!-- P : a ⊢ E : b -->
+<p><code class="c"><span class="i m v">P</span></code>
 <span class="q">:</span> <code class="c"><span class="i m"><!--
---><span class="v">P</span></span></code> <span class="q">⊢</span>
+--><span class="v">a</span></span></code> <span class="q">⊢</span>
 <code class="c"><span class="i m v">E</span></code>
 <span class="q">:</span> <code class="c"><span class="i m"><!--
---><span class="v">Q</span></span></code></p>
+--><span class="v">b</span></span></code></p>
 
 <hr>
 
-<!-- Γ ⊢ ⅂a : P.E : P -> Q -->
-Γ <span class="q">⊢</span>
-<code class="c">⅂<span class="i m v">a</span><!--
---> : <span class="i m v">P</span>.<span class="i m v">E</span></code><!--
+<!-- ⊢ ⅂a : P.E : P -> Q -->
+<span class="q">⊢</span>
+<code class="c">⅂<span class="i m v">P</span><!--
+--> : <span class="i m v">a</span>.<span class="i m v">E</span></code><!--
 --> <span class="q">:</span> <code class="c"><span class="i m"><!--
---><span class="v">P</span></span><!--
---> → <span class="i m v">Q</span></code>
+--><span class="v">a</span></span><!--
+--> → <span class="i m v">b</span></code>
 
 </div></div></p>
 
-<p><strong>Mechanics</strong>: <code class="c">⅂pa: t.</code>
+<p><strong>Mechanics</strong>: <code class="c">⅂pa : t.</code>
 discharges the antecedent
 <code class="c">t →</code>
 in the goal and introduces a premise
@@ -726,17 +686,102 @@ in the goal and introduces a premise
 <span class="q">:</span> <code class="c">t</code></span>
 in the context. The body uses these like function parameters.</p>
 
-<p><strong>Example</strong>:</p>
+<h3>Syllogy (<code class="c">→</code> Usage)</h3>
 
-<p><code class="a">theorem Imp-syl ∀a b.
-a → (a → b) → b.
+<p><strong>Logical form</strong>:
+<span class="i m"><span class="i m v">a</span> →
+<span class="i m v">b</span></span>, and
+<span class="nw"><span class="i m v">a</span>.</span>
+So, <span class="nw"><span class="i m v">b</span>.</span></p>
 
-proof Imp-syl Ʌa b.
-⅂pa: a.
-⅂pab: a → b.
+<p><strong>Proof term</strong>: Function application which shows
+<code class="c"><span class="i m v">b</span></code>:</p>
+
+<p style="text-align:center;width:100%;">
+<code class="c"><span class="i m v">E</span><!--
+--> <span class="i m v">P</span></code></p>
+
+<p>This is a <em>syllogy</em> through proof
+<span class="i m"><code class="c"><span class="i m v">E</span></code>
+<span class="q">:</span>
+<code class="c"><span class="i m v">a</span><!--
+--> → <span class="i m v">b</span></code></span> from proof <span class="nw">
+<span class="i m"><code class="c"><span class="i m v">P</span></code>
+<span class="q">:</span>
+<code class="c"><span class="i m v">a</span></code></span>.</span></p>
+
+<p><strong>Judgment rule</strong>:
+<code class="c"><span class="i m v">P</span></code> must show
+<code class="c"><span class="i m v">a</span></code>,
+and <code class="c"><span class="i m v">E</span></code>
+must show <code class="c"><span class="i m v">a</span><!--
+--> → <span class="i m v">b</span></code>.</p>
+
+<div class="rule"><div class="rulebox m">
+
+<!-- ⊢ A : P -->
+<p><span class="q">⊢</span>
+<code class="c"><span class="i m v">P</span></code>
+<span class="q">:</span>
+<code class="c"><span class="i m v">a</span></code></p>
+
+<!-- ⊢ E : P -> Q -->
+<p><span class="q">⊢</span>
+<code class="c"><span class="i m v">E</span></code>
+<span class="q">:</span>
+<code class="c"><span class="i m v">a</span><!--
+--> → <span class="i m v">b</span></code></p>
+
+<hr>
+
+<!-- ⊢ E A : Q -->
+<span class="q">⊢</span>
+<code class="c"><span class="i m v">E</span><!--
+--> <span class="i m v">P</span></code>
+<span class="q">:</span>
+<code class="c"><span class="i m"><span class="v">b</span></span></code>
+
+</div></div>
+
+<p><strong>Mechanics</strong>: When
+<span><code class="c">pab</code> <span class="q">:</span>
+<code class="c">a → b</code> and
+<span><code class="c">pa</code> <span class="q">:</span>
+<code class="c">a</code>, <code class="c">pab pa</code> shows
+<span class="nw"><code class="c">b</code>.</span>
+This applies the proof to specific premises.</span></span></p>
+
+<h3>Examples</h3>
+
+<p><code class="a">theorem Imp-refl : ∀a.
+a → a :=
+
+Ʌa.
+⅂pa : a.
+pa.</code></p>
+
+<p>The body <code class="c">⅂pa : a.pa</code> shows
+<code class="c">a → a</code> for arbitrary
+<span class="nw"><code class="c">a</code>.</span></p>
+
+<p><code class="a">theorem False-of-False :
+False → False :=
+
+ImpRefl (False).
+</code></p>
+
+<p><code class="c">Imp-refl (False)</code> shows
+<span class="nw"><code class="c">False → False</code>.</span></p>
+
+<p><code class="a">theorem Imp-syl : ∀a b.
+a → (a → b) → b :=
+
+Ʌa b.
+⅂pa : a.
+⅂pab : a → b.
 pab pa.</code></p>
 
-<p>The body <code class="c">pab pa</code> proves
+<p>The body <code class="c">pab pa</code> shows
 <code class="c">b</code> for arbitrary propositions
 <code class="c">a</code> and <code class="c">b</code> and premises
 <span class="i m"><code class="c">pa</code> <span class="q">:</span>
@@ -744,72 +789,5 @@ pab pa.</code></p>
 <span class="i m"><code class="c">pab</code>
 <span class="q">:</span> <code class="c">a → b</code></span>.</p>
 
-<h3>Modus Ponens (<code class="c">→</code> Elimination)</h3>
-
-<p><strong>Logical form</strong>:
-<span class="i m"><span class="i m v">P</span> →
-<span class="i m v">Q</span></span> and
-<span class="nw"><span class="i m v">P</span>.</span>
-So, <span class="nw"><span class="i m v">Q</span>.</span></p>
-
-<p><strong>Proof term</strong>: Function application which proves
-<code class="c"><span class="i m v">Q</span></code>:</p>
-
-<p style="text-align:center;width:100%;">
-<code class="c"><span class="i m v">E</span><!--
---> <span class="i m v">A</span></code></p>
-
-<p>This is a <em>modus ponens</em> through proof
-<span class="i m"><code class="c"><span class="i m v">E</span></code>
-<span class="q">:</span>
-<code class="c"><span class="i m v">P</span><!--
---> → <span class="i m v">Q</span></code></span> from proof <span class="nw">
-<span class="i m"><code class="c"><span class="i m v">A</span></code>
-<span class="q">:</span>
-<code class="c"><span class="i m v">P</span></code></span>.</span></p>
-
-<p><strong>Judgment rule</strong>:
-<code class="c"><span class="i m v">A</span></code> must prove
-<code class="c"><span class="i m v">P</span></code>,
-and <code class="c"><span class="i m v">E</span></code>
-must prove <code class="c"><span class="i m v">P</span><!--
---> → <span class="i m v">Q</span></code> in
-<span class="i m">Γ</span>.</p>
-
-<p></p><div class="rule"><div class="rulebox m">
-
-<!-- Γ ⊢ A : P -->
-<p>Γ <span class="q">⊢</span>
-<code class="c"><span class="i m v">A</span></code>
-<span class="q">:</span>
-<code class="c"><span class="i m v">P</span></code></p>
-
-<!-- Γ ⊢ E : P -> Q -->
-<p>Γ <span class="q">⊢</span>
-<code class="c"><span class="i m v">E</span></code>
-<span class="q">:</span>
-<code class="c"><span class="i m v">P</span><!--
---> → <span class="i m v">Q</span></code></p>
-
-<hr>
-
-<!-- Γ ⊢ E A : Q -->
-Γ <span class="q">⊢</span>
-<code class="c"><span class="i m v">E</span><!--
---> <span class="i m v">A</span></code>
-<span class="q">:</span>
-<code class="c"><span class="i m"><span class="v">Q</span></span></code>
-
-</div></div><p></p>
-
-<p><strong>Mechanics</strong>: When
-<span><code class="c">pab</code> <span class="q">:</span>
-<code class="c">a → b</code> and
-<span><code class="c">pa</code> <span class="q">:</span>
-<code class="c">a</code>, <code class="c">pab pa</code> proves
-<span class="nw"><code class="c">b</code>.</span>
-This applies the proof to specific premises.</span></span></p>
-
-<p><strong>Example</strong>: (see previous)</p>
 
 </body></html>
