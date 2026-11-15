@@ -217,7 +217,6 @@ mp = pi(im(mv(`p`))),
 mE = fi(im(mv(`E`))),
 mP = fi(im(mv(`P`))),
 
-e1 = [lambda, a, pdot, mul, sp, a, sp, a],
 e2 = n => ic(NonNegative, sp, plp, square, sp, pi(n), prp)
 
 run(
@@ -302,7 +301,8 @@ proof.`),
 
 p(bc(theorem, sp, fi(`Real-NonNegative-square`), sp, tcolon,
 nl, forall, a, pdot,
-nl, Real, sp, a, sp, ar, sp, NonNegative, sp, plp, square, sp, a, prp, tdot)),
+nl, Real, sp, a, sp, ar,
+nl, NonNegative, sp, plp, square, sp, a, prp, tdot)),
 
 p(`“For all `, im(mv(`a`)), `, if `,
 im(mv(`a`)), ` is a real number, then `,
@@ -362,19 +362,22 @@ is a function type `, ic(a, sp, ar, sp, b),
 `.`, mv(`b`), `)`), ` is a polymorphic type `,
 ic(forall, a, pdot, b), `. Judgment rules
 are typing derivations. A type checker is
-a proof checker. Type soundness is logical
-soundness.`),
+a proof checker.`),
 
 h2(`Proving the Proposition`),
 
-p(`A proposition is a type of a proof.
+p(`A proposition is the type of a proof.
 A proof is a term of that type. When one
 provides such a term, one shows the proposition.
 For `, ic(forall, a, pdot, Real, sp, a, sp,
 ar, sp, NonNegative, sp, plp, square, sp, a, prp),
 `, such a proof is:`),
 
-p(bc(ts(`proof`), sp, fi(`Real-NonNegative-square`), sp, defined,
+p(bc(theorem, sp, fi(`Real-NonNegative-square`), sp, tcolon,
+nl, forall, a, pdot,
+nl, Real, sp, a, sp, ar,
+nl, NonNegative, sp, plp, square, sp, a, prp, sp, defined,
+nl,
 nl, given, a, fdot,
 nl, assume, pa, sp, fcolon, sp, Real, sp, a, fdot,
 nl, fi(`Real-NonNegative-mul`), sp, plp, a, prp, sp, plp, a, prp, sp, pa, sp, pa, sp, flb,
