@@ -216,6 +216,7 @@ mb = pi(im(mv(`b`))),
 mp = pi(im(mv(`p`))),
 mE = fi(im(mv(`E`))),
 mP = fi(im(mv(`P`))),
+nd = elm('span', style({ position: 'relative' }), `⊢`, elm('span', style({ position: 'absolute', left: '0', top: '-0.35ch' }), `/`)),
 
 e2 = n => ic(NonNegative, sp, plp, square, sp, pi(n), prp)
 
@@ -502,7 +503,7 @@ mE), ` : `, ic(forall, ma, pdot, mp, sp,
 ma)), ` is derived.`),
 
 p(rb(
-p(`⊬ `, ic(mb)),
+p(nd, ` `, ic(mb)),
 p(ic(mb), ` ⊢ `, ic(mE), ` : `, ic(mp, sp, mb)),
 hr(),
 `⊢ `, ic(given, mb, fdot, mE), ` : `, ic(
@@ -556,7 +557,7 @@ fdot, mE), ` : `, ic(ma, sp, ar, sp, mb)),
 ` is derived.`),
 
 p(rb(
-p(`⊬ `, ic(mP)),
+p(nd, ` `, ic(mP)),
 p(`⊢ `, ic(ma)),
 p(ic(mP), ` : `, ic(ma), ` ⊢ `, ic(mE), ` : `, ic(mb)),
 hr(),
