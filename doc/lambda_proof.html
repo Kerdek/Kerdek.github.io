@@ -137,33 +137,31 @@ style = s => () => {
   Object.assign(target.style, s) },
 class_name = s => () => {
   target.className = s },
-
-elme = k => (...mod) =>
+elmk = k => (...mod) =>
   elm(k, ...mod),
-
-h1 = elme('h1'),
-h2 = elme('h2'),
-h3 = elme('h3'),
-p = elme('p'),
-li = elme('li'),
-ul = elme('ul'),
-hr = elme('hr'),
-emph = elme('emph'),
-strong = elme('strong'),
-
-ccc = k => cn => (...mod) =>
+elmkc = k => cn => (...mod) =>
   elm(k,
   class_name(cn),
   ...mod),
 
-dc = ccc('div'),
-rb = dc('rule m'),
+p = elmk('p'),
+h1 = elmk('h1'),
+h2 = elmk('h2'),
+h3 = elmk('h3'),
+li = elmk('li'),
+ul = elmk('ul'),
+hr = elmk('hr'),
+emph = elmk('emph'),
+strong = elmk('strong'),
 
-cc = ccc('code'),
+dc = elmkc('div'),
+rm = dc('rule m'),
+
+cc = elmkc('code'),
 ic = cc('c'),
 bc = cc('a'),
 
-sc = ccc('span'),
+sc = elmkc('span'),
 im = sc('i m'),
 pi = sc('pi'),
 ps = sc('ps'),
@@ -175,50 +173,62 @@ mv = sc('v'),
 
 sp = ` `,
 nl = `\n`,
+
 forall = ps(`∀`),
+
 lambda = ps(`⅂`),
 assume = fs(`⅂`),
+
 ar = ps(`→`),
+
 pdot = ps(`.`),
 fdot = fs(`.`),
 tdot = ts(`.`),
+
 fcolon = fs(`:`),
 tcolon = ts(`:`),
+
 a = pi(`a`),
 b = pi(`b`),
-pa = fi(`pa`),
-pab = fi(`pab`),
 mul = pi(`mul`),
 sign = pi(`sign`),
 R = pi(`R`),
 Y = pi(`Y`),
 not = pi(`not`),
 square = pi(`square`),
-define = ts(`define`),
-theorem = ts(`theorem`),
 Real = pi(`Real`),
+NonNegative = pi(`NonNegative`),
+Eq = pi(`Eq`),
+False = pi(`False`),
+
+pa = fi(`pa`),
+pab = fi(`pab`),
 Russell = fi(`Russell`),
 Contradiction = fi(`Contradiction`),
 Imp_refl = fi(`Imp-refl`),
 False_of_False = fi(`False-of-False`),
 Imp_syl = fi(`Imp-syl`),
-NonNegative = pi(`NonNegative`),
-Eq = pi(`Eq`),
-False = pi(`False`),
+
+lp = ps(`(`),
+rp = ps(`)`),
+
 given = fs(`Ʌ`),
+lb = fs(`[`),
+rb = fs(`]`),
+
+define = ts(`define`),
+theorem = ts(`theorem`),
 defined = ts(`:=`),
-plp = ps(`(`),
-prp = ps(`)`),
-flb = fs(`[`),
-frb = fs(`]`),
+
 ma = pi(im(mv(`a`))),
 mb = pi(im(mv(`b`))),
 mp = pi(im(mv(`p`))),
 mE = fi(im(mv(`E`))),
 mP = fi(im(mv(`P`))),
+
 nd = elm('span', style({ position: 'relative' }), `⊢`, elm('span', style({ position: 'absolute', left: '0', top: '-0.35ch' }), `/`)),
 
-e2 = n => ic(NonNegative, sp, plp, square, sp, pi(n), prp)
+e2 = n => ic(NonNegative, sp, lp, square, sp, pi(n), rp)
 
 run(
 h1(`Lambda Calculus for Formal Verification`),
@@ -305,7 +315,7 @@ proof.`),
 p(bc(theorem, sp, fi(`Real-NonNegative-square`), sp, tcolon,
 nl, forall, a, pdot,
 nl, Real, sp, a, sp, ar,
-nl, NonNegative, sp, plp, square, sp, a, prp, tdot)),
+nl, NonNegative, sp, lp, square, sp, a, rp, tdot)),
 
 p(`“For all `, im(mv(`a`)), `, if `,
 im(mv(`a`)), ` is a real number, then `,
@@ -338,8 +348,8 @@ p(`Propositions state properties. The program
 remains untyped, but it occurs in a proposition.
 The program `, ic(square), ` is part of the
 proposition `, ic(forall, a, pdot, Real,
-sp, a, sp, ar, sp, NonNegative, sp, plp,
-square, sp, a, prp), `. `, ic(Real), ` and `,
+sp, a, sp, ar, sp, NonNegative, sp, lp,
+square, sp, a, rp), `. `, ic(Real), ` and `,
 ic(NonNegative), ` are predicates. The arrow `,
 ic(ar), ` connects the premise to the conclusion.
 The quantifier `, ic(forall, a, pdot), `
@@ -373,18 +383,18 @@ p(`A proposition is the type of a proof.
 A proof is a term of that type. When one
 provides such a term, one shows the proposition.
 For `, ic(forall, a, pdot, Real, sp, a, sp,
-ar, sp, NonNegative, sp, plp, square, sp, a, prp),
+ar, sp, NonNegative, sp, lp, square, sp, a, rp),
 `, such a proof is:`),
 
 p(bc(theorem, sp, fi(`Real-NonNegative-square`), sp, tcolon,
 nl, forall, a, pdot,
 nl, Real, sp, a, sp, ar,
-nl, NonNegative, sp, plp, square, sp, a, prp, sp, defined,
+nl, NonNegative, sp, lp, square, sp, a, rp, sp, defined,
 nl,
 nl, given, a, fdot,
 nl, assume, pa, sp, fcolon, sp, Real, sp, a, fdot,
-nl, fi(`Real-NonNegative-mul`), sp, plp, a, prp, sp, plp, a, prp, sp, pa, sp, pa, sp, flb,
-nl, sp, sp, fi(`Eq-refl`), sp, plp, sign, sp, a, prp, frb, tdot)),
+nl, fi(`Real-NonNegative-mul`), sp, lp, a, rp, sp, lp, a, rp, sp, pa, sp, pa, sp, lb,
+nl, sp, sp, fi(`Eq-refl`), sp, lp, sign, sp, a, rp, rb, tdot)),
 
 p(ic(fi(`Real-NonNegative-square`)), ` accepts
 proof that `, ic(a), ` is `, ic(Real), `,
@@ -401,7 +411,7 @@ a, fdot), ` says “assume `, ic(pa), ` shows
 `, ic(Real, sp, a), `”, which introduces
 proof `, ic(pa), ` of `, ic(Real, sp, a),
 `, the premise. The body shows `, ic(NonNegative,
-sp, plp, square, sp, a, prp), `, the conclusion.`),
+sp, lp, square, sp, a, rp), `, the conclusion.`),
 
 p(ic(fi(`Real-NonNegative-mul`)), ` shows
 that `, ic(mul, sp, a, sp, b), ` is `, ic(NonNegative),
@@ -412,12 +422,12 @@ Its proposition is`),
 p(bc(theorem, sp, fi(`Real-NonNegative-mul`), sp, tcolon,
 nl, forall, a, sp, b, pdot,
 nl, Real, sp, a, sp, ar, sp, Real, sp, b, sp, ar,
-nl, Eq, sp, plp, sign, sp, a, prp, sp, plp, sign, sp, b, prp, sp, ar,
-nl, NonNegative, sp, plp, mul, sp, a, sp, b, prp, tdot)),
+nl, Eq, sp, lp, sign, sp, a, rp, sp, lp, sign, sp, b, rp, sp, ar,
+nl, NonNegative, sp, lp, mul, sp, a, sp, b, rp, tdot)),
 
 p(ic(fi(`Eq-refl`)), ` shows `, ic(Eq, sp,
-plp, sign, sp, a, prp, sp, plp, sign, sp,
-a, prp), `.`),
+lp, sign, sp, a, rp, sp, lp, sign, sp,
+a, rp), `.`),
 
 p(bc(theorem, sp, fi(`Eq-refl`), sp, tcolon,
 nl, forall, a, pdot,
@@ -426,7 +436,7 @@ nl, Eq, sp, a, sp, a, tdot)),
 p(`The proof is not just a certificate, it
 is a procedure. It accepts proof of `, ic(Real,
 sp, a), ` and produces proof of `, ic(NonNegative,
-sp, plp, square, sp, a, prp)),
+sp, lp, square, sp, a, rp)),
 
 h2(`Summary`),
 
@@ -454,7 +464,7 @@ leads to the contradiction.`),
 
 p(bc(
 define, sp, R, sp, defined,
-nl, plp, lambda, a, pdot, a, sp, a, prp, sp, plp, lambda, a, pdot, a, sp, a, sp, ar, sp, False, prp, tdot,
+nl, lp, lambda, a, pdot, a, sp, a, rp, sp, lp, lambda, a, pdot, a, sp, a, sp, ar, sp, False, rp, tdot,
 nl,
 nl, theorem, sp, Russell, sp, tcolon, sp, R, sp, defined,
 nl, assume, pa, sp, fcolon, sp, R, fdot,
@@ -504,7 +514,7 @@ ic(mp, sp, mb)), ` is derived from `, ic(mb),
 mE), ` : `, ic(forall, ma, pdot, mp, sp,
 ma)), ` is derived.`),
 
-p(rb(
+p(rm(
 p(nd, ` `, ic(mb)),
 p(ic(mb), ` ⊢ `, ic(mE), ` : `, ic(mp, sp, mb)),
 hr(),
@@ -518,7 +528,7 @@ p(strong(`Logical form`), `: `, im(`∀`, mv(`a`),
 sp, mv(`b`), ` for given `, im(mv(`b`)), `.`)),
 
 p(strong(`Proof term`), `: Specialization
-proof `, im(ic(mE, sp, plp, mb, prp), ` :
+proof `, im(ic(mE, sp, lp, mb, rp), ` :
 `, ic(mp, sp, mb)), ` which specializes proof
 `, im(ic(mE), ` : `, ic(forall, ma, pdot,
 mp, sp, ma)), ` for proposition `, ic(mb),
@@ -527,14 +537,14 @@ mp, sp, ma)), ` for proposition `, ic(mb),
 p(strong(`Judgment rule`), `: If `, ic(mb),
 ` is derived, and `, im(ic(mE), ` : `, ic(forall,
 ma, pdot, mp, sp, ma)), ` is derived, then
-`, im(ic(mE, sp, plp, mb, prp), ` : `,
+`, im(ic(mE, sp, lp, mb, rp), ` : `,
 ic(mp, sp, mb)), ` is derived.`),
 
-p(rb(
+p(rm(
 p(`⊢ `, ic(mb)),
 p(`⊢ `, ic(mE), ` : `, ic(forall, ma, pdot, mp, sp, ma)),
 hr(),
-`⊢ `, ic(mE, sp, plp, mb, prp), ` : `, ic(mp, sp, mb))),
+`⊢ `, ic(mE, sp, lp, mb, rp), ` : `, ic(mp, sp, mb))),
 
 h3(`Assumption (`, im(`→`), ` Formation)`),
 
@@ -558,7 +568,7 @@ from `, im(ic(mP), ` : `, ic(ma)), `, then
 fdot, mE), ` : `, ic(ma, sp, ar, sp, mb)),
 ` is derived.`),
 
-p(rb(
+p(rm(
 p(nd, ` `, ic(mP)),
 p(`⊢ `, ic(ma)),
 p(ic(mP), ` : `, ic(ma), ` ⊢ `, ic(mE), ` : `, ic(mb)),
@@ -581,7 +591,7 @@ p(strong(`Judgment rule`), `: If `, im(ic(mP),
 ` : `, ic(mb)), ` is derived, then `, im(ic(mE,
 sp, mP), ` : `, ic(mb)), ` is derived.`),
 
-p(rb(
+p(rm(
 p(`⊢  `, ic(mP), ` : `, ic(ma)),
 p(`⊢  `, ic(mE), ` : `, ic(ma, sp, ar, sp, mb)),
 hr(),
@@ -604,14 +614,14 @@ sp, a), ` for arbitrary `, ic(a), `.`),
 p(bc(theorem, sp, False_of_False, sp, tcolon,
 nl, False, sp, ar, sp, False, sp, defined,
 nl,
-nl, Imp_refl, sp, plp, False, prp, tdot)),
+nl, Imp_refl, sp, lp, False, rp, tdot)),
 
-p(ic(Imp_refl, sp, plp, False, prp), ` shows
+p(ic(Imp_refl, sp, lp, False, rp), ` shows
 `, ic(False, sp, ar, sp, False), `.`),
 
 p(bc(theorem, sp, Imp_syl, sp, tcolon,
 nl, forall, a, sp, b, pdot,
-nl, a, sp, ar, sp, plp, a, sp, ar, sp, b, prp, sp, ar, sp, b, sp, defined,
+nl, a, sp, ar, sp, lp, a, sp, ar, sp, b, rp, sp, ar, sp, b, sp, defined,
 nl,
 nl, given, a, sp, b, fdot,
 nl, assume, pa, sp, fcolon, sp, a, fdot,
